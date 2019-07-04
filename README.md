@@ -51,6 +51,57 @@ Each sample folder will contain a filed called `class_input_priorityAlign.tsv` a
 #### Determining whether a read is included in the class input file
 For single-end reads, a read is included in the class input file if it is in `Chimeric.out.sam` or if it has an N in its CIGAR string in `Aligned.out.sam` (N codes for a base being skipped). Note that if the read is in both `Aligned.out.sam` and its CIGAR string doesn't have an N, and `Chimeric.out.sam`, then the read won't be included in `class_input_priorityAlign.tsv` but will be included in `class_input_priorityChimerc.tsv`. For paired-end reads, if read 1 is in `1Chimeric.out.sam` or if it has an N in its CIGAR string, the read will be included in the class input file (again, if it also appears in `1Aligned.out.sam` without an N then it won't appear in `class_input_priorityAlign.tsv`). Its line in the class input file will also include information about read 2, regardless of whether r2 is Chimeric/has an N in its CIGAR string or not. Note that if read 1 is not in `1Chimeric.out.sam` and doesn't have an N in its CIGAR string in `1Aligned.out.sam`, the read won't be included in the class input file *even if read 2 is Chimeric or has an N in its CIGAR string* (this is something we could change). 
 
+#### Fields of the class input file
+
+
+
+The class input file contains the following fields in the following order:
+1. `id`:
+2. `class`:
+3. `refNameR1`:
+4. `refNameR2`:
+5. `fileTypeR1`:
+6. `fileTypeR2`:
+7. `chrR1A`:
+8. `chrR1B`:
+9. `chrR2A`:
+10. `chrR2B`:
+11. `geneR1A`:
+12. `geneR1B`:
+13. `geneR2A`:
+14. `geneR2B`:
+15. `juncPosR1A`:
+16. `juncPosR1B`:
+17. `juncPosR2A`:
+18. `juncPosR2B`:
+19. `strandR1A`:
+20. `strandR1B`:
+21. `strandR2A`:
+22. `strandR2B`:
+23. `readClassR1`:
+24. `readClassR2`:
+25. `aScoreR1A`:
+26. `aScoreR1B`:
+27. `aScoreR2A`:
+28. `aScoreR2B`:
+29. `flagR1A`:
+30. `flagR1B`:
+31. `flagR2A`:
+33. `flagR2B`:
+34. `numNR1`:
+35. `numNR2`:
+36. `posR1A`:
+37. `posR1B`:
+38. `posR2A`:
+39. `posR2B`:
+40. `qualR1A`:
+41. `qualR1B`:
+42. `qualR2A`:
+43. `qualR2B`:
+44. `readLenR1`:
+45. `readLenR2`:
+
+
 ### Log files
 There is a file called `wrapper.log` in the folder for every pipeline run, as well as for every sample. The goal of these files it to make it easier to look at the output from the jobs you submit with the pipeline by collecting it all in the same place. For example, the folder `output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0` will contain a `wrapper.log` file which has the `.out` and `.err` files concatenated for every job and every sample in that run; these outputs are sorted by job type (so the outputs for the mapping jobs for each sample will be next to each other, etc). There is also a `wrapper.log` file in each sample sub-folder; for example, `output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/SRR6546273` will contain this file. It contains the output for all `.out` and `.err` outputs from all the jobs run on that specific sample. The `wrapper.log` files are rewritten every time the pipeline is run on a sample.
 

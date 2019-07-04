@@ -1,3 +1,4 @@
 output/
 annotators/
 job_output/
+*.pyc
