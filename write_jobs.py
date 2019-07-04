@@ -28,24 +28,32 @@ def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "aft
   job_file.write("date\n")
   job_file.close()
 
-def ann_SJ(out_path, name, assembly, gtf_file, dep = ""):
+def ann_SJ(out_path, name, assembly, gtf_file, single, dep = ""):
   """Run script to add gene names to SJ.out.tab and Chimeric.out.junction"""
   command = "python3 scripts/annotate_SJ.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
+  if single:
+    command += "--single "
   sbatch_file("run_ann_SJ.sh", "ann_SJ_{}".format(name), "10:00", "5Gb", command, dep=dep)
   return submit_job("run_ann_SJ.sh")
 
-def class_input(out_path, name, assembly, gtf_file, dep=""):
+def class_input(out_path, name, assembly, gtf_file, single,dep=""):
   """Run script to create class input file"""
-  command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {}".format(out_path, name, assembly, gtf_file)
-  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "10:00", "1Gb", command, dep=dep)
+  command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
+  if single:
+    command += "--single"
+  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "5:00", "1Gb", command, dep=dep)
   return submit_job("run_class_input.sh")
 
 
-def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM):
+def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, single):
   """Run script to perform mapping job for STAR"""
   command = "mkdir -p {}{}\n".format(out_path, name)
   command += "STAR --version\n"
-  for i in range(2):
+  if single:
+    u = 1
+  else:
+    u = 2
+  for i in range(u):
     command += "STAR --runThreadN 4 "
     command += "--alignIntronMax 21 "
     command += "--genomeDir /scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_index_2.7.1a ".format(assembly)
@@ -87,9 +95,9 @@ def main():
   alignSJstitchMismatchNmax = [0,1]
   chimSegmentReadGapMax = [0,3]
 
-#  chimSegmentMin = [12] 
-#  chimJunctionOverhangMin = [13]
-#  alignSJstitchMismatchNmax = [1]
+#  chimSegmentMin = [10] 
+#  chimJunctionOverhangMin = [10]
+#  alignSJstitchMismatchNmax = [0]
 #  chimSegmentReadGapMax = [0]
 
   # Krasnow Biohub
@@ -121,7 +129,8 @@ def main():
   run_name = "GSE109774_colon"
   r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
   names = ["SRR65462{}".format(i) for i in range(73,85)]
-#  names = ["SRR65462{}".format(i) for i in range(74,75)]
+#  names = ["SRR65462{}".format(i) for i in range(80,81)]
+  single = False
 
 
   # path that contains fastqs
@@ -136,8 +145,8 @@ def main():
   # unique identifiers for each fastq; file location for read 1 should be <data_path><name><r_ends[0]>
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
 
-  run_map = True
-  run_ann = True
+  run_map = False
+  run_ann = False
   run_class = True
 
   if r_ends[0].split(".")[-1] == "gz":
@@ -160,21 +169,21 @@ def main():
           for name in names:
             jobs = []
             if run_map:
-              map_jobid = STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM)
+              map_jobid = STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, single)
               jobs.append("map_{}.{}".format(name,map_jobid))
               total_jobs.append(map_jobid)
             else:
               map_jobid = ""
         
             if run_ann:
-              ann_SJ_jobid = ann_SJ(out_path, name, assembly, gtf_file, dep = map_jobid)
+              ann_SJ_jobid = ann_SJ(out_path, name, assembly, gtf_file, single, dep = map_jobid)
               jobs.append("ann_SJ_{}.{}".format(name,ann_SJ_jobid))
               total_jobs.append(ann_SJ_jobid)
             else:
               ann_SJ_jobid = ""
         
             if run_class:
-              class_input_jobid = class_input(out_path, name, assembly, gtf_file, dep=ann_SJ_jobid)
+              class_input_jobid = class_input(out_path, name, assembly, gtf_file, single, dep=ann_SJ_jobid)
               jobs.append("class_input_{}.{}".format(name,class_input_jobid))
               total_jobs.append(class_input_jobid)
             else:

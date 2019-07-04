@@ -41,6 +41,7 @@ parser = argparse.ArgumentParser(description="annotate genes in STAR output file
 parser.add_argument("-i", "--input_path", help="the prefix to the STAR Chimeric.out.junction and SJ.out.tab files")
 parser.add_argument("-g", "--gtf_path", help="the path to the gtf file to use for annotation", default=False)
 parser.add_argument("-a", "--assembly", help="The name of the assembly to pre-load annotation (so, mm10 for the 10th mouse assembly)")
+parser.add_argument("-s", "--single", action="store_true", help="use this flag if the reads you are running on are single-ended")
 args = parser.parse_args()
 
 t0 = time.time()
@@ -56,7 +57,11 @@ else:
   
 print("initiated annotator: {}".format(time.time() - t0))
 
-for i in range(1,3):
+if args.single:
+  l = 2
+else:
+  l = 1
+for i in range(l,3):
   SJ_df = pd.read_csv("{}{}SJ.out.tab".format(args.input_path, i), sep="\t", names = ["donor_chromosome", "first_intron_base", "last_intron_base", "strand", "intron_motif", "annotated", "num_uniquely_mapping", "num_multi_mapping", "max_spliced_overhang"])
   SJ_df["acceptor_chromosome"] = SJ_df["donor_chromosome"]
   SJ_df["donor_gene"] = SJ_df.apply(get_gene1, axis=1)
