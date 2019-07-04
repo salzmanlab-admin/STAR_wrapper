@@ -49,57 +49,57 @@ The purpose of the class input files is for each row to contain a summary of rea
 Each sample folder will contain a filed called `class_input_priorityAlign.tsv` and `class_input_priorityChimeric.tsv`. The only difference between these two files is that in `class_input_priorityAlign.tsv` if a read appears in both `Aligned.out.sam` and `Chimeric.out.sam` the information will be taken from the `Aligned` file; for `class_input_priorityChimeric.tsv` the information will be taken from the `Chimeric` file before the `Aligned` file (this goes for read 1 and read 2). 
 
 #### Determining whether a read is included in the class input file
-For single-end reads, a read is included in the class input file if it is in `Chimeric.out.sam` or if it has an N in its CIGAR string in `Aligned.out.sam` (N codes for a base being skipped). Note that if the read is in both `Aligned.out.sam` and its CIGAR string doesn't have an N, and `Chimeric.out.sam`, then the read won't be included in `class_input_priorityAlign.tsv` but will be included in `class_input_priorityChimerc.tsv`. For paired-end reads, if read 1 is in `1Chimeric.out.sam` or if it has an N in its CIGAR string, the read will be included in the class input file (again, if it also appears in `1Aligned.out.sam` without an N then it won't appear in `class_input_priorityAlign.tsv`). Its line in the class input file will also include information about read 2, regardless of whether r2 is Chimeric/has an N in its CIGAR string or not. Note that if read 1 is not in `1Chimeric.out.sam` and doesn't have an N in its CIGAR string in `1Aligned.out.sam`, the read won't be included in the class input file *even if read 2 is Chimeric or has an N in its CIGAR string* (this is something we could change). 
+For single-end reads, a read is included in the class input file if it is in `Chimeric.out.sam` or if it has an N in its CIGAR string in `Aligned.out.sam` (N codes for a base being skipped). Note that if the read is in both `Aligned.out.sam` and its CIGAR string doesn't have an N, and `Chimeric.out.sam`, then the read won't be included in `class_input_priorityAlign.tsv` but will be included in `class_input_priorityChimerc.tsv`. For paired-end reads, if read 1 is in `1Chimeric.out.sam` or if it has an N in its CIGAR string, the read will be included in the class input file (again, if it also appears in `1Aligned.out.sam` without an N then it won't appear in `class_input_priorityAlign.tsv`). Its line in the class input file will also include information about read 2, regardless of whether r2 is Chimeric/has an N in its CIGAR string or not. Note that if read 1 is not in `1Chimeric.out.sam` and doesn't have an N in its CIGAR string in `1Aligned.out.sam`, the read won't be included in the class input file **even if read 2 is Chimeric or has an N in its CIGAR string** (this is something we could change). 
 
 #### Fields of the class input file
 
-
+A note on the naming convention for the fields of the class input file: `id` and `class` are the only fields that are necessarily the same for read 1 and read 2. All other fields have `R1` in them if they pertain to read 1, and `R2` in them if they pertain to read 2. For single-end reads, the information for the one read will always show up in the `R1` columns, even if it's actually from the fastq file labeled 2. Then within read 1 and read 2 the columns are split into `A` and `B`. For a read that aligns to two locations (either in the Chimeric file, or with an N in the CIGAR string in the Aligned file), the first portion of the read is referred to as `A`  and the second is referred to as `B`. Here "first portion" means that if you saw the read in the raw fastq file, the first bases in the read would align to the `A` location, and the last bases would align to the `B` location.
 
 The class input file contains the following fields in the following order:
-1. `id`:
-2. `class`:
-3. `refNameR1`:
-4. `refNameR2`:
-5. `fileTypeR1`:
-6. `fileTypeR2`:
-7. `chrR1A`:
-8. `chrR1B`:
-9. `chrR2A`:
-10. `chrR2B`:
-11. `geneR1A`:
-12. `geneR1B`:
-13. `geneR2A`:
-14. `geneR2B`:
-15. `juncPosR1A`:
-16. `juncPosR1B`:
-17. `juncPosR2A`:
-18. `juncPosR2B`:
-19. `strandR1A`:
-20. `strandR1B`:
-21. `strandR2A`:
-22. `strandR2B`:
-23. `readClassR1`:
-24. `readClassR2`:
-25. `aScoreR1A`:
-26. `aScoreR1B`:
-27. `aScoreR2A`:
-28. `aScoreR2B`:
-29. `flagR1A`:
-30. `flagR1B`:
-31. `flagR2A`:
-33. `flagR2B`:
-34. `numNR1`:
-35. `numNR2`:
-36. `posR1A`:
-37. `posR1B`:
-38. `posR2A`:
-39. `posR2B`:
-40. `qualR1A`:
-41. `qualR1B`:
-42. `qualR2A`:
-43. `qualR2B`:
-44. `readLenR1`:
-45. `readLenR2`:
+1. `id`: Read name. Example: `SRR6546273.367739`
+2. `class`: Class defined by read 1 or read 2. For paired end mode, the options are circular, linear, decoy, err (this happens when the strand is ambiguous, because in that case we can't tell if a potential circular junction is a circle or a decoy, since this definition depends on the strand), fusion (read 1 and read 2 are on different chromosomes, or either r1 or r2 is split between two chromosomes), and strandCross (one read has a portion with a + flag and another portion with a - flag; this is before we correct strandedness by gene location). For single end data the options are lin (linear-type junction), rev (circle-type junction), and fus (part of read maps to one chromosome and part maps to another)
+3. `refNameR1`: The refName for R1 will always be of the form `<chrR1A>:<geneR1A>:<juncPosR1A>:<strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<strandR1B>|<readClassR1>`. See the descriptions for these individual columns for more specifics.
+4. `refNameR2`: If read 2 is from `2Chimeric.out.sam` or has an N in the CIGAR string, it will have the same format as `refNameR1` except `R2` replaces `R1`. If instead it aligns without gaps/chimera, it's name is `<chrR2A>:<geneR2A>:<strandR2A>`.
+5. `fileTypeR1`: equals `Aligned` if the read came from the `1Aligned.out.sam` file, `Chimeric` if it came from the `1Chimeric.out.sam` file.
+6. `fileTypeR2`: equals `Aligned` if the read came from the `2Aligned.out.sam` file, `Chimeric` if it came from the `2Chimeric.out.sam` file.
+7. `chrR1A`: Chromosome that read 1 part A was aligned to
+8. `chrR1B`: Chromosome that read 1 part B was aligned to
+9. `chrR2A`: Chromosome that read 2 part A was aligned to
+10. `chrR2B`: Chromosome that read 2 part B was aligned to
+11. `geneR1A`: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on annotation. 
+12. `geneR1B`: Gene that read 1 part B was aligned to.
+13. `geneR2A`: Gene that read 2 part A was aligned to.
+14. `geneR2B`: Gene that read 2 part B was aligned to.
+15. `juncPosR1A`: The last position part A of read 1 aligns to before the junction. If `fileTypeR1 = Chimeric`: if `flagR1A` is 0 or 256, this is equal to `posR1A + ` the sum of the M's, N's, and D's in the CIGAR string. If `flagR1A` is 16 or 272 this is equal to `posR1A`. If `fileTypeR1 = Aligned`, then this equals `posR1A` plus the sum of the M's, N's, and D's before the largest N value in the CIGAR string. 
+16. `juncPosR1B`: The first position of part B of read 1 that aligns after the junction. If `fileTypeR1 = Chimeric`: if `flagR1B` is 0 or 256, this is equal to `posR1B`. If `flagR1B` is 16 or 272 this is equal to `posR1B + ` the sum of the M's, N's, and D's in the CIGAR string. If `fileTypeR1 = Aligned`, then this equals `posR1B`. 
+17. `juncPosR2A`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
+18. `juncPosR2B`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
+19. `strandR1A`: The strand that the gene at `juncPosR1A` is on (`+` or `-`); if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+20. `strandR1B`: The strand that the gene at `juncPosR1B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+21. `strandR2A`: The strand that the gene at `juncPosR2A` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+22. `strandR2B`: The strand that the gene at `juncPosR2B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+23. `readClassR1`: This is `fus` if read 1 part A and read 1 part B map to different chromosomes. It is `sc`  if the flags of read 1 part A and read 1 part B don't match (they match if they're both in [0,256] or they're both in [16,276]; they don't match otherwise). It is `rev` if the positions are consistent with a circular junction. It is `lin` if the positions are consistent with a linear junction. It is `err` otherwise (this can occur due to `?` occuring as the strand)
+24. `readClassR2`: See `readClassR1` and replace read 1 with read 2. If read 2 isn't a junction this will be `NA`.
+25. `aScoreR1A`: alignment score from the SAM file after the `AS`.
+26. `aScoreR1B`: alignment score from the SAM file after the `AS`.
+27. `aScoreR2A`: alignment score from the SAM file after the `AS`.
+28. `aScoreR2B`: alignment score from the SAM file after the `AS`.
+29. `flagR1A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+30. `flagR1B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+31. `flagR2A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+33. `flagR2B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+34. `numNR1`: Number of N in the reference; from the XN tag in the SAM file
+35. `numNR2`: Number of N in the reference; from the XN tag in the SAM file
+36. `posR1A`: 1-based leftmost mapping position from the SAM file 
+37. `posR1B`: 1-based leftmost mapping position from the SAM file 
+38. `posR2A`: 1-based leftmost mapping position from the SAM file 
+39. `posR2B`: 1-based leftmost mapping position from the SAM file 
+40. `qualR1A`: Mapping quality of the first portion of read 1. From the manual: "The mapping quality MAPQ (column 5) is 255 for uniquely mapping reads, and int(-10\*log10(1-1/Nmap)) for multi-mapping reads" 
+41. `qualR1B`: Mapping quality for the second portion of read 1.
+42. `qualR2A`: Mapping quality of the first portion of read 2. 
+43. `qualR2B`: Mapping quality of the second portion of read 2.
+44. `readLenR1`: length of read 1 (including any softclipped portions)
+45. `readLenR2`: Length of read 2 (including any softclipped portions)
 
 
 ### Log files
