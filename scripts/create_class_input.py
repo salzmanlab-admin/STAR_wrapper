@@ -168,47 +168,54 @@ def write_class_file(junc_read_dict,out_file, single):
 #                        "posB", "qualB", "aScoreB", "readLen", "junction", "strandA", "strandB", "posR2A", 
 #                        "qualR2A", "aScoreR2A", "numR2", "readLenR2", "junctionR2", "strandR2A", "posr2B", "qualR2B",
 #                        "aScoreR2B", "strandR2B"]) + "\n")
-  columns = ["id", "class", "posA", "qualA", "aScoreA", "numN", 
-                       "posB", "qualB", "aScoreB", "readLen", "junction", "flagA", "flagB", "strandA", "strandB", "posR2A", 
-                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "junctionR2", "strandR2A", "posR2B", "qualR2B",
-                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrA", "chrB", "geneA", "geneB", "juncPosA", "juncPosB", "readClass", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
+#  columns = ["id", "class", "posR1A", "qualR1A", "aScoreR1A", "numNR1", 
+#                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
+#                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
+#                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
+  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 
+             'chrR1A', 'chrR1B', 'chrR2A', 'chrR2B', 'geneR1A', 'geneR1B', 'geneR2A', 'geneR2B', 
+             'juncPosR1A', 'juncPosR1B', 'juncPosR2A', 'juncPosR2B', 
+             'strandR1A', 'strandR1B', 'strandR2A', 'strandR2B', 'readClassR1', 'readClassR2', 
+             'aScoreR1A', 'aScoreR1B', 'aScoreR2A', 'aScoreR2B', 'flagR1A', 'flagR1B', 'flagR2A', 'flagR2B', 
+             'numNR1', 'numNR2', 'posR1A', 'posR1B', 'posR2A', 'posR2B', 
+             'qualR1A', 'qualR1B', 'qualR2A', 'qualR2B', 'readLenR1', 'readLenR2']
   out.write("\t".join(columns) + "\n")
 #  out_dict = {c : [] for c in columns}
   out_dict = {}
   for junc in junc_read_dict.keys():
     for read_name in junc_read_dict[junc].keys():
-      if len(junc_read_dict[junc][read_name]) == 2:
+      if (len(junc_read_dict[junc][read_name]) == 2 and not single) or (len(junc_read_dict[junc][read_name]) == 1 and single):
         out_dict["id"] = read_name
 #         info = [read_name]
         r1 = junc_read_dict[junc][read_name][0]
 #        r2 = junc_read_dict[junc][read_name][1]
         split_ref = r1.refName.split("|")
 #        print("{},{},{}".format(r1.name,r1.refName, r2.refName))
-        out_dict["junction"] = r1.refName
-        out_dict["numN"] = r1.numN
-        out_dict["readLen"] = r1.readLen
-        out_dict["posA"] = r1.offsetA
-        out_dict["posB"] = r1.offsetB
-        out_dict["qualA"] = r1.mapQualA
-        out_dict["qualB"] = r1.mapQualB
-        out_dict["aScoreA"] = r1.aScoreA
-        out_dict["aScoreB"] = r1.aScoreB
-        out_dict["flagA"] = r1.flagA
-        out_dict["flagB"] = r1.flagB
+        out_dict["refNameR1"] = r1.refName
+        out_dict["numNR1"] = r1.numN
+        out_dict["readLenR1"] = r1.readLen
+        out_dict["posR1A"] = r1.offsetA
+        out_dict["posR1B"] = r1.offsetB
+        out_dict["qualR1A"] = r1.mapQualA
+        out_dict["qualR1B"] = r1.mapQualB
+        out_dict["aScoreR1A"] = r1.aScoreA
+        out_dict["aScoreR1B"] = r1.aScoreB
+        out_dict["flagR1A"] = r1.flagA
+        out_dict["flagR1B"] = r1.flagB
 #        try:
-        out_dict["strandA"] = split_ref[0].split(":")[3]
+        out_dict["strandR1A"] = split_ref[0].split(":")[3]
 #        except Exception as e:
 #          print("split_ref", split_ref)
 #          print("refName", r2.refName)
 #          raise e
-        out_dict["strandB"] = split_ref[1].split(":")[3]
-        out_dict["chrA"] = split_ref[0].split(":")[0]
-        out_dict["chrB"] = split_ref[1].split(":")[0]
-        out_dict["geneA"] = split_ref[0].split(":")[1]
-        out_dict["geneB"] = split_ref[1].split(":")[1]
-        out_dict["juncPosA"] = split_ref[0].split(":")[2]
-        out_dict["juncPosB"] = split_ref[1].split(":")[2]
-        out_dict["readClass"] = split_ref[2]
+        out_dict["strandR1B"] = split_ref[1].split(":")[3]
+        out_dict["chrR1A"] = split_ref[0].split(":")[0]
+        out_dict["chrR1B"] = split_ref[1].split(":")[0]
+        out_dict["geneR1A"] = split_ref[0].split(":")[1]
+        out_dict["geneR1B"] = split_ref[1].split(":")[1]
+        out_dict["juncPosR1A"] = split_ref[0].split(":")[2]
+        out_dict["juncPosR1B"] = split_ref[1].split(":")[2]
+        out_dict["readClassR1"] = split_ref[2]
 
         if type(r1).__name__ == "chimReadObj":
           out_dict["fileTypeR1"] = "Chimeric"
@@ -243,7 +250,7 @@ def write_class_file(junc_read_dict,out_file, single):
   #         info.append(str(r1.flagB))
           out_dict["numNR2"] = r2.numN
           out_dict["readLenR2"] = r2.readLen
-          out_dict["junctionR2"] = r2.refName
+          out_dict["refNameR2"] = r2.refName
           out_dict["posR2A"] = r2.offsetA
           out_dict["posR2B"] = r2.offsetB
           out_dict["qualR2A"] = r2.mapQualA
@@ -305,50 +312,61 @@ def main():
   else:
     ann = annotator.Annotator(args.gtf_path)
     pickle.dump(ann, open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/{}.pkl".format(args.assembly), "wb"))
-  
+  fastqIdStyle = "complete" 
+
   print("initiated annotator: {}".format(time.time() - t0))
 #  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/mm10_files/mm10.gtf"
 #  ann = annotator.Annotator(gtf_file, 10000)
 ##  gtf_dict = get_gtf_dict(gtf_file, 10000)
 #  print("loaded annotator")
-  read_junc_dict = {}
-  junc_read_dict = {}
-  fastqIdStyle = "complete"
-#  fastq_ids = ["SRR65462{}".format(x) for x in range(73,85)]
-#  fastq_ids = ["SRR65462{}".format(x) for x in range(79,84)]
-
-#  fastq_ids = ["SRR6546284"]
-#  for fastq_id in fastq_ids:
-#  print("{}: {}".format(fastq_id, time.time() - t0))
-
-  if args.single:
-    samFile1 = "{}2Chimeric.out.sam".format(args.input_path)
-    samFile2 = "{}2Aligned.out.sam".format(args.input_path)
-  else:
-    samFile1 = "{}1Chimeric.out.sam".format(args.input_path)
-    samFile2 = "{}1Aligned.out.sam".format(args.input_path)
-  samFile3 = "{}2Chimeric.out.sam".format(args.input_path)
-  samFile4 = "{}2Aligned.out.sam".format(args.input_path)
-
-
-  read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-
-  print("parsed r1chim", time.time() - t0)
-
-  read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-  print("parsed r1align", time.time() - t0)
-
-  if not args.single:
-
-    read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-    print("parsed r2align", time.time() - t0)
-
-    read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-    print("parsed r2chim", time.time() - t0)
-
-  print("parsed all", time.time() - t0)
-#  write_class_file(junc_read_dict,"/scratch/PI/horence/JuliaO/single_cell/scripts/output/create_class_input/{}.tsv".format(fastq_id))
-  write_class_file(junc_read_dict,"{}class_input.tsv".format(args.input_path), args.single)
+  regimes = ["priorityAlign", "priorityChimeric"]
+  for regime in regimes:
+    read_junc_dict = {}
+    junc_read_dict = {}
+  
+  #  fastq_ids = ["SRR65462{}".format(x) for x in range(73,85)]
+  #  fastq_ids = ["SRR65462{}".format(x) for x in range(79,84)]
+  
+  #  fastq_ids = ["SRR6546284"]
+  #  for fastq_id in fastq_ids:
+  #  print("{}: {}".format(fastq_id, time.time() - t0))
+  
+    if args.single:
+      samFile1 = "{}2Chimeric.out.sam".format(args.input_path)
+      samFile2 = "{}2Aligned.out.sam".format(args.input_path)
+    else:
+      samFile1 = "{}1Chimeric.out.sam".format(args.input_path)
+      samFile2 = "{}1Aligned.out.sam".format(args.input_path)
+    samFile3 = "{}2Chimeric.out.sam".format(args.input_path)
+    samFile4 = "{}2Aligned.out.sam".format(args.input_path)
+  
+  
+    if regime == "priorityAlign":
+      read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+      print("parsed r1align", time.time() - t0)
+      read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+      print("parsed r1chim", time.time() - t0)
+    elif regime == "priorityChimeric":
+      read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+      print("parsed r1chim", time.time() - t0)
+      read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+      print("parsed r1align", time.time() - t0)
+    if not args.single:
+      if regime == "priorityAlign":
+        read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+        print("parsed r2align", time.time() - t0)
+        read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+        print("parsed r2chim", time.time() - t0)
+      elif regime == "priorityChimeric":  
+        read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+        print("parsed r2chim", time.time() - t0)
+        read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+        print("parsed r2align", time.time() - t0)
+    print("len(junc_read_dict)", len(junc_read_dict))
+ 
+    print("parsed all {}".format(regime), time.time() - t0)
+  #  write_class_file(junc_read_dict,"/scratch/PI/horence/JuliaO/single_cell/scripts/output/create_class_input/{}.tsv".format(fastq_id))
+    write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, regime), args.single)
 
 
 #time.time() - t0

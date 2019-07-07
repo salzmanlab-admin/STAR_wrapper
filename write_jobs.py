@@ -17,7 +17,8 @@ def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "aft
   job_file.write("#SBATCH --error=job_output/{}.%j.err\n".format(job_name))
   job_file.write("#SBATCH --time={}\n".format(time))
   job_file.write("#SBATCH --qos=normal\n")
-  job_file.write("#SBATCH -p horence\n")
+#  job_file.write("#SBATCH -p horence\n")
+  job_file.write("#SBATCH -p owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -45,15 +46,15 @@ def class_input(out_path, name, assembly, gtf_file, single,dep=""):
   return submit_job("run_class_input.sh")
 
 
-def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, single):
+def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, single, gtf_file):
   """Run script to perform mapping job for STAR"""
   command = "mkdir -p {}{}\n".format(out_path, name)
   command += "STAR --version\n"
   if single:
-    u = 1
+    l = 1
   else:
-    u = 2
-  for i in range(u):
+    l = 0
+  for i in range(l,2):
     command += "STAR --runThreadN 4 "
     command += "--alignIntronMax 21 "
     command += "--genomeDir /scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_index_2.7.1a ".format(assembly)
@@ -69,8 +70,10 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
     command += "--chimJunctionOverhangMin {} ".format(cJOM)
     command += "--alignSJstitchMismatchNmax {} -1 {} {} ".format(aSJMN, aSJMN, aSJMN)
     command += "--chimSegmentReadGapMax {} ".format(cSRGM)
+    command += "--quantMode GeneCounts "
+    command += "--sjdbGTFfile {} ".format(gtf_file)
     command += "--outReadsUnmapped Fastx \n\n"
-  sbatch_file("run_map.sh", "map_{}".format(name), "2:00:00", "60Gb", command)
+  sbatch_file("run_map.sh", "map_{}".format(name), "12:00:00", "60Gb", command)
   return submit_job("run_map.sh")
 
 def log(out_path, name, jobs, dep = ""):
@@ -90,31 +93,34 @@ def submit_job(file_name):
 
 def main():
 
-  chimSegmentMin = [12,10] 
-  chimJunctionOverhangMin = [13, 10]
-  alignSJstitchMismatchNmax = [0,1]
-  chimSegmentReadGapMax = [0,3]
+#  chimSegmentMin = [12,10] 
+#  chimJunctionOverhangMin = [13, 10]
+#  alignSJstitchMismatchNmax = [0,1]
+#  chimSegmentReadGapMax = [0,3]
 
-#  chimSegmentMin = [10] 
-#  chimJunctionOverhangMin = [10]
-#  alignSJstitchMismatchNmax = [0]
-#  chimSegmentReadGapMax = [0]
+  chimSegmentMin = [12] 
+  chimJunctionOverhangMin = [13]
+  alignSJstitchMismatchNmax = [1]
+  chimSegmentReadGapMax = [3]
 
   # Krasnow Biohub
 #  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/biohub/rawdata/"
-#  assembly = "grch38"
+#  assembly = "hg38"
 #  run_name = "Krasnow_biohub"
 #  r_ends = ["_R1_001.fastq.gz","_R2_001.fastq.gz"]
 #  names = ["P9-B002581-B002581-1_S324", "P9-B001222-B001222-1_S155", "P8-B002581-B002581-1_S323", "P8-B001222-B001222-1_S154", "P7-B001222-B001222-1_S153", "P6-B001222-B001222-1_S152", "P5-B002581-B002581-1_S322"]
-
+#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
 #  names = ["P9-B002581-B002581-1_S324"]
 
   # benchmarking
 #  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/benchmarking/"
-#  assembly = "grch38"
+#  assembly = "hg38"
 #  run_name = "benchmarking"
 #  r_ends = ["_1.fastq", "_2.fastq"]
-#  names = ["SRR6782109", "SRR6782110", "SRR6782111", "SRR6782112", "SRR7547688", "SRR7547689", "SRR7547690", "SRR7547691", "SRR7547692", "SRR7588583", "SRR7588671", "SRR7706271", "SRR7706277"]
+##  names = ["SRR6782109", "SRR6782110", "SRR6782111", "SRR6782112", "SRR7547688", "SRR7547689", "SRR7547690", "SRR7547691", "SRR7547692", "SRR7588583", "SRR7588671", "SRR7706271", "SRR7706277"]
+#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+#  names = ["SRR7547691"]
+#  single = True
 
   # Tabula Muris lung
 #  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.06.19.GSE109774/"
@@ -122,15 +128,27 @@ def main():
 #  run_name = "GSE109774_lung"
 #  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
 #  names = ["SRR65770{}".format(i) for i in range(46, 58)]
+#  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 
  # Tabula Muris colon
-  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
-  assembly = "mm10"
-  run_name = "GSE109774_colon"
-  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-  names = ["SRR65462{}".format(i) for i in range(73,85)]
-#  names = ["SRR65462{}".format(i) for i in range(80,81)]
-  single = False
+#  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
+#  assembly = "mm10"
+#  run_name = "GSE109774_colon"
+#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
+##  names = ["SRR65462{}".format(i) for i in range(73,85)]
+#  names = ["SRR65462{}".format(i) for i in range(75,76)]
+#  single = False
+#  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
+
+# Tabula Sapiens pilot
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/"
+  assembly = "hg38"
+  run_name = "TS_pilot"
+  r_ends = ["/possorted_genome_bam.fq", "/possorted_genome_bam.fq"]
+  names = ["TSP1_bladder_1", "TSP1_lung_1", "TSP1_exopancreas2_1", "TSP1_exopancreas2_2", "TSP1_exopancreas2_3"]
+  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+  single = True
+
 
 
   # path that contains fastqs
@@ -145,8 +163,8 @@ def main():
   # unique identifiers for each fastq; file location for read 1 should be <data_path><name><r_ends[0]>
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
 
-  run_map = False
-  run_ann = False
+  run_map = True
+  run_ann = True
   run_class = True
 
   if r_ends[0].split(".")[-1] == "gz":
@@ -161,7 +179,7 @@ def main():
           cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
           out_path = "/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/{}/".format(cond_run_name)
         #  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
-          gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
+#          gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
         
         
           total_jobs = []
@@ -169,7 +187,7 @@ def main():
           for name in names:
             jobs = []
             if run_map:
-              map_jobid = STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, single)
+              map_jobid = STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, single, gtf_file)
               jobs.append("map_{}.{}".format(name,map_jobid))
               total_jobs.append(map_jobid)
             else:
