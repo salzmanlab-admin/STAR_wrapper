@@ -102,6 +102,14 @@ The class input file contains the following fields in the following order:
 43. `qualR2B`: Mapping quality of the second portion of read 2.
 44. `readLenR1`: length of read 1 (including any softclipped portions)
 45. `readLenR2`: Length of read 2 (including any softclipped portions)
+46. `MDR1A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+47. `MDR1B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+48. `MDR2A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+49. `MDR2B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+50. `nmmR1A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+51. `nmmR1B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+52. `nmmR2A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+53. `nmmR2B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
 
 
 ### Log files

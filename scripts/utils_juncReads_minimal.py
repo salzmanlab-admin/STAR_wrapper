@@ -299,9 +299,9 @@ class juncObj:
 
 
 #readObj = namedtuple('readObj', ['name', 'flag', 'refName', 'offset', 'aScore', 'nextBest', 'mapQual', 'baseName', 'readLen', 'numN', 'cigar'])
-readObj = namedtuple('readObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB'])
+readObj = namedtuple('readObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB'])
 
-chimReadObj = namedtuple('chimReadObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB'])
+chimReadObj = namedtuple('chimReadObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB'])
 
 def readObj_refname(cigar, seqname, position, ann):
   if "N" not in cigar:
@@ -402,7 +402,10 @@ def newReadObj(vals, readIdStyle, ann, fill_char = "NA"):
 #    print("refName","{}:{}:{}".format(vals[2],",".join(gtf_data.gene_names_at_locus(contig=vals[2][3:], position=int(vals[3]))),flag_dict[int(vals[1])]) )
 #    return readObj(name=vals[0], flag=int(vals[1]), refName="{}:{}:{}".format(vals[2],"", flag_dict[int(vals[1])]), offset=vals[3], aScore=myScore, nextBest=myNextBest, mapQual=vals[4], baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigar=vals[5])
     cigar_string = get_cigar_string(vals[5], int(vals[1]))
-    return readObj(name=vals[0], flagA=int(vals[1]), flagB=fill_char, refName=readObj_refname(cigar_string, vals[2], int(vals[3]),  ann),offsetA=vals[3], offsetB=fill_char, aScoreA=myScore, aScoreB=fill_char, nextBestA=myNextBest, nextBestB=fill_char, mapQualA=vals[4], mapQualB=fill_char, baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigarA=cigar_string, cigarB=fill_char)
+    return readObj(name=vals[0], flagA=int(vals[1]), flagB=fill_char, refName=readObj_refname(cigar_string, vals[2], int(vals[3]),  ann),offsetA=vals[3], offsetB=fill_char, aScoreA=myScore, aScoreB=fill_char, nextBestA=myNextBest, nextBestB=fill_char, mapQualA=vals[4], mapQualB=fill_char, baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigarA=cigar_string, cigarB=fill_char, MDA=mmStr, MDB=fill_char, nmmA = nmm(mmStr), nmmB=fill_char)
+
+def nmm(MD): 
+  return len(''.join(filter(["A","C","G","T"].__contains__, MD)))
 
 def parse_cigar(cigar): 
   matches = re.findall(r'(\d+)([A-Z]{1})', cigar)
@@ -514,10 +517,13 @@ def chim_newReadObj(vals1, vals2, readIdStyle, ann):
             myScoreB= curOpt[2]
         elif curOpt[0] == "XS":  # next best score
             myNextBestB = curOpt[2]
+        elif curOpt[0] == "MD":  # string representing mismatch locations
+            mmStrB = curOpt[2]
+
 
     if readIdStyle == "appended":        
         myBaseName = vals1[0][:-1]  # name without trailing 1 or 2 so we can quickly match up paired reads
     else:
         myBaseName = vals1[0]  # or sometimes the read ids are already the same in the 2 separate files  
 #    return readObj(name=vals1[0], flag=int(vals1[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]]), offset=vals1[3], aScore=myScore, nextBest=myNextBest, mapQual=min(vals1[4],vals2[4]), baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigar=vals1[5])
-    return chimReadObj(name=vals1[0], flagA=int(vals1[1]),flagB=int(vals2[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]], ann), offsetA=vals1[3], offsetB=vals2[3], aScoreA=myScoreA, aScoreB=myScoreB, nextBestA=myNextBestA, nextBestB=myNextBestB, mapQualA=vals1[4],mapQualB=vals2[4], baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigarA=get_cigar_string(vals1[5], int(vals1[1])), cigarB=get_cigar_string(vals2[5], int(vals2[1])))
+    return chimReadObj(name=vals1[0], flagA=int(vals1[1]),flagB=int(vals2[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]], ann), offsetA=vals1[3], offsetB=vals2[3], aScoreA=myScoreA, aScoreB=myScoreB, nextBestA=myNextBestA, nextBestB=myNextBestB, mapQualA=vals1[4],mapQualB=vals2[4], baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigarA=get_cigar_string(vals1[5], int(vals1[1])), cigarB=get_cigar_string(vals2[5], int(vals2[1])), MDA=mmStr, MDB=mmStrB, nmmA = nmm(mmStr), nmmB = nmm(mmStrB))
