@@ -55,7 +55,7 @@ For single-end reads, a read is included in the class input file if it is in `Ch
 
 A note on the naming convention for the fields of the class input file: `id` and `class` are the only fields that are necessarily the same for read 1 and read 2. All other fields have `R1` in them if they pertain to read 1, and `R2` in them if they pertain to read 2. For single-end reads, the information for the one read will always show up in the `R1` columns, even if it's actually from the fastq file labeled 2. Then within read 1 and read 2 the columns are split into `A` and `B`. For a read that aligns to two locations (either in the Chimeric file, or with an N in the CIGAR string in the Aligned file), the first portion of the read is referred to as `A`  and the second is referred to as `B`. Here "first portion" means that if you saw the read in the raw fastq file, the first bases in the read would align to the `A` location, and the last bases would align to the `B` location.
 
-If a read is from the Aligned file rather than the Chimeric file, the following columns will have the value `NA`: `flagB`, `posB`, `aScoreB`, `qualB`. If a read doesn't contain a junction, the following columns will **also** have the value `NA`: `strandR2B`, `chrR2B`, `geneR2B`, `readClassR2`, `juncPosR2A`, `juncPosR2B`. 
+If a read is from the Aligned file rather than the Chimeric file, the following columns will have the value `NA`: `flagB`, `posB`, `aScoreB`, `qualB`. If a read doesn't contain a junction, the following columns will **also** have the value `NA`: `strandR2B`, `chrR2B`, `geneR2B`, `readClassR2`, `juncPosR2A`, `juncPosR2B`, `cigarR2B`, `MR2B`, `SR2B`. 
 
 The class input file contains the following fields in the following order:
 1. `id`: Read name. Example: `SRR6546273.367739`
@@ -64,53 +64,67 @@ The class input file contains the following fields in the following order:
 4. `refNameR2`: If read 2 is from `2Chimeric.out.sam` or has an N in the CIGAR string, it will have the same format as `refNameR1` except `R2` replaces `R1`. If instead it aligns without gaps/chimera, it's name is `<chrR2A>:<geneR2A>:<strandR2A>`.
 5. `fileTypeR1`: equals `Aligned` if the read came from the `1Aligned.out.sam` file, `Chimeric` if it came from the `1Chimeric.out.sam` file.
 6. `fileTypeR2`: equals `Aligned` if the read came from the `2Aligned.out.sam` file, `Chimeric` if it came from the `2Chimeric.out.sam` file.
-7. `chrR1A`: Chromosome that read 1 part A was aligned to
-8. `chrR1B`: Chromosome that read 1 part B was aligned to
-9. `chrR2A`: Chromosome that read 2 part A was aligned to
-10. `chrR2B`: Chromosome that read 2 part B was aligned to
-11. `geneR1A`: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on annotation. 
-12. `geneR1B`: Gene that read 1 part B was aligned to.
-13. `geneR2A`: Gene that read 2 part A was aligned to.
-14. `geneR2B`: Gene that read 2 part B was aligned to.
-15. `juncPosR1A`: The last position part A of read 1 aligns to before the junction. If `fileTypeR1 = Chimeric`: if `flagR1A` is 0 or 256, this is equal to `posR1A + ` the sum of the M's, N's, and D's in the CIGAR string. If `flagR1A` is 16 or 272 this is equal to `posR1A`. If `fileTypeR1 = Aligned`, then this equals `posR1A` plus the sum of the M's, N's, and D's before the largest N value in the CIGAR string. 
-16. `juncPosR1B`: The first position of part B of read 1 that aligns after the junction. If `fileTypeR1 = Chimeric`: if `flagR1B` is 0 or 256, this is equal to `posR1B`. If `flagR1B` is 16 or 272 this is equal to `posR1B + ` the sum of the M's, N's, and D's in the CIGAR string. If `fileTypeR1 = Aligned`, then this equals `posR1B`. 
-17. `juncPosR2A`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
-18. `juncPosR2B`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
-19. `strandR1A`: The strand that the gene at `juncPosR1A` is on (`+` or `-`); if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-20. `strandR1B`: The strand that the gene at `juncPosR1B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-21. `strandR2A`: The strand that the gene at `juncPosR2A` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-22. `strandR2B`: The strand that the gene at `juncPosR2B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-23. `readClassR1`: This is `fus` if read 1 part A and read 1 part B map to different chromosomes. It is `sc`  if the flags of read 1 part A and read 1 part B don't match (they match if they're both in [0,256] or they're both in [16,276]; they don't match otherwise). It is `rev` if the positions are consistent with a circular junction. It is `lin` if the positions are consistent with a linear junction. It is `err` otherwise (this can occur due to `?` occuring as the strand)
-24. `readClassR2`: See `readClassR1` and replace read 1 with read 2. If read 2 isn't a junction this will be `NA`.
-25. `aScoreR1A`: alignment score from the SAM file after the `AS`.
-26. `aScoreR1B`: alignment score from the SAM file after the `AS`.
-27. `aScoreR2A`: alignment score from the SAM file after the `AS`.
-28. `aScoreR2B`: alignment score from the SAM file after the `AS`.
-29. `flagR1A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
-30. `flagR1B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
-31. `flagR2A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
-33. `flagR2B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
-34. `numNR1`: Number of N in the reference; from the XN tag in the SAM file
-35. `numNR2`: Number of N in the reference; from the XN tag in the SAM file
-36. `posR1A`: 1-based leftmost mapping position from the SAM file 
-37. `posR1B`: 1-based leftmost mapping position from the SAM file 
-38. `posR2A`: 1-based leftmost mapping position from the SAM file 
-39. `posR2B`: 1-based leftmost mapping position from the SAM file 
-40. `qualR1A`: Mapping quality of the first portion of read 1. From the manual: "The mapping quality MAPQ (column 5) is 255 for uniquely mapping reads, and int(-10\*log10(1-1/Nmap)) for multi-mapping reads" 
-41. `qualR1B`: Mapping quality for the second portion of read 1.
-42. `qualR2A`: Mapping quality of the first portion of read 2. 
-43. `qualR2B`: Mapping quality of the second portion of read 2.
-44. `readLenR1`: length of read 1 (including any softclipped portions)
-45. `readLenR2`: Length of read 2 (including any softclipped portions)
-46. `MDR1A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
-47. `MDR1B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
-48. `MDR2A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
-49. `MDR2B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
-50. `nmmR1A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
-51. `nmmR1B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
-52. `nmmR2A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
-53. `nmmR2B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+7. `readClassR1`: This is `fus` if read 1 part A and read 1 part B map to different chromosomes. It is `sc`  if the flags of read 1 part A and read 1 part B don't match (they match if they're both in [0,256] or they're both in [16,276]; they don't match otherwise). It is `rev` if the positions are consistent with a circular junction. It is `lin` if the positions are consistent with a linear junction. It is `err` otherwise (this can occur due to `?` occuring as the strand)
+8. `readClassR2`: See `readClassR1` and replace read 1 with read 2. If read 2 isn't a junction this will be `NA`.
+9. `numNR1`: Number of N in the reference; from the XN tag in the SAM file
+10. `numNR2`: Number of N in the reference; from the XN tag in the SAM file
+11. `readLenR1`: length of read 1 (including any softclipped portions)
+12. `readLenR2`: Length of read 2 (including any softclipped portions)
+13. `chrR1A`: Chromosome that read 1 part A was aligned to
+14. `chrR1B`: Chromosome that read 1 part B was aligned to
+15. `chrR2A`: Chromosome that read 2 part A was aligned to
+16. `chrR2B`: Chromosome that read 2 part B was aligned to
+17. `geneR1A`: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on annotation. 
+18. `geneR1B`: Gene that read 1 part B was aligned to.
+19. `geneR2A`: Gene that read 2 part A was aligned to.
+20. `geneR2B`: Gene that read 2 part B was aligned to.
+21. `juncPosR1A`: The last position part A of read 1 aligns to before the junction. If `fileTypeR1 = Chimeric`: if `flagR1A` is 0 or 256, this is equal to `posR1A + ` the sum of the M's, N's, and D's in the CIGAR string. If `flagR1A` is 16 or 272 this is equal to `posR1A`. If `fileTypeR1 = Aligned`, then this equals `posR1A` plus the sum of the M's, N's, and D's before the largest N value in the CIGAR string. 
+22. `juncPosR1B`: The first position of part B of read 1 that aligns after the junction. If `fileTypeR1 = Chimeric`: if `flagR1B` is 0 or 256, this is equal to `posR1B`. If `flagR1B` is 16 or 272 this is equal to `posR1B + ` the sum of the M's, N's, and D's in the CIGAR string. If `fileTypeR1 = Aligned`, then this equals `posR1B`. 
+23. `juncPosR2A`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
+24. `juncPosR2B`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
+25. `strandR1A`: The strand that the gene at `juncPosR1A` is on (`+` or `-`); if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+26. `strandR1B`: The strand that the gene at `juncPosR1B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+27. `strandR2A`: The strand that the gene at `juncPosR2A` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+28. `strandR2B`: The strand that the gene at `juncPosR2B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
 
+29. `aScoreR1A`: alignment score from the SAM file after the `AS`.
+30. `aScoreR1B`: alignment score from the SAM file after the `AS`.
+31. `aScoreR2A`: alignment score from the SAM file after the `AS`.
+32. `aScoreR2B`: alignment score from the SAM file after the `AS`.
+33. `flagR1A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+34. `flagR1B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+35. `flagR2A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+36. `flagR2B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+
+37. `posR1A`: 1-based leftmost mapping position from the SAM file 
+38. `posR1B`: 1-based leftmost mapping position from the SAM file 
+39. `posR2A`: 1-based leftmost mapping position from the SAM file 
+40. `posR2B`: 1-based leftmost mapping position from the SAM file 
+41. `qualR1A`: Mapping quality of the first portion of read 1. From the manual: "The mapping quality MAPQ (column 5) is 255 for uniquely mapping reads, and int(-10\*log10(1-1/Nmap)) for multi-mapping reads" 
+42. `qualR1B`: Mapping quality for the second portion of read 1.
+43. `qualR2A`: Mapping quality of the first portion of read 2. 
+44. `qualR2B`: Mapping quality of the second portion of read 2.
+
+45. `MDR1A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+46. `MDR1B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+47. `MDR2A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+48. `MDR2B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+49. `nmmR1A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+50. `nmmR1B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+51. `nmmR2A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+52. `nmmR2B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+53. `cigarR1A`: The cigar string for portion A (for Chimeric, this is without the softclipped portion that corresponds to B; for Aligned, this is without the long N sequence marking the intron and everything after)
+54. `cigarR2B`: The cigar string for portion B
+55. `cigarR2A`: The cigar string for portion A
+56. `cigarR2B`: The cigar string for portion B
+57. `MR1A`: The number of M's in `cigarR1A` (this corresponds to the number of bases that have a match or mismatch with the reference)
+58. `MR1B`: The number of M's in `cigarR1B`
+59. `MR2A`: The number of M's in `cigarR2A`
+60. `MR2B`: The number of M's in `cigarR2B`
+61. `SR1A`: The number of S's in `cigarR1A` (this corresponds to the number of bases that have been softclipped)
+62. `SR1B`: The number of S's in `cigarR1B`
+63. `SR2A`: The number of S's in `cigarR2A`
+64. `SR2B`: The number of S's in `cigarR2B`
 
 ### Log files
 There is a file called `wrapper.log` in the folder for every pipeline run, as well as for every sample. The goal of these files it to make it easier to look at the output from the jobs you submit with the pipeline by collecting it all in the same place. For example, the folder `output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0` will contain a `wrapper.log` file which has the `.out` and `.err` files concatenated for every job and every sample in that run; these outputs are sorted by job type (so the outputs for the mapping jobs for each sample will be next to each other, etc). There is also a `wrapper.log` file in each sample sub-folder; for example, `output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/SRR6546273` will contain this file. It contains the output for all `.out` and `.err` outputs from all the jobs run on that specific sample. The `wrapper.log` files are rewritten every time the pipeline is run on a sample.
