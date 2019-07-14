@@ -179,7 +179,7 @@ def write_class_file(junc_read_dict,out_file, single):
              'aScoreR1A', 'aScoreR1B', 'aScoreR2A', 'aScoreR2B', 'flagR1A', 'flagR1B', 'flagR2A', 'flagR2B', 
              'numNR1', 'numNR2', 'posR1A', 'posR1B', 'posR2A', 'posR2B', 
              'qualR1A', 'qualR1B', 'qualR2A', 'qualR2B', 'readLenR1', 'readLenR2', "MDR1A", "MDR1B", "MDR2A", "MDR2B", 
-             'nmmR1A', 'nmmR1B', 'nmmR2A', 'nmmR2B']
+             'nmmR1A', 'nmmR1B', 'nmmR2A', 'nmmR2B', 'cigarR1A', 'cigarR1B','cigarR2A','cigarR2B']
   out.write("\t".join(columns) + "\n")
 #  out_dict = {c : [] for c in columns}
   out_dict = {}
@@ -221,6 +221,8 @@ def write_class_file(junc_read_dict,out_file, single):
         out_dict["MDR1B"] = r1.MDB
         out_dict["nmmR1A"] = r1.nmmA
         out_dict["nmmR1B"] = r1.nmmB
+        out_dict["cigarR1A"] = r1.cigarA
+        out_dict["cigarR1B"] = r1.cigarB
 
         if type(r1).__name__ == "chimReadObj":
           out_dict["fileTypeR1"] = "Chimeric"
@@ -268,6 +270,9 @@ def write_class_file(junc_read_dict,out_file, single):
           out_dict["MDR2B"] = r2.MDB
           out_dict["nmmR2A"] = r2.nmmA
           out_dict["nmmR2B"] = r2.nmmB
+          out_dict["cigarR2A"] = r2.cigarA
+          out_dict["cigarR2B"] = r2.cigarB
+
 
 
           if len(r2.refName.split("|")) > 1:
