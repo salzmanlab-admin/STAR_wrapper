@@ -303,10 +303,10 @@ readObj = namedtuple('readObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA',
 
 chimReadObj = namedtuple('chimReadObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB'])
 
-def readObj_refname(cigar, seqname, position, ann):
+def readObj_refname(cigar, seqname, position, ann, fill_char):
   if "N" not in cigar:
     gene, strand = ann.get_name_given_locus(seqname, int(position))
-    return "{}:{}:{}".format(seqname,gene,strand)
+    return cigar, fill_char, "{}:{}:{}".format(seqname,gene,strand)
 
  # print("cigar",cigar)
 
@@ -348,7 +348,23 @@ def readObj_refname(cigar, seqname, position, ann):
 #  else:
   read_class = "lin"
 
-  return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(seqname, gene1, offset1, strand1,seqname, gene2, offset2, strand2, read_class)
+#  S1 = 0
+#  for i in range(max_N_ind):
+#    m = matches[i]
+#    if m[1] == "S":
+#      S1 += int(m[0])
+#
+#  S2 = 0
+#  for i in range(max_N_ind + 1, len(matches) + 1):
+#    m = matches[i]
+#    if m[1] == "S":
+#      S2 += int(m[0])
+  cigar1 = "".join(["".join(m) for m in matches[:max_N_ind]])
+  cigar2 = "".join(["".join(m) for m in matches[max_N_ind + 1:]])
+
+
+
+  return cigar1, cigar2, "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(seqname, gene1, offset1, strand1,seqname, gene2, offset2, strand2, read_class)
   
   
 
@@ -379,22 +395,22 @@ def newReadObj(vals, readIdStyle, ann, fill_char = "NA"):
         elif curOpt[0] == "MD":  # string representing mismatch locations
             mmStr = curOpt[2]
             
-    # correct for N-penalty in junction alignments and update alignment score as needed
-    if numN > 0:
-        match = id_patt.search(vals[2])  # if this is a junction alignment, refName will fit this pattern
-        if match:  # only want to adjust junction alignments 
-            # get MD string, string representation of where the mismatches or Ns occurred
-            # if Ns are on left the pattern is 0N, if on right of match the pattern is N0
-            match_md = md_patt.search(mmStr)
-            numOinStr = match_md.group(1).count("0N")
-            numNinStr = match_md.group(2).count("N0")
-            # confirm agreement between XN and MD string
-            if numNinStr == numN or numOinStr == numN or numNinStr + numOinStr == numN: 
-                myOrigScore = myScore
-                myScore = str(int(myScore) + numN) # 1 was deducted from score for each N matched in reference so add back, keep as string for consistency
-            else:
-                print("could not update AS for", vals[0], "MD and XN do not agree", mmStr, str(numN))
-                    
+#    # correct for N-penalty in junction alignments and update alignment score as needed
+#    if numN > 0:
+#        match = id_patt.search(vals[2])  # if this is a junction alignment, refName will fit this pattern
+#        if match:  # only want to adjust junction alignments 
+#            # get MD string, string representation of where the mismatches or Ns occurred
+#            # if Ns are on left the pattern is 0N, if on right of match the pattern is N0
+#            match_md = md_patt.search(mmStr)
+#            numOinStr = match_md.group(1).count("0N")
+#            numNinStr = match_md.group(2).count("N0")
+#            # confirm agreement between XN and MD string
+#            if numNinStr == numN or numOinStr == numN or numNinStr + numOinStr == numN: 
+#                myOrigScore = myScore
+#                myScore = str(int(myScore) + numN) # 1 was deducted from score for each N matched in reference so add back, keep as string for consistency
+#            else:
+#                print("could not update AS for", vals[0], "MD and XN do not agree", mmStr, str(numN))
+#                    
     if readIdStyle == "appended":        
         myBaseName = vals[0][:-1]  # name without trailing 1 or 2 so we can quickly match up paired reads
     else:
@@ -402,7 +418,8 @@ def newReadObj(vals, readIdStyle, ann, fill_char = "NA"):
 #    print("refName","{}:{}:{}".format(vals[2],",".join(gtf_data.gene_names_at_locus(contig=vals[2][3:], position=int(vals[3]))),flag_dict[int(vals[1])]) )
 #    return readObj(name=vals[0], flag=int(vals[1]), refName="{}:{}:{}".format(vals[2],"", flag_dict[int(vals[1])]), offset=vals[3], aScore=myScore, nextBest=myNextBest, mapQual=vals[4], baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigar=vals[5])
     cigar_string = get_cigar_string(vals[5], int(vals[1]))
-    return readObj(name=vals[0], flagA=int(vals[1]), flagB=fill_char, refName=readObj_refname(cigar_string, vals[2], int(vals[3]),  ann),offsetA=vals[3], offsetB=fill_char, aScoreA=myScore, aScoreB=fill_char, nextBestA=myNextBest, nextBestB=fill_char, mapQualA=vals[4], mapQualB=fill_char, baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigarA=cigar_string, cigarB=fill_char, MDA=mmStr, MDB=fill_char, nmmA = nmm(mmStr), nmmB=fill_char)
+    cigar1, cigar2, refName = readObj_refname(cigar_string, vals[2], int(vals[3]),  ann, fill_char)
+    return readObj(name=vals[0], flagA=int(vals[1]), flagB=fill_char, refName=refName,offsetA=vals[3], offsetB=fill_char, aScoreA=myScore, aScoreB=fill_char, nextBestA=myNextBest, nextBestB=fill_char, mapQualA=vals[4], mapQualB=fill_char, baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigarA=cigar1, cigarB=cigar2, MDA=mmStr, MDB=fill_char, nmmA = nmm(mmStr), nmmB=fill_char)
 
 def nmm(MD): 
   return len(''.join(filter(["A","C","G","T"].__contains__, MD)))
@@ -463,7 +480,7 @@ def chim_refName(flags, cigars, offsets, rnames, ann):
     elif (strand1 == "+" and posFirst > posSecond) or (strand1 == "-" and posFirst < posSecond):
         juncType = "rev"
     elif (strand1 == "+" and posFirst < posSecond) or (strand1 == "-" and posFirst > posSecond):
-        juncType = "lin"
+         juncType = "lin"
     else:
         juncType = "err"
 #    return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], "", posFirst, signs[0], rnames[1], "", posSecond, signs[1], juncType)
@@ -483,7 +500,19 @@ def get_cigar_string(old_cigar, f):
     return old_cigar 
    
 
- 
+def split_cigar(cigar):
+    matches = re.findall(r'(\d+)([A-Z]{1})', cigar)
+    if (matches[0][1] == "S") and (matches[-1][1] != "S"):
+      cigar1 = "".join(["".join(m) for m in matches[1:]])
+    elif (matches[-1][1] == "S") and (matches[0][1] != "S"):
+      cigar1 = "".join(["".join(m) for m in matches[:-1]])
+    else:
+      assert (matches[0][1] == "S") and (matches[-1][1] == "S")
+      if int(matches[0][0]) > int(matches[-1][0]):
+        cigar1 = "".join(["".join(m) for m in matches[1:]])
+      else:
+        cigar1 = "".join(["".join(m) for m in matches[:-1]])
+    return cigar1
 
 # param vals: result of calling line.strip().split() on a non-header line from sam file.
 # param readIdStyle: for now, options are just "appended" or "complete".
@@ -525,5 +554,21 @@ def chim_newReadObj(vals1, vals2, readIdStyle, ann):
         myBaseName = vals1[0][:-1]  # name without trailing 1 or 2 so we can quickly match up paired reads
     else:
         myBaseName = vals1[0]  # or sometimes the read ids are already the same in the 2 separate files  
+
+#    matches = re.findall(r'(\d+)([A-Z]{1})', vals1[5])
+#    if (m[0][1] == "S") and (m[-1][1] != "S"):
+#      cigar1 = "".join(["".join(m) for m in matches[1:])
+#    elif (m[-1][1] == "S") and (m[0][1] != "S"):
+#      cigar1 = "".join(["".join(m) for m in matches[:-1])
+#    else:
+#      assert (m[0][1] == "S") and (m[-1][1] == "S")
+#      if int(m[0][0]) > int(m[-1][0]):
+#        cigar1 = "".join(["".join(m) for m in matches[1:])
+#      else:
+#        cigar1 = "".join(["".join(m) for m in matches[:-1])
+#
+#    cigar1 = split_cigar(vals1[5])   
+   
+    
 #    return readObj(name=vals1[0], flag=int(vals1[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]]), offset=vals1[3], aScore=myScore, nextBest=myNextBest, mapQual=min(vals1[4],vals2[4]), baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigar=vals1[5])
-    return chimReadObj(name=vals1[0], flagA=int(vals1[1]),flagB=int(vals2[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]], ann), offsetA=vals1[3], offsetB=vals2[3], aScoreA=myScoreA, aScoreB=myScoreB, nextBestA=myNextBestA, nextBestB=myNextBestB, mapQualA=vals1[4],mapQualB=vals2[4], baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigarA=get_cigar_string(vals1[5], int(vals1[1])), cigarB=get_cigar_string(vals2[5], int(vals2[1])), MDA=mmStr, MDB=mmStrB, nmmA = nmm(mmStr), nmmB = nmm(mmStrB))
+    return chimReadObj(name=vals1[0], flagA=int(vals1[1]),flagB=int(vals2[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]], ann), offsetA=vals1[3], offsetB=vals2[3], aScoreA=myScoreA, aScoreB=myScoreB, nextBestA=myNextBestA, nextBestB=myNextBestB, mapQualA=vals1[4],mapQualB=vals2[4], baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigarA=split_cigar(vals1[5]), cigarB=split_cigar(vals2[5]), MDA=mmStr, MDB=mmStrB, nmmA = nmm(mmStr), nmmB = nmm(mmStrB))

@@ -161,6 +161,17 @@ def get_read_class(r1, r2):
 #        return "decoy"
   return "err"
 
+def get_SM(cigar):
+  matches = re.findall(r'(\d+)([A-Z]{1})', cigar)
+  M = 0
+  S = 0
+  for m in matches:
+    if m[1] == "M":
+      M += int(m[0])
+    elif m[1] == "S":
+      S += int(m[0])
+  return M, S
+
 def write_class_file(junc_read_dict,out_file, single):
   fill_char = "NA"
   out = open(out_file,"w")
@@ -172,14 +183,20 @@ def write_class_file(junc_read_dict,out_file, single):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 
-             'chrR1A', 'chrR1B', 'chrR2A', 'chrR2B', 'geneR1A', 'geneR1B', 'geneR2A', 'geneR2B', 
-             'juncPosR1A', 'juncPosR1B', 'juncPosR2A', 'juncPosR2B', 
-             'strandR1A', 'strandR1B', 'strandR2A', 'strandR2B', 'readClassR1', 'readClassR2', 
-             'aScoreR1A', 'aScoreR1B', 'aScoreR2A', 'aScoreR2B', 'flagR1A', 'flagR1B', 'flagR2A', 'flagR2B', 
-             'numNR1', 'numNR2', 'posR1A', 'posR1B', 'posR2A', 'posR2B', 
-             'qualR1A', 'qualR1B', 'qualR2A', 'qualR2B', 'readLenR1', 'readLenR2', "MDR1A", "MDR1B", "MDR2A", "MDR2B", 
-             'nmmR1A', 'nmmR1B', 'nmmR2A', 'nmmR2B', 'cigarR1A', 'cigarR1B','cigarR2A','cigarR2B']
+  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2']
+  col_base = ['chr','gene', 'juncPos', 'strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S']
+  for c in col_base:
+    for r in ["R1","R2"]:
+      for l in ["A","B"]:
+        columns.append("{}{}{}".format(c,r,l))
+#  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 
+#             'chrR1A', 'chrR1B', 'chrR2A', 'chrR2B', 'geneR1A', 'geneR1B', 'geneR2A', 'geneR2B', 
+#             'juncPosR1A', 'juncPosR1B', 'juncPosR2A', 'juncPosR2B', 
+#             'strandR1A', 'strandR1B', 'strandR2A', 'strandR2B', 'readClassR1', 'readClassR2', 
+#             'aScoreR1A', 'aScoreR1B', 'aScoreR2A', 'aScoreR2B', 'flagR1A', 'flagR1B', 'flagR2A', 'flagR2B', 
+#             'numNR1', 'numNR2', 'posR1A', 'posR1B', 'posR2A', 'posR2B', 
+#             'qualR1A', 'qualR1B', 'qualR2A', 'qualR2B', 'readLenR1', 'readLenR2', "MDR1A", "MDR1B", "MDR2A", "MDR2B", 
+#             'nmmR1A', 'nmmR1B', 'nmmR2A', 'nmmR2B', 'cigarR1A', 'cigarR1B','cigarR2A','cigarR2B', 'MR1A', 'MR1B','MR2A','MR2B',]
   out.write("\t".join(columns) + "\n")
 #  out_dict = {c : [] for c in columns}
   out_dict = {}
@@ -223,6 +240,12 @@ def write_class_file(junc_read_dict,out_file, single):
         out_dict["nmmR1B"] = r1.nmmB
         out_dict["cigarR1A"] = r1.cigarA
         out_dict["cigarR1B"] = r1.cigarB
+        M, S = get_SM(r1.cigarA)
+        out_dict["MR1A"] = M
+        out_dict["SR1A"] = S
+        M, S = get_SM(r1.cigarB)
+        out_dict["MR1B"] = M
+        out_dict["SR1B"] = S
 
         if type(r1).__name__ == "chimReadObj":
           out_dict["fileTypeR1"] = "Chimeric"
@@ -272,6 +295,10 @@ def write_class_file(junc_read_dict,out_file, single):
           out_dict["nmmR2B"] = r2.nmmB
           out_dict["cigarR2A"] = r2.cigarA
           out_dict["cigarR2B"] = r2.cigarB
+          M, S = get_SM(r2.cigarA)
+          out_dict["MR2A"] = M
+          out_dict["SR2A"] = S
+        
 
 
 
@@ -286,6 +313,10 @@ def write_class_file(junc_read_dict,out_file, single):
             out_dict["juncPosR2A"] = split_ref[0].split(":")[2]
             out_dict["juncPosR2B"] = split_ref[1].split(":")[2]
             out_dict["readClassR2"] = split_ref[2]
+            M, S = get_SM(r2.cigarB)
+            out_dict["MR2B"] = M
+            out_dict["SR2B"] = S
+
           else:
             split_ref = r2.refName.split(":")
             out_dict["strandR2A"] = split_ref[2]
@@ -297,6 +328,9 @@ def write_class_file(junc_read_dict,out_file, single):
             out_dict["juncPosR2A"] = fill_char
             out_dict["juncPosR2B"] = fill_char
             out_dict["readClassR2"] = fill_char
+            out_dict["MR2B"] = fill_char
+            out_dict["SR2B"] = fill_char
+
         out.write("\t".join([str(out_dict[c]) for c in columns]) + "\n")
 
 #         info.append(r2)
