@@ -16,9 +16,9 @@ def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "aft
   job_file.write("#SBATCH --output=job_output/{}.%j.out\n".format(job_name))
   job_file.write("#SBATCH --error=job_output/{}.%j.err\n".format(job_name))
   job_file.write("#SBATCH --time={}\n".format(time))
-  job_file.write("#SBATCH --qos=normal\n")
+ # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p owners\n")
+  job_file.write("#SBATCH -p horence\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -29,12 +29,21 @@ def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "aft
   job_file.write("date\n")
   job_file.close()
 
+def ensembl(out_path, name, assembly, single, dep = ""):
+  """Run script to add both ensembl gene ids and gene counts to the class input files"""
+  command = "Rscript scripts/add_ensembl_id.R {}{}/  {}".format(out_path, name, assembly)
+  if single:
+    command += " 1 "
+  sbatch_file("run_ensembl.sh", "ensembl_{}".format(name), "12:00:00", "10Gb", command, dep=dep)
+  return submit_job("run_ensembl.sh")
+
+
 def ann_SJ(out_path, name, assembly, gtf_file, single, dep = ""):
   """Run script to add gene names to SJ.out.tab and Chimeric.out.junction"""
   command = "python3 scripts/annotate_SJ.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
     command += "--single "
-  sbatch_file("run_ann_SJ.sh", "ann_SJ_{}".format(name), "10:00", "5Gb", command, dep=dep)
+  sbatch_file("run_ann_SJ.sh", "ann_SJ_{}".format(name), "24:00:00", "50Gb", command, dep=dep)
   return submit_job("run_ann_SJ.sh")
 
 def class_input(out_path, name, assembly, gtf_file, single,dep=""):
@@ -42,7 +51,7 @@ def class_input(out_path, name, assembly, gtf_file, single,dep=""):
   command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
     command += "--single"
-  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "5:00", "1Gb", command, dep=dep)
+  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "24:00:00", "50Gb", command, dep=dep)
   return submit_job("run_class_input.sh")
 
 
@@ -55,7 +64,7 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
   else:
     l = 0
   for i in range(l,2):
-    command += "STAR --runThreadN 4 "
+    command += "/scratch/PI/horence/Roozbeh/STAR-2.7.1a/bin/Linux_x86_64/STAR --runThreadN 4 "
     command += "--alignIntronMax 21 "
     command += "--genomeDir /scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_index_2.7.1a ".format(assembly)
     command += "--readFilesIn {}{}{} ".format(data_path, name, r_ends[i])
@@ -73,7 +82,7 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
     command += "--quantMode GeneCounts "
     command += "--sjdbGTFfile {} ".format(gtf_file)
     command += "--outReadsUnmapped Fastx \n\n"
-  sbatch_file("run_map.sh", "map_{}".format(name), "12:00:00", "60Gb", command)
+  sbatch_file("run_map.sh", "map_{}".format(name), "12:00:00", "50Gb", command)
   return submit_job("run_map.sh")
 
 def log(out_path, name, jobs, dep = ""):
@@ -98,10 +107,10 @@ def main():
 #  alignSJstitchMismatchNmax = [0,1]
 #  chimSegmentReadGapMax = [0,3]
 
-  chimSegmentMin = [12] 
-  chimJunctionOverhangMin = [13]
-  alignSJstitchMismatchNmax = [1]
-  chimSegmentReadGapMax = [3]
+  chimSegmentMin = [10] 
+  chimJunctionOverhangMin = [10]
+  alignSJstitchMismatchNmax = [0]
+  chimSegmentReadGapMax = [0]
 
   # Krasnow Biohub
 #  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/biohub/rawdata/"
@@ -144,11 +153,20 @@ def main():
   data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/"
   assembly = "hg38"
   run_name = "TS_pilot"
-  r_ends = ["/possorted_genome_bam.fq", "/possorted_genome_bam.fq"]
-  names = ["TSP1_bladder_1", "TSP1_lung_1", "TSP1_exopancreas2_1", "TSP1_exopancreas2_2", "TSP1_exopancreas2_3"]
+  r_ends = ["possorted_genome_bam.fq", "possorted_genome_bam.fq"]
+  names = ["TSP1_bladder_1", "TSP1_lung_1"]
   gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
   single = True
 
+
+# Tabula Sapiens demultiplexed pilot
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_bladder_1/"
+  assembly = "hg38"
+  run_name = "TS_pilot_demultiplexed"
+  r_ends = ["_001.fastq.gz", "001.fastq.gz"]
+  names = ["TSP1_bladder_1_S13_L001_R2"]
+  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+  single = True
 
 
   # path that contains fastqs
@@ -163,10 +181,11 @@ def main():
   # unique identifiers for each fastq; file location for read 1 should be <data_path><name><r_ends[0]>
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
 
-  run_map = True
-  run_ann = True
-  run_class = True
-
+  run_map = False
+  run_ann = False
+  run_class = False
+  run_ensembl = True 
+ 
   if r_ends[0].split(".")[-1] == "gz":
     gzip = True
   else:
@@ -177,7 +196,7 @@ def main():
       for aSJMN in alignSJstitchMismatchNmax:
         for cSRGM in chimSegmentReadGapMax:
           cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
-          out_path = "/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/{}/".format(cond_run_name)
+          out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
         #  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 #          gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
         
@@ -206,8 +225,15 @@ def main():
               total_jobs.append(class_input_jobid)
             else:
               class_input_jobid = ""
+                             
+            if run_ensembl:
+             ensembl_jobid = ensembl(out_path, name, assembly, single, dep=class_input_jobid)
+             jobs.append("ensembl_{}.{}".format(name,ensembl_jobid))
+             total_jobs.append(ensembl_jobid)
+            else:
+              ensembl_jobid = ""
         
-            log_jobid = log(out_path, name, jobs, dep = class_input_jobid)
+            log_jobid = log(out_path, name, jobs, dep = ensembl_jobid)
             jobs.append("log_{}.{}".format(name,log_jobid))
             total_jobs.append(log_jobid)
         
