@@ -12,7 +12,7 @@ args = commandArgs(trailingOnly = TRUE)
 ##### input files #########
 directory = args[1]
 assembly = args[2]
-is.single = args[3]
+is.single = as.numeric(args[3])
 gtf_file = "/scratch/PI/horence/Roozbeh/single_cell_project/utility_files/gtf_hg38_gene_name_ids.txt"
 synonyms_file = "/scratch/PI/horence/Roozbeh/single_cell_project/utility_files/synonyms.txt"
 ######################

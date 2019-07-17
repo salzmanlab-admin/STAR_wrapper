@@ -34,7 +34,10 @@ def ensembl(out_path, name, assembly, single, dep = ""):
   command = "Rscript scripts/add_ensembl_id.R {}{}/  {}".format(out_path, name, assembly)
   if single:
     command += " 1 "
-  sbatch_file("run_ensembl.sh", "ensembl_{}".format(name), "12:00:00", "10Gb", command, dep=dep)
+  else:
+    command += " 0 "
+    command 
+  sbatch_file("run_ensembl.sh", "ensembl_{}".format(name), "12:00:00", "25Gb", command, dep=dep)
   return submit_job("run_ensembl.sh")
 
 
@@ -43,7 +46,7 @@ def ann_SJ(out_path, name, assembly, gtf_file, single, dep = ""):
   command = "python3 scripts/annotate_SJ.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
     command += "--single "
-  sbatch_file("run_ann_SJ.sh", "ann_SJ_{}".format(name), "24:00:00", "50Gb", command, dep=dep)
+  sbatch_file("run_ann_SJ.sh", "ann_SJ_{}".format(name), "24:00:00", "40Gb", command, dep=dep)
   return submit_job("run_ann_SJ.sh")
 
 def class_input(out_path, name, assembly, gtf_file, single,dep=""):
@@ -51,7 +54,7 @@ def class_input(out_path, name, assembly, gtf_file, single,dep=""):
   command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
     command += "--single"
-  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "24:00:00", "50Gb", command, dep=dep)
+  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "24:00:00", "40Gb", command, dep=dep)
   return submit_job("run_class_input.sh")
 
 
@@ -82,7 +85,7 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
     command += "--quantMode GeneCounts "
     command += "--sjdbGTFfile {} ".format(gtf_file)
     command += "--outReadsUnmapped Fastx \n\n"
-  sbatch_file("run_map.sh", "map_{}".format(name), "12:00:00", "50Gb", command)
+  sbatch_file("run_map.sh", "map_{}".format(name), "12:00:00", "60Gb", command)
   return submit_job("run_map.sh")
 
 def log(out_path, name, jobs, dep = ""):
@@ -159,14 +162,14 @@ def main():
   single = True
 
 
-# Tabula Sapiens demultiplexed pilot
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_bladder_1/"
+# Tabula Sapiens demultiplexed pilot (smartseq)
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_N5_S272/"
   assembly = "hg38"
-  run_name = "TS_pilot_demultiplexed"
-  r_ends = ["_001.fastq.gz", "001.fastq.gz"]
-  names = ["TSP1_bladder_1_S13_L001_R2"]
+  run_name = "TS_pilot_smartseq"
+  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+  names = ["B107809_N5_S272"]
   gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-  single = True
+  single = False
 
 
   # path that contains fastqs
@@ -184,7 +187,7 @@ def main():
   run_map = False
   run_ann = False
   run_class = False
-  run_ensembl = True 
+  run_ensembl = True
  
   if r_ends[0].split(".")[-1] == "gz":
     gzip = True

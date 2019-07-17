@@ -7,8 +7,8 @@
 #SBATCH -p horence
 #SBATCH --nodes=1
 #SBATCH --mem=500
-#SBATCH --dependency=afterany:46085310:46085312
+#SBATCH --dependency=afterany:46150854:46150856
 #SBATCH --kill-on-invalid-dep=yes
 date
-python3 scripts/create_log.py -i /scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_demultiplexed_cSM_10_cJOM_10_aSJMN_0_cSRGM_0// -j ensembl_TSP1_bladder_1_S13_L001_R2.46085310 log_TSP1_bladder_1_S13_L001_R2.46085312
+python3 scripts/create_log.py -i /scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0// -j ensembl_B107809_N5_S272.46150854 log_B107809_N5_S272.46150856
 date
