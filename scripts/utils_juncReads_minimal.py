@@ -299,9 +299,9 @@ class juncObj:
 
 
 #readObj = namedtuple('readObj', ['name', 'flag', 'refName', 'offset', 'aScore', 'nextBest', 'mapQual', 'baseName', 'readLen', 'numN', 'cigar'])
-readObj = namedtuple('readObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB'])
+readObj = namedtuple('readObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB','NHA', 'NHB','HIA', 'HIB', 'nMA', 'nMB', 'NMA', 'NMB', 'jMA', 'jMB', 'jIA', 'jIB'])
 
-chimReadObj = namedtuple('chimReadObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB'])
+chimReadObj = namedtuple('chimReadObj', ['name', 'flagA', 'flagB', 'refName', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB','NHA', 'NHB','HIA', 'HIB', 'nMA', 'nMB', 'NMA', 'NMB', 'jMA', 'jMB', 'jIA', 'jIB'])
 
 def readObj_refname(cigar, seqname, position, ann, fill_char):
   if "N" not in cigar:
@@ -383,6 +383,8 @@ def newReadObj(vals, readIdStyle, ann, fill_char = "NA"):
     myScore = None
     myNextBest = None
     optFields = vals[11:]  
+    jM = fill_char
+    jI = fill_char
     
     for x in optFields:
         curOpt = x.split(":")
@@ -394,7 +396,19 @@ def newReadObj(vals, readIdStyle, ann, fill_char = "NA"):
             numN = int(curOpt[2]) 
         elif curOpt[0] == "MD":  # string representing mismatch locations
             mmStr = curOpt[2]
-            
+        elif curOpt[0] == "NH":
+            NH = curOpt[2]
+        elif curOpt[0] == "HI":
+            HI = curOpt[2]
+        elif curOpt[0] == "nM":
+            nM = curOpt[2]
+        elif curOpt[0] == "NM":
+            NM = curOpt[2]
+        elif curOpt[0] == "jM":
+            jM = ",".join(curOpt[2].split(",")[1:])
+        elif curOpt[0] == "jI":
+            jI = ",".join(curOpt[2].split(",")[1:])
+           
 #    # correct for N-penalty in junction alignments and update alignment score as needed
 #    if numN > 0:
 #        match = id_patt.search(vals[2])  # if this is a junction alignment, refName will fit this pattern
@@ -419,7 +433,7 @@ def newReadObj(vals, readIdStyle, ann, fill_char = "NA"):
 #    return readObj(name=vals[0], flag=int(vals[1]), refName="{}:{}:{}".format(vals[2],"", flag_dict[int(vals[1])]), offset=vals[3], aScore=myScore, nextBest=myNextBest, mapQual=vals[4], baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigar=vals[5])
     cigar_string = get_cigar_string(vals[5], int(vals[1]))
     cigar1, cigar2, refName = readObj_refname(cigar_string, vals[2], int(vals[3]),  ann, fill_char)
-    return readObj(name=vals[0], flagA=int(vals[1]), flagB=fill_char, refName=refName,offsetA=vals[3], offsetB=fill_char, aScoreA=myScore, aScoreB=fill_char, nextBestA=myNextBest, nextBestB=fill_char, mapQualA=vals[4], mapQualB=fill_char, baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigarA=cigar1, cigarB=cigar2, MDA=mmStr, MDB=fill_char, nmmA = nmm(mmStr), nmmB=fill_char)
+    return readObj(name=vals[0], flagA=int(vals[1]), flagB=fill_char, refName=refName,offsetA=vals[3], offsetB=fill_char, aScoreA=myScore, aScoreB=fill_char, nextBestA=myNextBest, nextBestB=fill_char, mapQualA=vals[4], mapQualB=fill_char, baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigarA=cigar1, cigarB=cigar2, MDA=mmStr, MDB=fill_char, nmmA = nmm(mmStr), nmmB=fill_char, NHA = NH, NHB = fill_char, HIA = HI, HIB = fill_char, nMA = nM, nMB = fill_char, NMA = NM, NMB = fill_char, jMA = jM, jMB = fill_char, jIA = jI, jIB = fill_char)
 
 def nmm(MD): 
   return len(''.join(filter(["A","C","G","T"].__contains__, MD)))
@@ -519,7 +533,7 @@ def split_cigar(cigar):
 #                    "appended" means /1 or /2 added to read 1 or read 2 respectively
 #                    "complete" means same id used in read1 and read2 files 
 # Need to store read length because trimming could result in different lengths of reads within a single dataset
-def chim_newReadObj(vals1, vals2, readIdStyle, ann):
+def chim_newReadObj(vals1, vals2, readIdStyle, ann, fill_char = "NA"):
     assert vals1[0] == vals2[0]
     numN = 0
     mmStr = ""
@@ -527,6 +541,10 @@ def chim_newReadObj(vals1, vals2, readIdStyle, ann):
     myNextBestA = None
     myScoreB = None
     myNextBestB = None
+    jM = fill_char
+    jI = fill_char
+    jMB = fill_char
+    jIB = fill_char
 
     optFields1 = vals1[11:]  
     optFields2 = vals2[11:]
@@ -540,6 +558,19 @@ def chim_newReadObj(vals1, vals2, readIdStyle, ann):
             numN = int(curOpt[2]) 
         elif curOpt[0] == "MD":  # string representing mismatch locations
             mmStr = curOpt[2]
+        elif curOpt[0] == "NH":
+            NH = curOpt[2]
+        elif curOpt[0] == "HI":
+            HI = curOpt[2]
+        elif curOpt[0] == "nM":
+            nM = curOpt[2]
+        elif curOpt[0] == "NM":
+            NM = curOpt[2]
+        elif curOpt[0] == "jM":
+            jM = ",".join(curOpt[2].split(",")[1:])
+        elif curOpt[0] == "jI":
+            jI = ",".join(curOpt[2].split(",")[1:])
+
     for x in optFields2:
         curOpt = x.split(":")
         if curOpt[0] == "AS":
@@ -548,6 +579,18 @@ def chim_newReadObj(vals1, vals2, readIdStyle, ann):
             myNextBestB = curOpt[2]
         elif curOpt[0] == "MD":  # string representing mismatch locations
             mmStrB = curOpt[2]
+        elif curOpt[0] == "NH":
+            NHB = curOpt[2]
+        elif curOpt[0] == "HI":
+            HIB = curOpt[2]
+        elif curOpt[0] == "nM":
+            nMB = curOpt[2]
+        elif curOpt[0] == "NM":
+            NMB = curOpt[2]
+        elif curOpt[0] == "jM":
+            jMB = ",".join(curOpt[2].split(",")[1:])
+        elif curOpt[0] == "jI":
+            jIB = ",".join(curOpt[2].split(",")[1:])
 
 
     if readIdStyle == "appended":        
@@ -571,4 +614,4 @@ def chim_newReadObj(vals1, vals2, readIdStyle, ann):
    
     
 #    return readObj(name=vals1[0], flag=int(vals1[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]]), offset=vals1[3], aScore=myScore, nextBest=myNextBest, mapQual=min(vals1[4],vals2[4]), baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigar=vals1[5])
-    return chimReadObj(name=vals1[0], flagA=int(vals1[1]),flagB=int(vals2[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]], ann), offsetA=vals1[3], offsetB=vals2[3], aScoreA=myScoreA, aScoreB=myScoreB, nextBestA=myNextBestA, nextBestB=myNextBestB, mapQualA=vals1[4],mapQualB=vals2[4], baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigarA=split_cigar(vals1[5]), cigarB=split_cigar(vals2[5]), MDA=mmStr, MDB=mmStrB, nmmA = nmm(mmStr), nmmB = nmm(mmStrB))
+    return chimReadObj(name=vals1[0], flagA=int(vals1[1]),flagB=int(vals2[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]], ann), offsetA=vals1[3], offsetB=vals2[3], aScoreA=myScoreA, aScoreB=myScoreB, nextBestA=myNextBestA, nextBestB=myNextBestB, mapQualA=vals1[4],mapQualB=vals2[4], baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigarA=split_cigar(vals1[5]), cigarB=split_cigar(vals2[5]), MDA=mmStr, MDB=mmStrB, nmmA = nmm(mmStr), nmmB = nmm(mmStrB), NHA = NH, NHB = NHB, HIA = HI, HIB = HIB, nMA = nM, nMB = nMB, NMA = NM, NMB = NMB, jMA = jM, jMB = jMB, jIA = jI, jIB = jIB)

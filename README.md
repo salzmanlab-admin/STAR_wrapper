@@ -125,6 +125,34 @@ The class input file contains the following fields in the following order:
 62. `SR1B`: The number of S's in `cigarR1B`
 63. `SR2A`: The number of S's in `cigarR2A`
 64. `SR2B`: The number of S's in `cigarR2B`
+65. `NHR1A`: Number of reported alignments that contains the query in the current record
+66. `NHR1B`: Number of reported alignments that contains the query in the current record
+67. `NHR2A`: Number of reported alignments that contains the query in the current record
+68. `NHR2B`: Number of reported alignments that contains the query in the current record
+69. `HIR1A`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+70. `HIR1B`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+71. `HIR2A`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+72. `HIR2B`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+73. `nMR1A`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+74. `nMR1B`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+75. `nMR2A`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+76. `nMR2B`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+77. `NMR1A`: Edit distance to the reference, including ambiguous bases but excluding clipping
+78. `NMR1B`: Edit distance to the reference, including ambiguous bases but excluding clipping
+79. `NMR2A`: Edit distance to the reference, including ambiguous bases but excluding clipping
+80. `NMR2B`: Edit distance to the reference, including ambiguous bases but excluding clipping
+81. `jMR1A`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+jI:B:I,Start1,End1,Start2,End2,...
+82. `jMR1B`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+jI:B:I,Start1,End1,Start2,End2,...
+83. `jMR2A`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+jI:B:I,Start1,End1,Start2,End2,...
+84. `jMR2B`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+jI:B:I,Start1,End1,Start2,End2,...
+85. `jIR1A`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+86. `jIR1B`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+87. `jIR2A`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+88. `jIR2B`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
 
 ### Log files
 There is a file called `wrapper.log` in the folder for every pipeline run, as well as for every sample. The goal of these files it to make it easier to look at the output from the jobs you submit with the pipeline by collecting it all in the same place. For example, the folder `output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0` will contain a `wrapper.log` file which has the `.out` and `.err` files concatenated for every job and every sample in that run; these outputs are sorted by job type (so the outputs for the mapping jobs for each sample will be next to each other, etc). There is also a `wrapper.log` file in each sample sub-folder; for example, `output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/SRR6546273` will contain this file. It contains the output for all `.out` and `.err` outputs from all the jobs run on that specific sample. The `wrapper.log` files are rewritten every time the pipeline is run on a sample.

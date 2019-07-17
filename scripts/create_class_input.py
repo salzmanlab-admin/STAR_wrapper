@@ -184,7 +184,8 @@ def write_class_file(junc_read_dict,out_file, single):
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
   columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2']
-  col_base = ['chr','gene', 'juncPos', 'strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S']
+  col_base = ['chr','gene', 'juncPos', 'strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
+              'NH', 'HI', 'nM', 'NM', 'jM', 'jI']
   for c in col_base:
     for r in ["R1","R2"]:
       for l in ["A","B"]:
@@ -246,6 +247,18 @@ def write_class_file(junc_read_dict,out_file, single):
         M, S = get_SM(r1.cigarB)
         out_dict["MR1B"] = M
         out_dict["SR1B"] = S
+        out_dict["NHR1A"] = r1.NHA
+        out_dict["NHR1B"] = r1.NHB
+        out_dict["HIR1A"] = r1.HIA
+        out_dict["HIR1B"] = r1.HIB
+        out_dict["nMR1A"] = r1.nMA
+        out_dict["nMR1B"] = r1.nMB
+        out_dict["NMR1A"] = r1.NMA
+        out_dict["NMR1B"] = r1.NMB
+        out_dict["jMR1A"] = r1.jMA
+        out_dict["jMR1B"] = r1.jMB
+        out_dict["jIR1A"] = r1.jIA
+        out_dict["jIR1B"] = r1.jIB
 
         if type(r1).__name__ == "chimReadObj":
           out_dict["fileTypeR1"] = "Chimeric"
@@ -298,7 +311,19 @@ def write_class_file(junc_read_dict,out_file, single):
           M, S = get_SM(r2.cigarA)
           out_dict["MR2A"] = M
           out_dict["SR2A"] = S
-        
+          out_dict["NHR2A"] = r2.NHA
+          out_dict["NHR2B"] = r2.NHB
+          out_dict["HIR2A"] = r2.HIA
+          out_dict["HIR2B"] = r2.HIB
+          out_dict["nMR2A"] = r2.nMA
+          out_dict["nMR2B"] = r2.nMB
+          out_dict["NMR2A"] = r2.NMA
+          out_dict["NMR2B"] = r2.NMB
+          out_dict["jMR2A"] = r2.jMA
+          out_dict["jMR2B"] = r2.jMB
+          out_dict["jIR2A"] = r2.jIA
+          out_dict["jIR2B"] = r2.jIB
+       
 
 
 
