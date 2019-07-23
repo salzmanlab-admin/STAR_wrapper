@@ -61,7 +61,7 @@ For single-end reads, a read is included in the class input file if it is in `Ch
 
 A note on the naming convention for the fields of the class input file: `id` and `class` are the only fields that are necessarily the same for read 1 and read 2. All other fields have `R1` in them if they pertain to read 1, and `R2` in them if they pertain to read 2. For single-end reads, the information for the one read will always show up in the `R1` columns, even if it's actually from the fastq file labeled 2. Then within read 1 and read 2 the columns are split into `A` and `B`. For a read that aligns to two locations (either in the Chimeric file, or with an N in the CIGAR string in the Aligned file), the first portion of the read is referred to as `A`  and the second is referred to as `B`. Here "first portion" means that if you saw the read in the raw fastq file, the first bases in the read would align to the `A` location, and the last bases would align to the `B` location.
 
-If a read is from the Aligned file rather than the Chimeric file, the following columns will have the value `NA`: `flagB`, `posB`, `aScoreB`, `qualB`. If a read doesn't contain a junction, the following columns will **also** have the value `NA`: `strandR2B`, `chrR2B`, `geneR2B`, `readClassR2`, `juncPosR2A`, `juncPosR2B`, `cigarR2B`, `MR2B`, `SR2B`. 
+If a read is from the Aligned file rather than the Chimeric file, the following columns will have the value `NA`: `flagB`, `posB`, `aScoreB`, `qualB`, `seqB`. If a read doesn't contain a junction, the following columns will **also** have the value `NA`: `strandR2B`, `chrR2B`, `geneR2B`, `readClassR2`, `juncPosR2A`, `juncPosR2B`, `cigarR2B`, `MR2B`, `SR2B`. 
 
 The class input file contains the following fields in the following order:
 1. `id`: Read name. Example: `SRR6546273.367739`
@@ -159,6 +159,10 @@ jI:B:I,Start1,End1,Start2,End2,...
 86. `jIR1B`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
 87. `jIR2A`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
 88. `jIR2B`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+89. `seqR1A`: The read sequence
+90. `seqR1B`: The read sequence
+91. `seqR2A`: The read sequence
+92. `seqR2B`: The read sequence
 
 ### New columns in the class input file after run_ensembl step:
 * `geneR1B_ensembl`: the gene ensembl id for `geneR1B`

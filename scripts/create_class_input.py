@@ -185,7 +185,7 @@ def write_class_file(junc_read_dict,out_file, single):
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
   columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2']
   col_base = ['chr','gene', 'juncPos', 'strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
-              'NH', 'HI', 'nM', 'NM', 'jM', 'jI']
+              'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'seq']
   for c in col_base:
     for r in ["R1","R2"]:
       for l in ["A","B"]:
@@ -259,6 +259,8 @@ def write_class_file(junc_read_dict,out_file, single):
         out_dict["jMR1B"] = r1.jMB
         out_dict["jIR1A"] = r1.jIA
         out_dict["jIR1B"] = r1.jIB
+        out_dict["seqR1A"] = r1.seqA
+        out_dict["seqR1B"] = r1.seqB
 
         if type(r1).__name__ == "chimReadObj":
           out_dict["fileTypeR1"] = "Chimeric"
@@ -291,6 +293,8 @@ def write_class_file(junc_read_dict,out_file, single):
   #         info.append(r1.refName)
   #         info.append(str(r1.flagA))
   #         info.append(str(r1.flagB))
+          out_dict["seqR2A"] = r2.seqA
+          out_dict["seqR2B"] = r2.seqB
           out_dict["numNR2"] = r2.numN
           out_dict["readLenR2"] = r2.readLen
           out_dict["refNameR2"] = r2.refName
