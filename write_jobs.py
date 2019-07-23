@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import time
+import argparse
 
 def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "afterok"):
   """Write sbatch script given parameters"""
@@ -125,24 +126,14 @@ def submit_job(file_name):
 
 def main():
 
-#  chimSegmentMin = [12,10] 
-#  chimJunctionOverhangMin = [13, 10]
-#  alignSJstitchMismatchNmax = [0,1]
-#  chimSegmentReadGapMax = [0,3]
+ # parser = argparse.ArgumentParser()
+ # parser.add_argument('-s', '--sample', required=True, help='the name of the smartseq sample')
+ # args = parser.parse_args()
 
   chimSegmentMin = [10] 
   chimJunctionOverhangMin = [10]
   alignSJstitchMismatchNmax = [0]
   chimSegmentReadGapMax = [0]
-
-  # Krasnow Biohub
-#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/biohub/rawdata/"
-#  assembly = "hg38"
-#  run_name = "Krasnow_biohub"
-#  r_ends = ["_R1_001.fastq.gz","_R2_001.fastq.gz"]
-#  names = ["P9-B002581-B002581-1_S324", "P9-B001222-B001222-1_S195", "P8-B002581-B002581-1_S323", "P8-B001222-B001222-1_S194", "P7-B001222-B001222-1_S193", "P6-B001222-B001222-1_S192", "P5-B002581-B002581-1_S322"]
-#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-#  names = ["P9-B002581-B002581-1_S324"]
 
   # benchmarking
   data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/benchmarking/"
@@ -152,14 +143,6 @@ def main():
   names = ["SRR6782109", "SRR6782110", "SRR6782111", "SRR6782112", "SRR8606521"]
   gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
   single = True
-
-  # Tabula Muris lung
-#  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.06.19.GSE109774/"
-#  assembly = "mm10"
-#  run_name = "GSE109774_lung"
-#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-#  names = ["SRR65770{}".format(i) for i in range(46, 58)]
-#  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 
  # Tabula Muris colon
 #  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
@@ -191,6 +174,15 @@ def main():
 #  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
 #  single = False
 
+# Tabula Sapiens pilot (smartseq)
+#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/"+args.sample+"/"
+#  assembly = "hg38"
+#  run_name = "TS_pilot_smartseq"
+#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+#  names = [args.sample]
+#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+#  single = False
+
 #Engstrom sim1
 #  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
 #  assembly = "hg38"
@@ -214,9 +206,9 @@ def main():
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
 
   run_map = False
+  run_star_fusion = False
   run_ann = False
   run_class = False
-  run_star_fusion = False
   run_ensembl = True
   run_compare = True
  

@@ -19,7 +19,7 @@ def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "aft
   job_file.write("#SBATCH --time={}\n".format(time))
  # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p horence\n")
+  job_file.write("#SBATCH -p owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -38,7 +38,7 @@ def star_fusion(out_path, name, single, dep = ""):
     command += "   {}{}/2Chimeric.out.junction --output_dir {}{}/star_fusion ".format(out_path, name,out_path,name)
   else:
     command += " {}{}/1Chimeric.out.junction --output_dir {}{}/star_fusion ".format(out_path, name,out_path,name)
-  sbatch_file("run_star_fusion.sh", "fusion_{}".format(name), "12:00:00", "15Gb", command, dep=dep)
+  sbatch_file("run_star_fusion.sh", "fusion_{}".format(name), "12:00:00", "20Gb", command, dep=dep)
   return submit_job("run_star_fusion.sh")
 
 def compare(out_path, name, single, dep = ""):
@@ -125,19 +125,48 @@ def submit_job(file_name):
     print("Error submitting job {} {} {}".format(status, job_num, file_name))
 
 def main():
-  
+
   parser = argparse.ArgumentParser()
   parser.add_argument('-s', '--sample', required=True, help='the name of the smartseq sample')
   args = parser.parse_args()
 
-
-  chimSegmentMin = [10]
+  chimSegmentMin = [10] 
   chimJunctionOverhangMin = [10]
   alignSJstitchMismatchNmax = [0]
   chimSegmentReadGapMax = [0]
 
 
-# Tabula Sapiens demultiplexed pilot (smartseq)
+  # benchmarking
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/benchmarking/"
+  assembly = "hg38"
+  run_name = "benchmarking"
+  r_ends = ["_2.fastq", "_2.fastq"]
+  names = ["SRR6782109", "SRR6782110", "SRR6782111", "SRR6782112", "SRR8606521"]
+  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+  single = True
+
+
+# Tabula Sapiens pilot (10X)
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_1/"
+  assembly = "hg38"
+  run_name = "TS_pilot_10X"
+  r_ends = ["_001.fastq.gz", "_001.fastq.gz"]
+  names = ["TSP1_muscle_1_S19_L001_R2","TSP1_muscle_1_S19_L002_R2","TSP1_muscle_1_S19_L003_R2","TSP1_muscle_1_S19_L004_R2"]
+  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+  single = True
+
+
+# Tabula Sapiens pilot (smartseq)
+#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_J2_S29/"
+#  assembly = "hg38"
+#  run_name = "TS_pilot_smartseq"
+#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+#  names = ["B107809_J2_S29"]
+#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+#  single = False
+
+
+# Tabula Sapiens pilot (smartseq)
   data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/"+args.sample+"/"
   assembly = "hg38"
   run_name = "TS_pilot_smartseq"
@@ -146,10 +175,32 @@ def main():
   gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
   single = False
 
+#Engstrom sim1
+#  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
+#  assembly = "hg38"
+#  run_name = "Engstrom"
+#  r_ends = ["_R1.fq", "_R2.fq"]
+#  names = ["Engstrom_sim1_trimmed"]
+#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+#  single = False
+
+
+  # path that contains fastqs
+#  data_path = ""
+
+  # assembly and gtf file to use for alignment
+#  assembly = "mm10"
+
+  # unique endings for the file names of read one (location 0) and read 2 (location 1)
+#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
+
+  # unique identifiers for each fastq; file location for read 1 should be <data_path><name><r_ends[0]>
+#  names = ["SRR65462{}".format(i) for i in range(73,85)]
+
   run_map = False
+  run_star_fusion = False
   run_ann = False
   run_class = False
-  run_star_fusion = False
   run_ensembl = True
   run_compare = True
  
@@ -178,14 +229,13 @@ def main():
               total_jobs.append(map_jobid)
             else:
               map_jobid = ""
-
             if run_star_fusion:
               star_fusion_jobid = star_fusion(out_path, name, single, dep=map_jobid)
               jobs.append("star_fusion_{}.{}".format(name,star_fusion_jobid))
               total_jobs.append(star_fusion_jobid)
             else:
               star_fusion_jobid = ""
-
+        
             if run_ann:
               ann_SJ_jobid = ann_SJ(out_path, name, assembly, gtf_file, single, dep = star_fusion_jobid)
               jobs.append("ann_SJ_{}.{}".format(name,ann_SJ_jobid))
