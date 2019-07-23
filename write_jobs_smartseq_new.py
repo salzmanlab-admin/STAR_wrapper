@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import time
+import argparse
 
 def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "afterok"):
   """Write sbatch script given parameters"""
@@ -18,7 +19,7 @@ def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "aft
   job_file.write("#SBATCH --time={}\n".format(time))
  # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p owners\n")
+  job_file.write("#SBATCH -p horence\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -37,7 +38,7 @@ def star_fusion(out_path, name, single, dep = ""):
     command += "   {}{}/2Chimeric.out.junction --output_dir {}{}/star_fusion ".format(out_path, name,out_path,name)
   else:
     command += " {}{}/1Chimeric.out.junction --output_dir {}{}/star_fusion ".format(out_path, name,out_path,name)
-  sbatch_file("run_star_fusion.sh", "fusion_{}".format(name), "12:00:00", "20Gb", command, dep=dep)
+  sbatch_file("run_star_fusion.sh", "fusion_{}".format(name), "12:00:00", "15Gb", command, dep=dep)
   return submit_job("run_star_fusion.sh")
 
 def compare(out_path, name, single, dep = ""):
@@ -124,94 +125,26 @@ def submit_job(file_name):
     print("Error submitting job {} {} {}".format(status, job_num, file_name))
 
 def main():
+  
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-s', '--sample', required=True, help='the name of the smartseq sample')
+  args = parser.parse_args()
 
-#  chimSegmentMin = [12,10] 
-#  chimJunctionOverhangMin = [13, 10]
-#  alignSJstitchMismatchNmax = [0,1]
-#  chimSegmentReadGapMax = [0,3]
 
-  chimSegmentMin = [10] 
+  chimSegmentMin = [10]
   chimJunctionOverhangMin = [10]
   alignSJstitchMismatchNmax = [0]
   chimSegmentReadGapMax = [0]
 
-  # Krasnow Biohub
-#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/biohub/rawdata/"
-#  assembly = "hg38"
-#  run_name = "Krasnow_biohub"
-#  r_ends = ["_R1_001.fastq.gz","_R2_001.fastq.gz"]
-#  names = ["P9-B002581-B002581-1_S324", "P9-B001222-B001222-1_S195", "P8-B002581-B002581-1_S323", "P8-B001222-B001222-1_S194", "P7-B001222-B001222-1_S193", "P6-B001222-B001222-1_S192", "P5-B002581-B002581-1_S322"]
-#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-#  names = ["P9-B002581-B002581-1_S324"]
 
-  # benchmarking
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/benchmarking/"
+# Tabula Sapiens demultiplexed pilot (smartseq)
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/"+args.sample+"/"
   assembly = "hg38"
-  run_name = "benchmarking"
-  r_ends = ["_2.fastq", "_2.fastq"]
-  names = ["SRR6782109", "SRR6782110", "SRR6782111", "SRR6782112", "SRR8606521"]
+  run_name = "TS_pilot_smartseq"
+  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+  names = [args.sample]
   gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-  single = True
-
-  # Tabula Muris lung
-#  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.06.19.GSE109774/"
-#  assembly = "mm10"
-#  run_name = "GSE109774_lung"
-#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-#  names = ["SRR65770{}".format(i) for i in range(46, 58)]
-#  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
-
- # Tabula Muris colon
-#  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
-#  assembly = "mm10"
-#  run_name = "GSE109774_colon"
-#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-##  names = ["SRR65462{}".format(i) for i in range(73,85)]
-#  names = ["SRR65462{}".format(i) for i in range(75,76)]
-#  single = False
-#  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
-
-
-# Tabula Sapiens pilot (10X)
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_1/"
-  assembly = "hg38"
-  run_name = "TS_pilot_10X"
-  r_ends = ["_001.fastq.gz", "_001.fastq.gz"]
-  names = ["TSP1_muscle_1_S19_L001_R2","TSP1_muscle_1_S19_L002_R2","TSP1_muscle_1_S19_L003_R2","TSP1_muscle_1_S19_L004_R2"]
-  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-  single = True
-
-
-# Tabula Sapiens pilot (smartseq)
-#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_J2_S29/"
-#  assembly = "hg38"
-#  run_name = "TS_pilot_smartseq"
-#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-#  names = ["B107809_J2_S29"]
-#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-#  single = False
-
-#Engstrom sim1
-#  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
-#  assembly = "hg38"
-#  run_name = "Engstrom"
-#  r_ends = ["_R1.fq", "_R2.fq"]
-#  names = ["Engstrom_sim1_trimmed"]
-#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-#  single = False
-
-
-  # path that contains fastqs
-#  data_path = ""
-
-  # assembly and gtf file to use for alignment
-#  assembly = "mm10"
-
-  # unique endings for the file names of read one (location 0) and read 2 (location 1)
-#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-
-  # unique identifiers for each fastq; file location for read 1 should be <data_path><name><r_ends[0]>
-#  names = ["SRR65462{}".format(i) for i in range(73,85)]
+  single = False
 
   run_map = False
   run_ann = False
@@ -245,13 +178,14 @@ def main():
               total_jobs.append(map_jobid)
             else:
               map_jobid = ""
+
             if run_star_fusion:
               star_fusion_jobid = star_fusion(out_path, name, single, dep=map_jobid)
               jobs.append("star_fusion_{}.{}".format(name,star_fusion_jobid))
               total_jobs.append(star_fusion_jobid)
             else:
               star_fusion_jobid = ""
-        
+
             if run_ann:
               ann_SJ_jobid = ann_SJ(out_path, name, assembly, gtf_file, single, dep = star_fusion_jobid)
               jobs.append("ann_SJ_{}.{}".format(name,ann_SJ_jobid))
