@@ -489,7 +489,7 @@ def chim_refName(flags, cigars, offsets, rnames, ann):
 
     if rnames[0] != rnames[1]:
         juncType = "fus"
-    elif signs[0] != signs[1]:
+    elif signs[0] == signs[1]:
       juncType = "sc"
     elif (strand1 == "+" and posFirst > posSecond) or (strand1 == "-" and posFirst < posSecond):
         juncType = "rev"
