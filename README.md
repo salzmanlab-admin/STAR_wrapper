@@ -169,16 +169,16 @@ jI:B:I,Start1,End1,Start2,End2,...
 * `geneR1B_expression`: the gene counts (htseq counts) for `geneR1B` according to column V3 in `1ReadsPerGene.out.tab` (`2ReadsPerGene.out.tab` for PE data)
 
 ###  Files for comparing the junctions in the class input files with those in the STAR output files:
-If run_compare is set to TRUE, junctions in both class input files are comapred with the junctions in the STAR output files SJ.out.tab and Chimeric.out.junction. Currently, the comaprison is only for junctional R1 reads. At the end of this step 3 columns will be added to each class input file:
+If run_compare is set to TRUE, junctions in both class input files are comapred with the junctions in the STAR output files `SJ.out.tab` and `Chimeric.out.junction`. Currently, the comaprison is only for junctional R1 reads. At the end of this step 3 columns will be added to each class input file:
 
-* `is.STAR_Chim`: is 1 if a chimeric junction in the class input file is also present in Chimeric.out.junction, and is 0 otherwise. (It is NA for all splice alignments in the class inpout file coming from Aligned.out.sam) 
-* `is.STAR_SJ`: is 1 if a splice junction in the class input file is also present in SJ.out.tab, and is 0 otherwise. (It is NA for all * chimeric junctions in the class inpout file coming from Chimeric.out.sam)  
-* `is.STAR_Fusion`: is 1 if a chimeric junction in the class input file is also present in star-fusion.fusion_predictions.abridged.tsv (called by STAR-Fusion), and is 0 otherwise. (It is NA for all splice alignments in the class inpout file coming from Aligned.out.sam) 
+* `is.STAR_Chim`: is 1 if a chimeric junction in the class input file is also present in `Chimeric.out.junction`, and is 0 otherwise. (It is NA for all splice alignments in the class inpout file coming from `Aligned.out.sam`) 
+* `is.STAR_SJ`: is 1 if a splice junction in the class input file is also present in `SJ.out.tab`, and is 0 otherwise. (It is NA for all * chimeric junctions in the class inpout file coming from `Chimeric.out.sam`)  
+* `is.STAR_Fusion`: is 1 if a chimeric junction in the class input file is also present in `star-fusion.fusion_predictions.abridged.tsv` (called by STAR-Fusion), and is 0 otherwise. (It is NA for all splice alignments in the class inpout file coming from `Aligned.out.sam`) 
 Also, the following 4 files will be written at the end of this module:
-* `in_star_chim_not_in_classinput_priority_Align.txt`: chimeric junctions in the STAR Chimeric.out.junction file that cannot be found in class_input_priorityAlign.tsv
-* `in_star_chim_not_in_classinput_priority_Chim.txt`: chimeric junctions in the STAR Chimeric.out.junction file that cannot be found in class_input_priorityChimeric.tsv
-* `in_star_SJ_not_in_classinput_priority_Align.txt`: splice junctions in the STAR SJ.out.tab file that cannot be found in class_input_priorityAlign.tsv
-* `in_star_SJ_not_in_classinput_priority_Chim.txt`: chimeric junctions in the STAR SJ.out.tab file that cannot be found in class_input_priorityChimeric.tsv
+* `in_star_chim_not_in_classinput_priority_Align.txt`: chimeric junctions in the STAR `Chimeric.out.junction` file that cannot be found in `class_input_priorityAlign.tsv`
+* `in_star_chim_not_in_classinput_priority_Chim.txt`: chimeric junctions in the STAR `Chimeric.out.junction` file that cannot be found in `class_input_priorityChimeric.tsv`
+* `in_star_SJ_not_in_classinput_priority_Align.txt`: splice junctions in the STAR `SJ.out.tab` file that cannot be found in `class_input_priorityAlign.tsv`
+* `in_star_SJ_not_in_classinput_priority_Chim.txt`: chimeric junctions in the STAR `SJ.out.tab` file that cannot be found in class_input_priorityChimeric.tsv
 
 
 
