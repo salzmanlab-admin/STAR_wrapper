@@ -63,10 +63,11 @@ A note on the naming convention for the fields of the class input file: `id` and
 
 If a read is from the Aligned file rather than the Chimeric file, the following columns will have the value `NA`: `flagB`, `posB`, `aScoreB`, `qualB`, `seqB`. If a read doesn't contain a junction, the following columns will **also** have the value `NA`: `strandR2B`, `chrR2B`, `geneR2B`, `readClassR2`, `juncPosR2A`, `juncPosR2B`, `cigarR2B`, `MR2B`, `SR2B`. 
 
-The class <mark>input file</mark> contains the following fields in the following order:
+The class input file contains the following fields in the following order:
+
+Note: \[] indicates that the field is only present in the Chimeric file.  
 
 1.`id`: Read name. Example: `SRR6546273.367739`
-
 2. `class`: Class defined by read 1 or read 2. For paired end mode, the options are circular, linear, decoy, err (this happens when the strand is ambiguous, because in that case we can't tell if a potential circular junction is a circle or a decoy, since this definition depends on the strand), fusion (read 1 and read 2 are on different chromosomes, or either r1 or r2 is split between two chromosomes), and strandCross (both reads have flags indicating they're both on + or both on -; this is before we correct strandedness by gene location). For single end data the options are lin (linear-type junction), rev (circle-type junction), and fus (part of read maps to one chromosome and part maps to another)
 3. `refNameR1`: The refName for R1 will always be of the form `<chrR1A>:<geneR1A>:<juncPosR1A>:<strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<strandR1B>|<readClassR1>`. See the descriptions for these individual columns for more specifics.
 4. `refNameR2`: If read 2 is from `2Chimeric.out.sam` or has an N in the CIGAR string, it will have the same format as `refNameR1` except `R2` replaces `R1`. If instead it aligns without gaps/chimera, it's name is `<chrR2A>:<geneR2A>:<strandR2A>`.
@@ -79,9 +80,9 @@ The class <mark>input file</mark> contains the following fields in the following
 11. `readLenR1`: length of read 1 (including any softclipped portions)
 12. `readLenR2`: Length of read 2 (including any softclipped portions)
 13. `chrR1A`: Chromosome that read 1 part A was aligned to
-14. `chrR1B`: Chromosome that read 1 part B was aligned to
+14. \[`chrR1B`]: Chromosome that read 1 part B was aligned to
 15. `chrR2A`: Chromosome that read 2 part A was aligned to
-16. `chrR2B`: Chromosome that read 2 part B was aligned to
+16. \[`chrR2B`]: Chromosome that read 2 part B was aligned to
 17. `geneR1A`: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on annotation. 
 18. `geneR1B`: Gene that read 1 part B was aligned to.
 19. `geneR2A`: Gene that read 2 part A was aligned to.
