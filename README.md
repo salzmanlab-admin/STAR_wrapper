@@ -68,6 +68,7 @@ The class input file contains the following fields in the following order:
 Note: \[] indicates that the field is only present in the Chimeric file.  
 
 1.`id`: Read name. Example: `SRR6546273.367739`
+
 2. `class`: Class defined by read 1 or read 2. For paired end mode, the options are circular, linear, decoy, err (this happens when the strand is ambiguous, because in that case we can't tell if a potential circular junction is a circle or a decoy, since this definition depends on the strand), fusion (read 1 and read 2 are on different chromosomes, or either r1 or r2 is split between two chromosomes), and strandCross (both reads have flags indicating they're both on + or both on -; this is before we correct strandedness by gene location). For single end data the options are lin (linear-type junction), rev (circle-type junction), and fus (part of read maps to one chromosome and part maps to another)
 3. `refNameR1`: The refName for R1 will always be of the form `<chrR1A>:<geneR1A>:<juncPosR1A>:<strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<strandR1B>|<readClassR1>`. See the descriptions for these individual columns for more specifics.
 4. `refNameR2`: If read 2 is from `2Chimeric.out.sam` or has an N in the CIGAR string, it will have the same format as `refNameR1` except `R2` replaces `R1`. If instead it aligns without gaps/chimera, it's name is `<chrR2A>:<geneR2A>:<strandR2A>`.
