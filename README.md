@@ -81,9 +81,9 @@ Note: \[] indicates that the field is only present in the Chimeric file.
 11. `readLenR1`: length of read 1 (including any softclipped portions)
 12. `readLenR2`: Length of read 2 (including any softclipped portions)
 13. `chrR1A`: Chromosome that read 1 part A was aligned to
-14. \[`chrR1B`]: Chromosome that read 1 part B was aligned to
+14. _chrR1B_: Chromosome that read 1 part B was aligned to
 15. `chrR2A`: Chromosome that read 2 part A was aligned to
-16. \[`chrR2B`]: Chromosome that read 2 part B was aligned to
+16. _chrR2B_: Chromosome that read 2 part B was aligned to
 17. `geneR1A`: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on annotation. 
 18. `geneR1B`: Gene that read 1 part B was aligned to.
 19. `geneR2A`: Gene that read 2 part A was aligned to.
