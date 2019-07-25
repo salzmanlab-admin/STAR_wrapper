@@ -126,13 +126,13 @@ Note: \[] indicates that the field is only present in the Chimeric file.
 54. cigarR2B: The cigar string for portion B
 55. cigarR2A: The cigar string for portion A
 56. cigarR2B: The cigar string for portion B
-57. *MR1A*: The number of M's in `cigarR1A` (this corresponds to the number of bases that have a match or mismatch with the reference)
-58. *MR1B*: The number of M's in `cigarR1B`
+57. **MR1A**: The number of M's in `cigarR1A` (this corresponds to the number of bases that have a match or mismatch with the reference)
+58. **MR1B**: The number of M's in `cigarR1B`
 59. MR2A: The number of M's in `cigarR2A`
 60. MR2B: The number of M's in `cigarR2B`
-61. *SR1A*: The number of S's in `cigarR1A` (this corresponds to the number of bases that have been softclipped)
-62. *SR1B*: The number of S's in `cigarR1B`
-63. SR2A: The number of S's in `cigarR2A`
+61. **SR1A**: The number of S's in `cigarR1A` (this corresponds to the number of bases that have been softclipped)
+62. **SR1B**: The number of S's in `cigarR1B`
+63. :octopus: SR2A: The number of S's in `cigarR2A`
 64. SR2B: The number of S's in `cigarR2B`
 65. NHR1A: Number of reported alignments that contains the query in the current record
 66. NHR1B: Number of reported alignments that contains the query in the current record
