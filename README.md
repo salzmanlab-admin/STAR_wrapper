@@ -65,7 +65,7 @@ If a read is from the Aligned file rather than the Chimeric file, the following 
 
 The class input file contains the following fields in the following order:
 
-Note: \[] indicates that the field is only present in the Chimeric file.  
+Note: :whale: indicates that it is safe to use without modification in a model between aligned and chimeric. :octopus: means it is safe to use without modification within chimeric.  
 
 1. `id`: Read name. Example: `SRR6546273.367739`
 
@@ -96,8 +96,8 @@ Note: \[] indicates that the field is only present in the Chimeric file.
 26. strandR1B: The strand that the gene at `juncPosR1B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
 27. strandR2A: The strand that the gene at `juncPosR2A` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
 28. strandR2B: The strand that the gene at `juncPosR2B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-29. aScoreR1A: alignment score from the SAM file after the `AS`.
-30. aScoreR1B: alignment score from the SAM file after the `AS`.
+29. :octopus: aScoreR1A: alignment score from the SAM file after the `AS`.
+30. :octopus: aScoreR1B: alignment score from the SAM file after the `AS`.
 31. aScoreR2A: alignment score from the SAM file after the `AS`.
 32. aScoreR2B: alignment score from the SAM file after the `AS`.
 33. flagR1A: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
@@ -118,21 +118,21 @@ Note: \[] indicates that the field is only present in the Chimeric file.
 46. MDR1B: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
 47. MDR2A: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
 48. MDR2B: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
-49. nmmR1A: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
-50. nmmR1B: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+49. :octopus: nmmR1A: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+50. :octopus: nmmR1B: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
 51. nmmR2A: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
 52. nmmR2B: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
 53. cigarR1A: The cigar string for portion A (for Chimeric, this is without the softclipped portion that corresponds to B; for Aligned, this is without the long N sequence marking the intron and everything after)
 54. cigarR2B: The cigar string for portion B
 55. cigarR2A: The cigar string for portion A
 56. cigarR2B: The cigar string for portion B
-57. :whale: MR1A: The number of M's in `cigarR1A` (this corresponds to the number of bases that have a match or mismatch with the reference)
-58. :whale: MR1B: The number of M's in `cigarR1B`
+57. :whale: :octopus: MR1A: The number of M's in `cigarR1A` (this corresponds to the number of bases that have a match or mismatch with the reference)
+58. :whale: :octopus: MR1B: The number of M's in `cigarR1B`
 59. MR2A: The number of M's in `cigarR2A`
 60. MR2B: The number of M's in `cigarR2B`
-61. :whale: SR1A: The number of S's in `cigarR1A` (this corresponds to the number of bases that have been softclipped)
-62. :whale: SR1B: The number of S's in `cigarR1B`
-63. :octopus: SR2A: The number of S's in `cigarR2A`
+61. :whale: :octopus: SR1A: The number of S's in `cigarR1A` (this corresponds to the number of bases that have been softclipped)
+62. :whale: :octopus: SR1B: The number of S's in `cigarR1B`
+63. SR2A: The number of S's in `cigarR2A`
 64. SR2B: The number of S's in `cigarR2B`
 65. NHR1A: Number of reported alignments that contains the query in the current record
 66. NHR1B: Number of reported alignments that contains the query in the current record
@@ -142,24 +142,24 @@ Note: \[] indicates that the field is only present in the Chimeric file.
 70. HIR1B: Query hit index, indicating the alignment record is the i-th one stored in SAM
 71. HIR2A: Query hit index, indicating the alignment record is the i-th one stored in SAM
 72. HIR2B: Query hit index, indicating the alignment record is the i-th one stored in SAM
-73. nMR1A: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
-74. nMR1B: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+73. :octopus: nMR1A: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+74. :octopus: nMR1B: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
 75. nMR2A: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
 76. nMR2B: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
-77. NMR1A: Edit distance to the reference, including ambiguous bases but excluding clipping
-78. NMR1B: Edit distance to the reference, including ambiguous bases but excluding clipping
+77. :octopus: NMR1A: Edit distance to the reference, including ambiguous bases but excluding clipping
+78. :octopus: NMR1B: Edit distance to the reference, including ambiguous bases but excluding clipping
 79. NMR2A: Edit distance to the reference, including ambiguous bases but excluding clipping
 80. NMR2B: Edit distance to the reference, including ambiguous bases but excluding clipping
-81. jMR1A: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+81. :octopus: jMR1A: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
 jI:B:I,Start1,End1,Start2,End2,...
-82. jMR1B: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+82. :octopus: jMR1B: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
 jI:B:I,Start1,End1,Start2,End2,...
 83. jMR2A: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
 jI:B:I,Start1,End1,Start2,End2,...
 84. jMR2B: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
 jI:B:I,Start1,End1,Start2,End2,...
-85. jIR1A: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
-86. jIR1B: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+85. :octopus: jIR1A: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+86. :octopus: jIR1B: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
 87. jIR2A: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
 88. jIR2B: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
 89. seqR1A: The read sequence
