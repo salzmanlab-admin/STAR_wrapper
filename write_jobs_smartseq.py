@@ -200,7 +200,7 @@ def main():
   run_map = False
   run_star_fusion = False
   run_ann = False
-  run_class = False
+  run_class = True
   run_ensembl = True
   run_compare = True
  
