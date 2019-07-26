@@ -57,7 +57,8 @@ def whitelist(data_path,out_path, name, bc_pattern, r_ends):
   command += "--stdin {}{}{} ".format(data_path, name, r_ends[0])
   command += "--bc-pattern={} ".format(bc_pattern)
   command += "--log2stderr > {}{}_whitelist.txt ".format(data_path,name)
-  command += "--plot-prefix={}{}".format(data_path, name)
+  command += "--plot-prefix={}{} ".format(data_path, name)
+  command += "--knee-method=density "
   sbatch_file("run_whitelist.sh", "whitelist_{}".format(name), "2:00:00", "20Gb", command)
   return submit_job("run_whitelist.sh")
 
@@ -74,7 +75,6 @@ def extract(out_path, data_path, name, bc_pattern, r_ends, dep = ""):
   command += "--error-correct-cell "
   sbatch_file("run_extract.sh", "extract_{}".format(name), "20:00:00", "20Gb", command, dep = dep)
   return submit_job("run_extract.sh")
-
 
 def ensembl(out_path, name, single, dep = ""):
   """Run script to add both ensembl gene ids and gene counts to the class input files"""

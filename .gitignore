@@ -2,3 +2,4 @@ output/
 annotators/
 job_output/
 *.pyc
+my_write_jobs.py
