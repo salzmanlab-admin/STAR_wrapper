@@ -183,7 +183,7 @@ def write_class_file(junc_read_dict,out_file, single):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2']
+  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI']
   col_base = ['chr','gene', 'juncPos', 'strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
               'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'seq']
   for c in col_base:
@@ -205,6 +205,14 @@ def write_class_file(junc_read_dict,out_file, single):
     for read_name in junc_read_dict[junc].keys():
       if (len(junc_read_dict[junc][read_name]) == 2 and not single) or (len(junc_read_dict[junc][read_name]) == 1 and single):
         out_dict["id"] = read_name
+        if single:
+          read_vals = read_name.split("_")
+          out_dict["barcode"].append(read_vals[-2])
+          out_dict["UMI"].append(read_vals[-1])
+
+        else:
+          out_dict["barcode"].append(fill_char)
+          out_dict["UMI"].append(fill_char)
 #         info = [read_name]
         r1 = junc_read_dict[junc][read_name][0]
 #        r2 = junc_read_dict[junc][read_name][1]
