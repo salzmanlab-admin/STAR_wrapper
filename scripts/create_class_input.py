@@ -207,12 +207,12 @@ def write_class_file(junc_read_dict,out_file, single):
         out_dict["id"] = read_name
         if single:
           read_vals = read_name.split("_")
-          out_dict["barcode"].append(read_vals[-2])
-          out_dict["UMI"].append(read_vals[-1])
+          out_dict["barcode"] = read_vals[-2]
+          out_dict["UMI"] = read_vals[-1]
 
         else:
-          out_dict["barcode"].append(fill_char)
-          out_dict["UMI"].append(fill_char)
+          out_dict["barcode"] = fill_char
+          out_dict["UMI"] = fill_char
 #         info = [read_name]
         r1 = junc_read_dict[junc][read_name][0]
 #        r2 = junc_read_dict[junc][read_name][1]
