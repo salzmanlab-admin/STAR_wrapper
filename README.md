@@ -67,11 +67,13 @@ The class input file contains the following fields in the following order:
 
 Note: :whale: indicates that it is safe to use without modification in a model between aligned and chimeric. :octopus: means it is safe to use without modification within chimeric.  
 
+**Refnames for negative-strand genes will have the acceptor first and the donor second**
+
 1. `id`: Read name. Example: `SRR6546273.367739`
 
 2. class: Class defined by read 1 or read 2. For paired end mode, the options are circular, linear, decoy, err (this happens when the strand is ambiguous, because in that case we can't tell if a potential circular junction is a circle or a decoy, since this definition depends on the strand), fusion (read 1 and read 2 are on different chromosomes, or either r1 or r2 is split between two chromosomes), and strandCross (both reads have flags indicating they're both on + or both on -; this is before we correct strandedness by gene location). For single end data the options are lin (linear-type junction), rev (circle-type junction), and fus (part of read maps to one chromosome and part maps to another)
-3. refNameR1: The refName for R1 will always be of the form `<chrR1A>:<geneR1A>:<juncPosR1A>:<strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<strandR1B>|<readClassR1>`. See the descriptions for these individual columns for more specifics.
-4. refNameR2: If read 2 is from `2Chimeric.out.sam` or has an N in the CIGAR string, it will have the same format as `refNameR1` except `R2` replaces `R1`. If instead it aligns without gaps/chimera, it's name is `<chrR2A>:<geneR2A>:<strandR2A>`.
+3. refNameR1: The refName for R1 will always be of the form either `<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<readClassR1>` or `<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<readClassR1>`. Which one of these two it is will be defined by whether the read strand is + (in which case it will be the first one) or the read strand is - (in which case it will be the second one). See the descriptions for these individual columns for more specifics. **Refnames for negative-strand genes will have the acceptor first and the donor second**
+4. refNameR2: If read 2 is from `2Chimeric.out.sam` or has an N in the CIGAR string, it will have the same format as `refNameR1` except `R2` replaces `R1`. If instead it aligns without gaps/chimera, it's name is `<chrR2A>:<geneR2A>:<gene_strandR2A>`.
 5. fileTypeR1: equals `Aligned` if the read came from the `1Aligned.out.sam` file, `Chimeric` if it came from the `1Chimeric.out.sam` file.
 6. fileTypeR2: equals `Aligned` if the read came from the `2Aligned.out.sam` file, `Chimeric` if it came from the `2Chimeric.out.sam` file.
 7. readClassR1: This is `fus` if read 1 part A and read 1 part B map to different chromosomes. It is `sc`  if the flags of read 1 part A and read 1 part B don't match (they match if they're both in [0,256] or they're both in [16,276]; they don't match otherwise). It is `rev` if the positions are consistent with a circular junction. It is `lin` if the positions are consistent with a linear junction. It is `err` otherwise (this can occur due to `?` occuring as the strand)
@@ -86,7 +88,8 @@ Note: :whale: indicates that it is safe to use without modification in a model b
 16. chrR1B: Chromosome that read 1 part B was aligned to
 17. chrR2A: Chromosome that read 2 part A was aligned to
 18. chrR2B: Chromosome that read 2 part B was aligned to
-19. geneR1A: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on annotation. 
+19. geneR1A: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on 
+. 
 20. geneR1B: Gene that read 1 part B was aligned to.
 21. geneR2A: Gene that read 2 part A was aligned to.
 22. geneR2B: Gene that read 2 part B was aligned to.
@@ -94,10 +97,10 @@ Note: :whale: indicates that it is safe to use without modification in a model b
 24. juncPosR1B: The first position of part B of read 1 that aligns after the junction. If `fileTypeR1 = Chimeric`: if `flagR1B` is 0 or 256, this is equal to `posR1B`. If `flagR1B` is 16 or 272 this is equal to `posR1B + ` the sum of the M's, N's, and D's in the CIGAR string. If `fileTypeR1 = Aligned`, then this equals `posR1B`. 
 25. juncPosR2A: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
 26. juncPosR2B: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
-27. strandR1A: The strand that the gene at `juncPosR1A` is on (`+` or `-`); if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-28. strandR1B: The strand that the gene at `juncPosR1B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-29. strandR2A: The strand that the gene at `juncPosR2A` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-30. strandR2B: The strand that the gene at `juncPosR2B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+27. gene_strandR1A: The strand that the gene at `juncPosR1A` is on (`+` or `-`); if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+28. gene_strandR1B: The strand that the gene at `juncPosR1B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+29. gene_strandR2A: The strand that the gene at `juncPosR2A` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+30. gene_strandR2B: The strand that the gene at `juncPosR2B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
 31. :octopus: aScoreR1A: alignment score from the SAM file after the `AS`.
 32. :octopus: aScoreR1B: alignment score from the SAM file after the `AS`.
 33. aScoreR2A: alignment score from the SAM file after the `AS`.
@@ -195,6 +198,7 @@ Also, the following 4 files will be written at the end of this module:
 There is a file called `wrapper.log` in the folder for every pipeline run, as well as for every sample. The goal of these files it to make it easier to look at the output from the jobs you submit with the pipeline by collecting it all in the same place. For example, the folder `output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0` will contain a `wrapper.log` file which has the `.out` and `.err` files concatenated for every job and every sample in that run; these outputs are sorted by job type (so the outputs for the mapping jobs for each sample will be next to each other, etc). There is also a `wrapper.log` file in each sample sub-folder; for example, `output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/SRR6546273` will contain this file. It contains the output for all `.out` and `.err` outputs from all the jobs run on that specific sample. The `wrapper.log` files are rewritten every time the pipeline is run on a sample.
 
 ## A note on annotation
+The annotation is currently done by pyensembl based on the gtf files we use to create the STAR index.
 
 ## Decisions to make in the future
 

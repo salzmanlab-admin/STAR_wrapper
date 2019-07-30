@@ -16,6 +16,7 @@ import numpy as np
 import os
 import pandas as pd
 import pickle
+import pyensembl
 from math import ceil
 import re
 import sys
@@ -184,7 +185,7 @@ def write_class_file(junc_read_dict,out_file, single):
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
   columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI']
-  col_base = ['chr','gene', 'juncPos', 'strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
+  col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
               'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'seq']
   for c in col_base:
     for r in ["R1","R2"]:
@@ -230,12 +231,12 @@ def write_class_file(junc_read_dict,out_file, single):
         out_dict["flagR1A"] = r1.flagA
         out_dict["flagR1B"] = r1.flagB
 #        try:
-        out_dict["strandR1A"] = split_ref[0].split(":")[3]
+        out_dict["gene_strandR1A"] = split_ref[0].split(":")[3]
 #        except Exception as e:
 #          print("split_ref", split_ref)
 #          print("refName", r2.refName)
 #          raise e
-        out_dict["strandR1B"] = split_ref[1].split(":")[3]
+        out_dict["gene_strandR1B"] = split_ref[1].split(":")[3]
         out_dict["chrR1A"] = split_ref[0].split(":")[0]
         out_dict["chrR1B"] = split_ref[1].split(":")[0]
         out_dict["geneR1A"] = split_ref[0].split(":")[1]
@@ -341,8 +342,8 @@ def write_class_file(junc_read_dict,out_file, single):
 
           if len(r2.refName.split("|")) > 1:
             split_ref = r2.refName.split("|")
-            out_dict["strandR2A"] = split_ref[0].split(":")[3]
-            out_dict["strandR2B"] = split_ref[1].split(":")[3]
+            out_dict["gene_strandR2A"] = split_ref[0].split(":")[3]
+            out_dict["gene_strandR2B"] = split_ref[1].split(":")[3]
             out_dict["chrR2A"] = split_ref[0].split(":")[0]
             out_dict["chrR2B"] = split_ref[1].split(":")[0]
             out_dict["geneR2A"] = split_ref[0].split(":")[1]
@@ -356,8 +357,8 @@ def write_class_file(junc_read_dict,out_file, single):
 
           else:
             split_ref = r2.refName.split(":")
-            out_dict["strandR2A"] = split_ref[2]
-            out_dict["strandR2B"] = fill_char
+            out_dict["gene_strandR2A"] = split_ref[2]
+            out_dict["gene_strandR2B"] = fill_char
             out_dict["chrR2A"] = split_ref[0]
             out_dict["chrR2B"] = fill_char
             out_dict["geneR2A"] = split_ref[1]
@@ -393,12 +394,17 @@ def main():
 #  gtf_data.index()
 
   wrapper_path = "/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/"
-  annotator_path = "{}annotators/{}.pkl".format(wrapper_path, args.assembly)
+  annotator_path = "{}annotators/pyensembl_{}.pkl".format(wrapper_path, args.assembly)
   if os.path.exists(annotator_path):
-    ann = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/{}.pkl".format(args.assembly), "rb"))
+    ann = pickle.load(open(annotator_path, "rb"))
   else:
-    ann = annotator.Annotator(args.gtf_path)
-    pickle.dump(ann, open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/{}.pkl".format(args.assembly), "wb"))
+#    ann = annotator.Annotator(args.gtf_path)
+    ann = pyensembl.Genome(reference_name = args.assembly,
+             annotation_name = "my_genome_features",
+             gtf_path_or_url=args.gtf_path)
+    ann.index()
+
+    pickle.dump(ann, open(annotator_path, "wb"))
   fastqIdStyle = "complete" 
 
   print("initiated annotator: {}".format(time.time() - t0))

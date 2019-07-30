@@ -4,6 +4,7 @@ import re
 from collections import namedtuple
 from collections import deque
 from numpy import mean
+import pyensembl
 import sys
 sys.path.insert(0, '/scratch/PI/horence/JuliaO/single_cell/scripts/')
 import annotator
@@ -305,7 +306,7 @@ chimReadObj = namedtuple('chimReadObj', ['name', 'flagA', 'flagB', 'refName', 'o
 
 def readObj_refname(cigar, seqname, position, ann, fill_char):
   if "N" not in cigar:
-    gene, strand = ann.get_name_given_locus(seqname, int(position))
+    gene, strand = get_name_strand(seqname, int(position), ann) #ann.get_name_given_locus(seqname, int(position))
     return cigar, fill_char, "{}:{}:{}".format(seqname,gene,strand)
 
  # print("cigar",cigar)
@@ -339,8 +340,8 @@ def readObj_refname(cigar, seqname, position, ann, fill_char):
       elif m[1] in ["N","D"]:
           offset2 += int(m[0])
   offset1 -= 1 
-  gene1, strand1 =  ann.get_name_given_locus(seqname, offset1)
-  gene2, strand2 = ann.get_name_given_locus(seqname, offset2)
+  gene1, strand1 =  get_name_strand(seqname, offset1, ann) # ann.get_name_given_locus(seqname, offset1)
+  gene2, strand2 = get_name_strand(seqname, offset2, ann) # ann.get_name_given_locus(seqname, offset2)
 #  if (strand1 == "+") and (offset1 > offset2):
 #    read_class = "rev"
 #  elif (strand1 == "-") and (offset2 > offset1):
@@ -449,6 +450,23 @@ def parse_cigar(cigar):
     elif m[1] == "D":
       val += int(m[0])
   return val
+
+def get_name_strand(contig, position, data):
+    gene_ids = data.gene_ids_at_locus(contig=contig, position=position)
+    names = []
+    strands = []
+    for gene_id in gene_ids:
+        gene = data.gene_by_id(gene_id)
+        names.append(gene.name)
+        strands.append(gene.strand)
+    if len(names) == 0:
+        return "unknown", "?"
+    if len(set(strands)) == 1:
+        strand = strands[0]
+    else:
+        strand = "?"
+    return ",".join(names), strand
+
     
 def chim_refName(flags, cigars, offsets, rnames, ann):
     sign_dict = {"0" : "+", "1" : "-"}
@@ -484,21 +502,27 @@ def chim_refName(flags, cigars, offsets, rnames, ann):
 #    else:
 #        cig_val = parse_cigar(cigars[0])
 #        posSecond = int(offsets[1]) + cig_val - 1
-    gene1, strand1 = ann.get_name_given_locus(rnames[0], posFirst)
-    gene2, strand2 = ann.get_name_given_locus(rnames[1], posSecond)
+    gene1, strand1 = get_name_strand(rnames[0], posFirst, ann) # ann.get_name_given_locus(rnames[0], posFirst)
+    gene2, strand2 = get_name_strand(rnames[1], posSecond, ann) #ann.get_name_given_locus(rnames[1], posSecond)
 
     if rnames[0] != rnames[1]:
         juncType = "fus"
     elif signs[0] != signs[1]:
       juncType = "sc"
-    elif (strand1 == "+" and posFirst > posSecond) or (strand1 == "-" and posFirst < posSecond):
+    elif (signs[0] == "+" and posFirst > posSecond) or (signs[0] == "-" and posFirst < posSecond):
         juncType = "rev"
-    elif (strand1 == "+" and posFirst < posSecond) or (strand1 == "-" and posFirst > posSecond):
+    elif (signs[0] == "+" and posFirst < posSecond) or (signs[0] == "-" and posFirst > posSecond):
          juncType = "lin"
     else:
         juncType = "err"
 #    return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], "", posFirst, signs[0], rnames[1], "", posSecond, signs[1], juncType)
-    return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], gene1, posFirst, strand1, rnames[1], gene2, posSecond, strand2, juncType)
+    if juncType == "sc": 
+      return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], gene1, posFirst, strand1, rnames[1], gene2, posSecond, strand2, juncType)
+    if signs[0] == "+":
+      return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], gene1, posFirst, strand1, rnames[1], gene2, posSecond, strand2, juncType)
+    # reverse names if on minus strand
+    elif signs[0] == "-":
+      return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[1], gene2, posSecond, strand2, rnames[0], gene1, posFirst, strand1, juncType)
 
 def reverse_cigar(old_cigar):
   matches = ["".join(x) for x in re.findall(r'(\d+)([A-Z]{1})', old_cigar)]
