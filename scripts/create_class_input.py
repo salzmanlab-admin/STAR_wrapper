@@ -16,7 +16,7 @@ import numpy as np
 import os
 import pandas as pd
 import pickle
-import pyensembl
+#import pyensembl
 from math import ceil
 import re
 import sys
@@ -394,15 +394,17 @@ def main():
 #  gtf_data.index()
 
   wrapper_path = "/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/"
-  annotator_path = "{}annotators/pyensembl_{}.pkl".format(wrapper_path, args.assembly)
+#  annotator_path = "{}annotators/pyensembl_{}.pkl".format(wrapper_path, args.assembly)
+  annotator_path = "{}annotators/{}.pkl".format(wrapper_path, args.assembly)
+
   if os.path.exists(annotator_path):
     ann = pickle.load(open(annotator_path, "rb"))
   else:
-#    ann = annotator.Annotator(args.gtf_path)
-    ann = pyensembl.Genome(reference_name = args.assembly,
-             annotation_name = "my_genome_features",
-             gtf_path_or_url=args.gtf_path)
-    ann.index()
+    ann = annotator.Annotator(args.gtf_path)
+#    ann = pyensembl.Genome(reference_name = args.assembly,
+#             annotation_name = "my_genome_features",
+#             gtf_path_or_url=args.gtf_path)
+#    ann.index()
 
     pickle.dump(ann, open(annotator_path, "wb"))
   fastqIdStyle = "complete" 
