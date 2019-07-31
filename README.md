@@ -84,6 +84,10 @@ Note: :whale: indicates that it is safe to use without modification in a model b
 12. readLenR2: Length of read 2 (including any softclipped portions)
 13. barcode: for 10X data this is the barcode found through UMI-tools, otherwise this is NA
 14. UMI: for 10X data this is the UMI found through UMI-tools, otherwise this is NA
+15. entropyR1: The entropy of the read calculated based on 5-mers. Let $k_1, \ldots, k_n$ be all the 5-mers in the read sequence (for example, for ACTCCGAGTCCTCCG the 5-mers would be **ACTCC**GAGTCCTCCG, A**CTCCG**AGTCCTCCG, AC**TCCGA**GTCCTCCG, ACT**CCGAG**TCCTCCG, ACTC**CGAGT**CCTCCG, ACTCC**GAGTC**CTCCG, ACTCCG**AGTCC**TCCG, ACTCCGA**GTCCT**CCG, ACTCCGAG**TCCTC**CG, ACTCCGAGT**CCTCC**G, and ACTCCGAGTC**CTCCG**). Then let $N(k_i)$ equal the number of times $k_i$ is in $k_1, \ldots, k_n$ (for example, CTCCG appears twice in ACTCCGAGTCCTCCG). Then the entropy is defined as $\sum_{i=1}^n -\frac{N(k_i)}{n}\log\left(\frac{N(k_i)}{n}\right)$
+16. entropyR2: Same as above
+17. seqR1: The read sequence
+18. seqR2: The read sequence
 15. chrR1A: Chromosome that read 1 part A was aligned to
 16. chrR1B: Chromosome that read 1 part B was aligned to
 17. chrR2A: Chromosome that read 2 part A was aligned to
@@ -167,10 +171,7 @@ jI:B:I,Start1,End1,Start2,End2,...
 88. :octopus: jIR1B: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
 89. jIR2A: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
 90. jIR2B: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
-91. seqR1A: The read sequence
-92. seqR1B: The read sequence
-93. seqR2A: The read sequence
-94. seqR2B: The read sequence
+
 
 ### New columns in the class input file after run_ensembl step:
 * `geneR1B_ensembl`: the gene ensembl id for `geneR1B`
