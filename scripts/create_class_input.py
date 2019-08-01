@@ -25,6 +25,14 @@ import time
 import utils_os
 from utils_juncReads_minimal import *
 
+
+def read_strand(flag, fill_char = "NA"):
+  if flag == fill_char:
+    return flag
+  sign_dict = {"0" : "+", "1" : "-"}
+  return sign_dict['{0:012b}'.format(flag)[7]]
+
+
 def entropy(kmer, c=5):
     """Calculate the entropy of a kmer using cmers as the pieces of information"""
     num_cmers = len(kmer) - c + 1
@@ -32,8 +40,10 @@ def entropy(kmer, c=5):
     for i in range(num_cmers):
         cmers.append(kmer[i:i+c])
     Ent = 0
-    for i in range(num_cmers):
-        prob = cmers.count(kmer[i:i+c])/float(num_cmers)
+    for cmer in set(cmers):
+#    for i in range(num_cmers):
+
+        prob = cmers.count(cmer)/float(num_cmers)
         Ent -= prob*np.log(prob)
     return Ent
 
@@ -120,6 +130,30 @@ def STAR_parseSam(samFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
     handle.close()
     return read_junc_dict, junc_read_dict
 
+def get_loc_flag(r1, r2):
+  if "|fus" in r1.refName:
+    return 1
+  if "|sc" in r1.refName:
+    return 0
+  r_strand = read_strand(r1.flagA)
+  if "|lin" in r1.refName:
+    if r_strand == "+":
+      if int(r2.offsetA) > int(r1.offsetA):
+        return 1
+      else:
+        return 0
+    if r_strand == "-":
+      if int(r2.offsetA) < int(r1.offsetA):
+        return 1
+      else:
+        return 0
+  if "|rev" in r1.refName:
+    if (int(r1.offsetA) <= int(r2.offsetA) <= int(r1.offsetB)) or (int(r1.offsetB) <= int(r2.offsetA) <= int(r1.offsetA)):
+      return 1
+    else:
+      return 0
+  return "error"
+
 def get_read_class(r1, r2):
   if "|lin" in r1.refName:
     return "linear"
@@ -172,7 +206,7 @@ def get_read_class(r1, r2):
 #        return "circular"
 #      else:
 #        return "decoy"
-  return "err"
+  return "error"
 
 def get_SM(cigar):
   matches = re.findall(r'(\d+)([A-Z]{1})', cigar)
@@ -196,9 +230,9 @@ def write_class_file(junc_read_dict,out_file, single):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2']
+  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2"]
   col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
-              'NH', 'HI', 'nM', 'NM', 'jM', 'jI']
+              'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'read_strand']
   for c in col_base:
     for r in ["R1","R2"]:
       for l in ["A","B"]:
@@ -222,6 +256,8 @@ def write_class_file(junc_read_dict,out_file, single):
           read_vals = read_name.split("_")
           out_dict["barcode"] = read_vals[-2]
           out_dict["UMI"] = read_vals[-1]
+          out_dict["read_strand_compatible"] = fill_char
+          out_dict["location_compatible"] = fill_char
 
         else:
           out_dict["barcode"] = fill_char
@@ -244,11 +280,14 @@ def write_class_file(junc_read_dict,out_file, single):
         out_dict["flagR1B"] = r1.flagB
 #        try:
         out_dict["gene_strandR1A"] = split_ref[0].split(":")[3]
+        out_dict["read_strandR1A"] = read_strand(r1.flagA)
 #        except Exception as e:
 #          print("split_ref", split_ref)
 #          print("refName", r2.refName)
 #          raise e
         out_dict["gene_strandR1B"] = split_ref[1].split(":")[3]
+        out_dict["read_strandR1B"] = read_strand(r1.flagB)
+    
         out_dict["chrR1A"] = split_ref[0].split(":")[0]
         out_dict["chrR1B"] = split_ref[1].split(":")[0]
         out_dict["geneR1A"] = split_ref[0].split(":")[1]
@@ -286,8 +325,15 @@ def write_class_file(junc_read_dict,out_file, single):
 
         if type(r1).__name__ == "chimReadObj":
           out_dict["fileTypeR1"] = "Chimeric"
+          if out_dict["read_strandR1A"] != out_dict["read_strandR1B"]:
+            out_dict["strand_crossR1"] = 1
+          else:
+            out_dict["strand_crossR1"] = 0
+         
+          
         elif type(r1).__name__ == "readObj":
           out_dict["fileTypeR1"] = "Aligned"
+          out_dict["strand_crossR1"] = 0
 
         if single:
           out_dict["class"] = r1.refName.split("|")[-1]
@@ -297,12 +343,20 @@ def write_class_file(junc_read_dict,out_file, single):
           r2 = junc_read_dict[junc][read_name][1]
           read_class = get_read_class(r1, r2)
           out_dict["class"] = read_class
+          out_dict["location_compatible"] = get_loc_flag(r1, r2)
 
           if type(r2).__name__ == "chimReadObj":
             out_dict["fileTypeR2"] = "Chimeric"
+            if out_dict["read_strandR2A"] != out_dict["read_strandR2B"]:
+              out_dict["strand_crossR2"] = 1
+            else:
+              out_dict["strand_crossR2"] = 0
+
+
           elif type(r2).__name__ == "readObj":
             out_dict["fileTypeR2"] = "Aligned"
-  
+            out_dict["strand_crossR2"] = 0
+ 
   #         info.append(read_class)
   #         info.append(r1.offsetA)
   #         info.append(r1.mapQualA)
@@ -350,7 +404,8 @@ def write_class_file(junc_read_dict,out_file, single):
           out_dict["jMR2B"] = r2.jMB
           out_dict["jIR2A"] = r2.jIA
           out_dict["jIR2B"] = r2.jIB
-       
+          out_dict["read_strandR2A"] = read_strand(r2.flagA)
+          out_dict["read_strandR2B"] = read_strand(r2.flagB)
 
 
 
@@ -358,6 +413,8 @@ def write_class_file(junc_read_dict,out_file, single):
             split_ref = r2.refName.split("|")
             out_dict["gene_strandR2A"] = split_ref[0].split(":")[3]
             out_dict["gene_strandR2B"] = split_ref[1].split(":")[3]
+
+
             out_dict["chrR2A"] = split_ref[0].split(":")[0]
             out_dict["chrR2B"] = split_ref[1].split(":")[0]
             out_dict["geneR2A"] = split_ref[0].split(":")[1]
@@ -368,6 +425,11 @@ def write_class_file(junc_read_dict,out_file, single):
             M, S = get_SM(r2.cigarB)
             out_dict["MR2B"] = M
             out_dict["SR2B"] = S
+            if out_dict["read_strandR1A"] == out_dict["read_strandR2A"]:
+              out_dict["read_strand_compatible"] = 0
+            elif out_dict["read_strandR1A"] != out_dict["read_strandR2A"]:
+              out_dict["read_strand_compatible"] = 1
+
 
           else:
             split_ref = r2.refName.split(":")
@@ -382,6 +444,10 @@ def write_class_file(junc_read_dict,out_file, single):
             out_dict["readClassR2"] = fill_char
             out_dict["MR2B"] = fill_char
             out_dict["SR2B"] = fill_char
+            if out_dict["read_strandR1A"] == out_dict["read_strandR2A"]:
+              out_dict["read_strand_compatible"] = 0
+            elif out_dict["read_strandR1A"] != out_dict["read_strandR2A"]:
+              out_dict["read_strand_compatible"] = 1
 
         out.write("\t".join([str(out_dict[c]) for c in columns]) + "\n")
 
