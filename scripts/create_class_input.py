@@ -12,12 +12,13 @@
 
 import annotator
 import argparse
+from math import ceil
 import numpy as np
 import os
 import pandas as pd
 import pickle
 #import pyensembl
-from math import ceil
+import pysam
 import re
 import sys
 import time
@@ -46,6 +47,93 @@ def entropy(kmer, c=5):
         prob = cmers.count(cmer)/float(num_cmers)
         Ent -= prob*np.log(prob)
     return Ent
+
+# loop through sam file, either creating a juncReadObj & juncObj (if this is read1s)
+# or updating mateGenome, mateJunction, or mateRegJunction if this is an alignment file from read2
+# to genome, all junctions, or regular junctions respectively.
+# The sam file may contain both aligned and unaligned reads. Only aligned reads will actually be stored.
+# param readType: "r1rj" is Rd1 to regular junction index, "r1j" is Rd1 to all junction,
+#                 "gMate" is Rd2 to genome, "jMate" is Rd2 to all junction, "rjMate" is Rd2 to regular junction
+def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyle, ann, verbose = True):
+    t0 = time.time()
+    if verbose:
+        print("bamFile:" + bamFile)
+        print("readType:" + readType)
+        
+#    handle = open(samFile, "rU")
+    first = False
+    count = 0    
+#    for line in handle:
+    for bam_read in pysam.AlignmentFile(bamFile).fetch(until_eof=True):
+      line = bam_read.to_string()
+      count += 1
+#      if count % 1000 == 0:
+#        print("{}: {}".format(count, time.time() - t0))
+#      if not line.startswith("@"): # ignore header lines
+#          try:
+      if bam_read.has_tag("ch") and not first:
+        prev_line = line
+        first = True
+      else:
+
+        if bam_read.has_tag("ch"):
+        
+#           print("prev_line",prev_line.strip().split())
+#           print("line",line.strip().split())
+#           print
+          read = chim_newReadObj(prev_line.strip().split(), line.strip().split(), fastqIdStyle, ann)
+#           print("chim read",read)
+          first = False
+        else:
+          read = newReadObj(line.strip().split(), fastqIdStyle, ann)
+#        print("refname", read.refName)
+        if readType == "r1":
+          if bam_read.has_tag("ch"):
+           
+            if read.name not in read_junc_dict:
+              if read.refName not in junc_read_dict:
+                junc_read_dict[read.refName] = {}
+              junc_read_dict[read.refName][read.name] = [read]
+              read_junc_dict[read.name] = read.refName
+  
+          else:
+            if "|lin" in read.refName:
+              if read.name not in read_junc_dict:
+                if read.refName not in junc_read_dict:
+                  junc_read_dict[read.refName] = {}
+                junc_read_dict[read.refName][read.name] = [read]
+                read_junc_dict[read.name] = read.refName
+
+#        if readType == "r1chim":
+#          if read.refName not in junc_read_dict.keys():
+#            junc_read_dict[read.refName] = {}
+#          junc_read_dict[read.refName][read.name] = [read]
+#          read_junc_dict[read.name] = read.refName
+##        elif readType == "r1align":
+##          if read.name not in read_junc_dict.keys():
+#        elif readType == "r1align":
+#          if read.refName not in junc_read_dict.keys():
+#            junc_read_dict[read.refName] = {}
+#          junc_read_dict[read.refName][read.name] = [read]
+#          read_junc_dict[read
+            
+        # add mates 
+        elif readType == "r2":
+          if read.name in read_junc_dict:
+            junc_read_dict[read_junc_dict[read.name]][read.name].append(read)
+            
+            assert len(junc_read_dict[read_junc_dict[read.name]][read.name]) == 2
+            del read_junc_dict[read.name]
+
+#       xcept Exception as e:
+#          print("Exception")
+#          print(e)
+#          print("error:", sys.exc_info()[0])
+#          print("parsing sam output for", line)
+#          
+#    handle.close()
+    return read_junc_dict, junc_read_dict
+
 
 # loop through sam file, either creating a juncReadObj & juncObj (if this is read1s)
 # or updating mateGenome, mateJunction, or mateRegJunction if this is an alignment file from read2
@@ -506,42 +594,56 @@ def main():
   #  for fastq_id in fastq_ids:
   #  print("{}: {}".format(fastq_id, time.time() - t0))
   
+#    if args.single:
+#      samFile1 = "{}2Chimeric.out.sam".format(args.input_path)
+#      samFile2 = "{}2Aligned.out.sam".format(args.input_path)
+#
+#    else:
+#      samFile1 = "{}1Chimeric.out.sam".format(args.input_path)
+#      samFile2 = "{}1Aligned.out.sam".format(args.input_path)
+#    samFile3 = "{}2Chimeric.out.sam".format(args.input_path)
+#    samFile4 = "{}2Aligned.out.sam".format(args.input_path)
+    
     if args.single:
-      samFile1 = "{}2Chimeric.out.sam".format(args.input_path)
-      samFile2 = "{}2Aligned.out.sam".format(args.input_path)
+      bamFile1 = "{}2Aligned.out.bam".format(args.input_path)
     else:
-      samFile1 = "{}1Chimeric.out.sam".format(args.input_path)
-      samFile2 = "{}1Aligned.out.sam".format(args.input_path)
-    samFile3 = "{}2Chimeric.out.sam".format(args.input_path)
-    samFile4 = "{}2Aligned.out.sam".format(args.input_path)
+      bamFile1 = "{}1Aligned.out.bam".format(args.input_path)
+      bamFile2 = "{}2Aligned.out.bam".format(args.input_path)
+
   
-  
-    if regime == "priorityAlign":
-      read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-      print("parsed r1align", time.time() - t0)
-      read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-      print("parsed r1chim", time.time() - t0)
-    elif regime == "priorityChimeric":
-      read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-      print("parsed r1chim", time.time() - t0)
-      read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-      print("parsed r1align", time.time() - t0)
-    if not args.single:
-      if regime == "priorityAlign":
-        read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-        print("parsed r2align", time.time() - t0)
-        read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-        print("parsed r2chim", time.time() - t0)
-      elif regime == "priorityChimeric":  
-        read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-        print("parsed r2chim", time.time() - t0)
-        read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-        print("parsed r2align", time.time() - t0)
+    if args.single:
+      read_junc_dict, junc_read_dict = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+    else:
+      read_junc_dict, junc_read_dict = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+      read_junc_dict, junc_read_dict = STAR_parseBAM(bamFile2, "r2", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+
+
+#    if regime == "priorityAlign":
+#      read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+#      print("parsed r1align", time.time() - t0)
+#      read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+#      print("parsed r1chim", time.time() - t0)
+#    elif regime == "priorityChimeric":
+#      read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+#      print("parsed r1chim", time.time() - t0)
+#      read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+#      print("parsed r1align", time.time() - t0)
+#    if not args.single:
+#      if regime == "priorityAlign":
+#        read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+#        print("parsed r2align", time.time() - t0)
+#        read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+#        print("parsed r2chim", time.time() - t0)
+#      elif regime == "priorityChimeric":  
+#        read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+#        print("parsed r2chim", time.time() - t0)
+#        read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+#        print("parsed r2align", time.time() - t0)
     print("len(junc_read_dict)", len(junc_read_dict))
  
     print("parsed all {}".format(regime), time.time() - t0)
   #  write_class_file(junc_read_dict,"/scratch/PI/horence/JuliaO/single_cell/scripts/output/create_class_input/{}.tsv".format(fastq_id))
-    write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, regime), args.single)
+    write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single)
 
 
 #time.time() - t0

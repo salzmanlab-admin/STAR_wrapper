@@ -124,10 +124,10 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
       command += "--readFilesCommand zcat "
     command += "--twopassMode Basic "
     command += "--outFileNamePrefix {}{}/{} ".format(out_path, name, i + 1)
-    command += "--outSAMtype SAM "
+    command += "--outSAMtype BAM Unsorted "
     command += "--chimSegmentMin {} ".format(cSM)
     command += "--outSAMattributes All "
-    command += "--chimOutType Junctions SeparateSAMold "
+    command += "--chimOutType WithinBAM SoftClip Junctions "
     command += "--chimJunctionOverhangMin {} ".format(cJOM)
     command += "--chimMultimapNmax {} ".format(cMN)
     command += "--alignSJstitchMismatchNmax {} -1 {} {} ".format(aSJMN, aSJMN, aSJMN)
@@ -159,7 +159,7 @@ def main():
  # parser.add_argument('-s', '--sample', required=True, help='the name of the smartseq sample')
  # args = parser.parse_args()
 
-  chimMultimapNmax = [0,1,2,5,7,10]
+  chimMultimapNmax = [0]
   chimSegmentMin = [10] 
   chimJunctionOverhangMin = [10]
   alignSJstitchMismatchNmax = [0]
@@ -175,36 +175,36 @@ def main():
 #  single = True
 
  # Tabula Muris colon
-#  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
-#  assembly = "mm10"
-#  run_name = "GSE109774_colon"
-#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-##  names = ["SRR65462{}".format(i) for i in range(73,85)]
-#  names = ["SRR65462{}".format(i) for i in range(75,76)]
-#  single = False
-#  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
+  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
+  assembly = "mm10"
+  run_name = "GSE109774_colon"
+  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
+#  names = ["SRR65462{}".format(i) for i in range(73,85)]
+  names = ["SRR65462{}".format(i) for i in range(75,76)]
+  single = False
+  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 
 
 # Tabula Sapiens pilot (10X)
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_1/"
-  assembly = "hg38"
-  run_name = "TS_pilot_10X_muscle"
-  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_muscle_1_S19_L002","TSP1_muscle_1_S19_L003"]
- # names = ["TSP1_muscle_1_S19_L001","TSP1_muscle_1_S19_L004"]
-  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-  single = True
-  bc_pattern = "C"*16 + "N"*10
+#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_1/"
+#  assembly = "hg38"
+#  run_name = "TS_pilot_10X_muscle"
+#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+#  names = ["TSP1_muscle_1_S19_L002","TSP1_muscle_1_S19_L003"]
+# # names = ["TSP1_muscle_1_S19_L001","TSP1_muscle_1_S19_L004"]
+#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+#  single = True
+#  bc_pattern = "C"*16 + "N"*10
 
 
 # Tabula Sapiens pilot (smartseq)
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S135/"
-  assembly = "hg38"
-  run_name = "TS_pilot_smartseq_Chim_Multimap_test"
-  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["B107809_A15_S135"]
-  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-  single = False
+#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S135/"
+#  assembly = "hg38"
+#  run_name = "TS_pilot_smartseq_Chim_Multimap_test"
+#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+#  names = ["B107809_A15_S135"]
+#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+#  single = False
 
 # Tabula Sapiens pilot (smartseq)
 #  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/"+args.sample+"/"
@@ -249,12 +249,12 @@ def main():
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
   run_whitelist = False
   run_extract = False
-  run_map = True
-  run_star_fusion = True
-  run_ann = True
+  run_map = False
+  run_star_fusion = False
+  run_ann = False
   run_class = True
-  run_ensembl = True
-  run_compare = True
+  run_ensembl = False
+  run_compare = False
 
   if not single:
     run_whitelist = False
