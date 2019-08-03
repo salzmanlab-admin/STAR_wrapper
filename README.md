@@ -130,6 +130,7 @@ Note: :whale: indicates that it is safe to use without modification in a model b
 57. `qualR2B`: Mapping quality of the second portion of read 2.
 
 58.`MDR1A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+
 59. `MDR1B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
 60. `MDR2A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
 61. `MDR2B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
