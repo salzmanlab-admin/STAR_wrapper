@@ -63,6 +63,7 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
 #    handle = open(samFile, "rU")
     first = False
     count = 0    
+    genomic_alignments = set()
 #    for line in handle:
     for bam_read in pysam.AlignmentFile(bamFile).fetch(until_eof=True):
       line = bam_read.to_string()
@@ -96,13 +97,15 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
               junc_read_dict[read.refName][read.name] = [read]
               read_junc_dict[read.name] = read.refName
   
+          elif "|lin" in read.refName:
+#            if "|lin" in read.refName:
+            if read.name not in read_junc_dict:
+              if read.refName not in junc_read_dict:
+                junc_read_dict[read.refName] = {}
+              junc_read_dict[read.refName][read.name] = [read]
+              read_junc_dict[read.name] = read.refName
           else:
-            if "|lin" in read.refName:
-              if read.name not in read_junc_dict:
-                if read.refName not in junc_read_dict:
-                  junc_read_dict[read.refName] = {}
-                junc_read_dict[read.refName][read.name] = [read]
-                read_junc_dict[read.name] = read.refName
+            genomic_alignments.add(read.name)
 
 #        if readType == "r1chim":
 #          if read.refName not in junc_read_dict.keys():
@@ -132,7 +135,7 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
 #          print("parsing sam output for", line)
 #          
 #    handle.close()
-    return read_junc_dict, junc_read_dict
+    return read_junc_dict, junc_read_dict, genomic_alignments
 
 
 # loop through sam file, either creating a juncReadObj & juncObj (if this is read1s)
@@ -307,7 +310,7 @@ def get_SM(cigar):
       S += int(m[0])
   return M, S
 
-def write_class_file(junc_read_dict,out_file, single):
+def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
   fill_char = "NA"
   out = open(out_file,"w")
 #   out.write("\t".join(["id", "class", "posA", "qualA", "aScoreA", "numN", 
@@ -318,7 +321,7 @@ def write_class_file(junc_read_dict,out_file, single):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2"]
+  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1"]
   col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
               'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'read_strand']
   for c in col_base:
@@ -340,6 +343,11 @@ def write_class_file(junc_read_dict,out_file, single):
     for read_name in junc_read_dict[junc].keys():
       if (len(junc_read_dict[junc][read_name]) == 2 and not single) or (len(junc_read_dict[junc][read_name]) == 1 and single):
         out_dict["id"] = read_name
+        if read_name in genomic_alignments:
+          out_dict["genomicAlignmentR1"] = 1
+        else:
+          out_dict["genomicAlignmentR1"] = 0
+
         if single:
           read_vals = read_name.split("_")
           out_dict["barcode"] = read_vals[-2]
@@ -612,10 +620,10 @@ def main():
 
   
     if args.single:
-      read_junc_dict, junc_read_dict = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+      read_junc_dict, junc_read_dict, genomic_alignments = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
     else:
-      read_junc_dict, junc_read_dict = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-      read_junc_dict, junc_read_dict = STAR_parseBAM(bamFile2, "r2", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+      read_junc_dict, junc_read_dict, genomic_alignments = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+      read_junc_dict, junc_read_dict, _ = STAR_parseBAM(bamFile2, "r2", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
 
 
 #    if regime == "priorityAlign":
@@ -643,7 +651,7 @@ def main():
  
     print("parsed all {}".format(regime), time.time() - t0)
   #  write_class_file(junc_read_dict,"/scratch/PI/horence/JuliaO/single_cell/scripts/output/create_class_input/{}.tsv".format(fastq_id))
-    write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single)
+    write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single, genomic_alignments)
 
 
 #time.time() - t0
