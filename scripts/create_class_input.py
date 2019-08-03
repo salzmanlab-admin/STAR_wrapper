@@ -321,7 +321,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refNameR1', 'refNameR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1"]
+  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1"]
   col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
               'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'read_strand']
   for c in col_base:
@@ -363,7 +363,9 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
 #        r2 = junc_read_dict[junc][read_name][1]
         split_ref = r1.refName.split("|")
 #        print("{},{},{}".format(r1.name,r1.refName, r2.refName))
-        out_dict["refNameR1"] = r1.refName
+        out_dict["refName_ABR1"] = r1.refName_AB
+        out_dict["refName_readStrandR1"] = r1.refName_readStrand
+
         out_dict["numNR1"] = r1.numN
         out_dict["readLenR1"] = r1.readLen
         out_dict["posR1A"] = r1.offsetA
@@ -470,7 +472,9 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
 #          out_dict["seqR2B"] = r2.seqB
           out_dict["numNR2"] = r2.numN
           out_dict["readLenR2"] = r2.readLen
-          out_dict["refNameR2"] = r2.refName
+          out_dict["refName_ABR2"] = r2.refName_AB
+          out_dict["refName_readStrandR2"] = r2.refName_readStrand
+
           out_dict["posR2A"] = r2.offsetA
           out_dict["posR2B"] = r2.offsetB
           out_dict["qualR2A"] = r2.mapQualA
@@ -590,68 +594,68 @@ def main():
 #  ann = annotator.Annotator(gtf_file, 10000)
 ##  gtf_dict = get_gtf_dict(gtf_file, 10000)
 #  print("loaded annotator")
-  regimes = ["priorityAlign", "priorityChimeric"]
-  for regime in regimes:
-    read_junc_dict = {}
-    junc_read_dict = {}
-  
-  #  fastq_ids = ["SRR65462{}".format(x) for x in range(73,85)]
-  #  fastq_ids = ["SRR65462{}".format(x) for x in range(79,84)]
-  
-  #  fastq_ids = ["SRR6546284"]
-  #  for fastq_id in fastq_ids:
-  #  print("{}: {}".format(fastq_id, time.time() - t0))
-  
-#    if args.single:
-#      samFile1 = "{}2Chimeric.out.sam".format(args.input_path)
-#      samFile2 = "{}2Aligned.out.sam".format(args.input_path)
-#
-#    else:
-#      samFile1 = "{}1Chimeric.out.sam".format(args.input_path)
-#      samFile2 = "{}1Aligned.out.sam".format(args.input_path)
-#    samFile3 = "{}2Chimeric.out.sam".format(args.input_path)
-#    samFile4 = "{}2Aligned.out.sam".format(args.input_path)
-    
-    if args.single:
-      bamFile1 = "{}2Aligned.out.bam".format(args.input_path)
-    else:
-      bamFile1 = "{}1Aligned.out.bam".format(args.input_path)
-      bamFile2 = "{}2Aligned.out.bam".format(args.input_path)
+#  regimes = ["priorityAlign", "priorityChimeric"]
+#  for regime in regimes:
+  read_junc_dict = {}
+  junc_read_dict = {}
 
+#  fastq_ids = ["SRR65462{}".format(x) for x in range(73,85)]
+#  fastq_ids = ["SRR65462{}".format(x) for x in range(79,84)]
+
+#  fastq_ids = ["SRR6546284"]
+#  for fastq_id in fastq_ids:
+#  print("{}: {}".format(fastq_id, time.time() - t0))
+
+   if args.single:
+     samFile1 = "{}2Chimeric.out.sam".format(args.input_path)
+     samFile2 = "{}2Aligned.out.sam".format(args.input_path)
+
+   else:
+     samFile1 = "{}1Chimeric.out.sam".format(args.input_path)
+     samFile2 = "{}1Aligned.out.sam".format(args.input_path)
+   samFile3 = "{}2Chimeric.out.sam".format(args.input_path)
+   samFile4 = "{}2Aligned.out.sam".format(args.input_path)
   
-    if args.single:
-      read_junc_dict, junc_read_dict, genomic_alignments = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-    else:
-      read_junc_dict, junc_read_dict, genomic_alignments = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-      read_junc_dict, junc_read_dict, _ = STAR_parseBAM(bamFile2, "r2", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+  if args.single:
+    bamFile1 = "{}2Aligned.out.bam".format(args.input_path)
+  else:
+    bamFile1 = "{}1Aligned.out.bam".format(args.input_path)
+    bamFile2 = "{}2Aligned.out.bam".format(args.input_path)
 
 
-#    if regime == "priorityAlign":
-#      read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-#      print("parsed r1align", time.time() - t0)
-#      read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-#      print("parsed r1chim", time.time() - t0)
-#    elif regime == "priorityChimeric":
-#      read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-#      print("parsed r1chim", time.time() - t0)
-#      read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-#      print("parsed r1align", time.time() - t0)
-#    if not args.single:
-#      if regime == "priorityAlign":
-#        read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-#        print("parsed r2align", time.time() - t0)
-#        read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-#        print("parsed r2chim", time.time() - t0)
-#      elif regime == "priorityChimeric":  
-#        read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-#        print("parsed r2chim", time.time() - t0)
-#        read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-#        print("parsed r2align", time.time() - t0)
-    print("len(junc_read_dict)", len(junc_read_dict))
- 
-    print("parsed all {}".format(regime), time.time() - t0)
-  #  write_class_file(junc_read_dict,"/scratch/PI/horence/JuliaO/single_cell/scripts/output/create_class_input/{}.tsv".format(fastq_id))
-    write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single, genomic_alignments)
+  if args.single:
+    read_junc_dict, junc_read_dict, genomic_alignments = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+  else:
+    read_junc_dict, junc_read_dict, genomic_alignments = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+    read_junc_dict, junc_read_dict, _ = STAR_parseBAM(bamFile2, "r2", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+
+
+   if regime == "priorityAlign":
+     read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+     print("parsed r1align", time.time() - t0)
+     read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+     print("parsed r1chim", time.time() - t0)
+   elif regime == "priorityChimeric":
+     read_junc_dict, junc_read_dict = STAR_parseSam(samFile1, "r1chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+     print("parsed r1chim", time.time() - t0)
+     read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+     print("parsed r1align", time.time() - t0)
+   if not args.single:
+     if regime == "priorityAlign":
+       read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+       print("parsed r2align", time.time() - t0)
+       read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+       print("parsed r2chim", time.time() - t0)
+     elif regime == "priorityChimeric":  
+       read_junc_dict, junc_read_dict = STAR_parseSam(samFile3, "r2chim", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+       print("parsed r2chim", time.time() - t0)
+       read_junc_dict, junc_read_dict = STAR_parseSam(samFile4, "r2align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
+       print("parsed r2align", time.time() - t0)
+  print("len(junc_read_dict)", len(junc_read_dict))
+
+  print("parsed all {}".format(regime), time.time() - t0)
+#  write_class_file(junc_read_dict,"/scratch/PI/horence/JuliaO/single_cell/scripts/output/create_class_input/{}.tsv".format(fastq_id))
+  write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single, genomic_alignments)
 
 
 #time.time() - t0
