@@ -522,14 +522,15 @@ def chim_refName(flags, cigars, offsets, rnames, ann):
          juncType = "lin"
     else:
         juncType = "err"
-#    return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], "", posFirst, signs[0], rnames[1], "", posSecond, signs[1], juncType)
-    if juncType == "sc": 
-      return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], gene1, posFirst, strand1, rnames[1], gene2, posSecond, strand2, juncType)
-    if signs[0] == "+":
-      return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], gene1, posFirst, strand1, rnames[1], gene2, posSecond, strand2, juncType)
-    # reverse names if on minus strand
-    elif signs[0] == "-":
-      return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[1], gene2, posSecond, strand2, rnames[0], gene1, posFirst, strand1, juncType)
+    return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], "", posFirst, signs[0], rnames[1], "", posSecond, signs[1], juncType)
+
+#    if juncType == "sc": 
+#      return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], gene1, posFirst, strand1, rnames[1], gene2, posSecond, strand2, juncType)
+#    if signs[0] == "+":
+#      return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], gene1, posFirst, strand1, rnames[1], gene2, posSecond, strand2, juncType)
+#    # reverse names if on minus strand
+#    elif signs[0] == "-":
+#      return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[1], gene2, posSecond, strand2, rnames[0], gene1, posFirst, strand1, juncType)
 
 def reverse_cigar(old_cigar):
   matches = ["".join(x) for x in re.findall(r'(\d+)([A-Z]{1})', old_cigar)]
