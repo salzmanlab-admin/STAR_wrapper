@@ -72,113 +72,115 @@ Note: :whale: indicates that it is safe to use without modification in a model b
 1. `id`: Read name. Example: `SRR6546273.367739`
 
 2. `class`: **deprecated: see read_strand_compatible and location_compatible** Class defined by read 1 or read 2. For paired end mode, the options are circular, linear, decoy, err (this happens when the strand is ambiguous, because in that case we can't tell if a potential circular junction is a circle or a decoy, since this definition depends on the strand), fusion (read 1 and read 2 are on different chromosomes, or either r1 or r2 is split between two chromosomes), and strandCross (both reads have flags indicating they're both on + or both on -; this is before we correct strandedness by gene location). For single end data the options are lin (linear-type junction), rev (circle-type junction), and fus (part of read maps to one chromosome and part maps to another)
-3. `refNameR1`: The refName for R1 will always be of the form either `<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<readClassR1>` or `<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<readClassR1>`. Which one of these two it is will be defined by whether the read strand is + (in which case it will be the first one) or the read strand is - (in which case it will be the second one). See the descriptions for these individual columns for more specifics. **Refnames for negative-strand genes will have the acceptor first and the donor second**
-4. `refNameR2`: If read 2 is from `2Chimeric.out.sam` or has an N in the CIGAR string, it will have the same format as `refNameR1` except `R2` replaces `R1`. If instead it aligns without gaps/chimera, it's name is `<chrR2A>:<geneR2A>:<gene_strandR2A>`.
-5. `fileTypeR1`: equals `Aligned` if the read came from the `1Aligned.out.sam` file, `Chimeric` if it came from the `1Chimeric.out.sam` file.
-6. `fileTypeR2`: equals `Aligned` if the read came from the `2Aligned.out.sam` file, `Chimeric` if it came from the `2Chimeric.out.sam` file.
-7. `readClassR1`: This is `fus` if read 1 part A and read 1 part B map to different chromosomes. It is `sc`  if the flags of read 1 part A and read 1 part B don't match (they match if they're both in [0,256] or they're both in [16,276]; they don't match otherwise). It is `rev` if the positions are consistent with a circular junction. It is `lin` if the positions are consistent with a linear junction. It is `err` otherwise (this can occur due to `?` occuring as the strand)
-8. `readClassR2`: See `readClassR1` and replace read 1 with read 2. If read 2 isn't a junction this will be `NA`.
-9. `numNR1`: Number of N in the reference; from the XN tag in the SAM file
-10. `numNR2`: Number of N in the reference; from the XN tag in the SAM file
-11. `readLenR1`: length of read 1 (including any softclipped portions)
-12. `readLenR2`: Length of read 2 (including any softclipped portions)
-13. `barcode`: for 10X data this is the barcode found through UMI-tools, otherwise this is NA
-14. `UMI`: for 10X data this is the UMI found through UMI-tools, otherwise this is NA
-15. `entropyR1`: The entropy of the read calculated based on 5-mers. Let $k_1, \ldots, k_n$ be all the 5-mers in the read sequence (for example, for ACTCCGAGTCCTCCG the 5-mers would be **ACTCC**GAGTCCTCCG, A**CTCCG**AGTCCTCCG, AC**TCCGA**GTCCTCCG, ACT**CCGAG**TCCTCCG, ACTC**CGAGT**CCTCCG, ACTCC**GAGTC**CTCCG, ACTCCG**AGTCC**TCCG, ACTCCGA**GTCCT**CCG, ACTCCGAG**TCCTC**CG, ACTCCGAGT**CCTCC**G, and ACTCCGAGTC**CTCCG**). Then let $N(c)$ equal the number of times the kmer c appears in $k_1, \ldots, k_n$ (for example, CTCCG appears twice in ACTCCGAGTCCTCCG). Then the entropy is defined as $\sum_C -\frac{N(c)}{n}\log\left(\frac{N(c)}{n}\right)$ (here C is the set of unique 5-mers in the read)
-16. `entropyR2`: Same as above
-17. `seqR1`: The read sequence
-18. `seqR2`: The read sequence
-19. `read_strand_compatible`: A 1 here indicates that the read strands are compatible, 0 indicates that they're not. This is 1 if `read_strandR1A` doesn't equal `read_strandR2A` and 0 otherwise. Note that this is **only** based on the "A" part of the read; cross-reference with `strand_crossR1` and `strand_crossR2` to verify that all read strands are in accordance. This is NA for single-end reads.
-20. `location_compatible`: A 1 here indicates that the locations are compatible, a 0 indicates that they're not. If `readClassR1` is `fus`, this is 1. If `readClassR1` is `sc`, this is 0. If `readClassR1` is `lin` and `read_strandR1` is +, then this is 1 if `posR1A` < `posR2A` and 0 otherwise. If `readClassR1` is `lin` and `read_strandR1` is -, then this is 1 if `posR1A` > `posR2A` and 0 otherwise. if `readClassR1` is `rev`, then this is 1 if `posR2A` is between `posR1A` and `posR1B` and 0 otherwise. Note that this is **only** based on the "A" part of read 2 for right now. This is NA for single-end reads.
-21. `strand_crossR1`: Here 1 indicates that there was a strand cross in read 1 (meaning `read_strandR1A` doesn't equal `read_strandR1B`) and 0 indicates that there wasn't a strand cross (meaning the read strands are equal) 
-22. `strand_crossR2`: Here 1 indicates that there was a strand cross in read 1 (meaning `read_strandR2A` doesn't equal `read_strandR2B`) and 0 indicates that there wasn't a strand cross (meaning the read strands are equal)
-23. `genomicAlignmentR1`: Here 1 indicates that there is a genomic alignment for read 1, and 0 indicates that there is not. 
-24. `chrR1A`: Chromosome that read 1 part A was aligned to
-25. `chrR1B`: Chromosome that read 1 part B was aligned to
-26. `chrR2A`: Chromosome that read 2 part A was aligned to
-27. `chrR2B`: Chromosome that read 2 part B was aligned to
-28. `geneR1A`: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on the annotation. 
-29. `geneR1B`: Gene that read 1 part B was aligned to.
-30. `geneR2A`: Gene that read 2 part A was aligned to.
-31. `geneR2B`: Gene that read 2 part B was aligned to.
-32. `juncPosR1A`: The last position part A of read 1 aligns to before the junction. If `fileTypeR1 = Chimeric`: if `flagR1A` is 0 or 256, this is equal to `posR1A + ` the sum of the M's, N's, and D's in the CIGAR string. If `flagR1A` is 16 or 272 this is equal to `posR1A`. If `fileTypeR1 = Aligned`, then this equals `posR1A` plus the sum of the M's, N's, and D's before the largest N value in the CIGAR string. 
-33. `juncPosR1B`: The first position of part B of read 1 that aligns after the junction. If `fileTypeR1 = Chimeric`: if `flagR1B` is 0 or 256, this is equal to `posR1B`. If `flagR1B` is 16 or 272 this is equal to `posR1B + ` the sum of the M's, N's, and D's in the CIGAR string. If `fileTypeR1 = Aligned`, then this equals `posR1B`. 
-34. `juncPosR2A`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
-35. `juncPosR2B`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
-36. `gene_strandR1A`: The strand that the gene at `juncPosR1A` is on (`+` or `-`); if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-37. `gene_strandR1B`: The strand that the gene at `juncPosR1B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-38. `gene_strandR2A`: The strand that the gene at `juncPosR2A` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-39. `gene_strandR2B`: The strand that the gene at `juncPosR2B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
-40. :octopus: `aScoreR1A`: alignment score from the SAM file after the `AS`.
-41. :octopus: `aScoreR1B`: alignment score from the SAM file after the `AS`.
-42. `aScoreR2A`: alignment score from the SAM file after the `AS`.
-43. `aScoreR2B`: alignment score from the SAM file after the `AS`.
-44. `flagR1A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
-45. `flagR1B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
-46. `flagR2A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
-47. `flagR2B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+3. `refName_ABR1`: The refName for R1 will always be of the form `<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<readClassR1>`
+4. `refName_readStrandR1`: The refName for R1 will always be of the form either `<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<readClassR1>` or `<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<readClassR1>`. Which one of these two it is will be defined by whether the read strand is + (in which case it will be the first one) or the read strand is - (in which case it will be the second one). See the descriptions for these individual columns for more specifics. **Refnames for negative-strand genes will have the acceptor first and the donor second**
+5. `refName_ABR2`: The refName for R2 will always be of the form  `<chrR2A>:<geneR2A>:<juncPosR2A>:<gene_strandR2A>|<chrR2B>:<geneR2B>:<juncPosR2B>:<gene_strandR2B>|<readClassR2>`
+6. `refName_readStrandR2`: If read 2 is from `2Chimeric.out.sam` or has an N in the CIGAR string, it will have the same format as `refNameR1` except `R2` replaces `R1`. If instead it aligns without gaps/chimera, it's name is `<chrR2A>:<geneR2A>:<gene_strandR2A>`.
+7. `fileTypeR1`: equals `Aligned` if the read came from the `1Aligned.out.sam` file, `Chimeric` if it came from the `1Chimeric.out.sam` file.
+8. `fileTypeR2`: equals `Aligned` if the read came from the `2Aligned.out.sam` file, `Chimeric` if it came from the `2Chimeric.out.sam` file.
+9. `readClassR1`: This is `fus` if read 1 part A and read 1 part B map to different chromosomes. It is `sc`  if the flags of read 1 part A and read 1 part B don't match (they match if they're both in [0,256] or they're both in [16,276]; they don't match otherwise). It is `rev` if the positions are consistent with a circular junction. It is `lin` if the positions are consistent with a linear junction. It is `err` otherwise (this can occur due to `?` occuring as the strand)
+10. `readClassR2`: See `readClassR1` and replace read 1 with read 2. If read 2 isn't a junction this will be `NA`.
+11. `numNR3`: Number of N in the reference; from the XN tag in the SAM file
+12. `numNR2`: Number of N in the reference; from the XN tag in the SAM file
+13. `readLenR1`: length of read 1 (including any softclipped portions)
+14. `readLenR2`: Length of read 2 (including any softclipped portions)
+15. `barcode`: for 10X data this is the barcode found through UMI-tools, otherwise this is NA
+16. `UMI`: for 10X data this is the UMI found through UMI-tools, otherwise this is NA
+17. `entropyR1`: The entropy of the read calculated based on 5-mers. Let $k_1, \ldots, k_n$ be all the 5-mers in the read sequence (for example, for ACTCCGAGTCCTCCG the 5-mers would be **ACTCC**GAGTCCTCCG, A**CTCCG**AGTCCTCCG, AC**TCCGA**GTCCTCCG, ACT**CCGAG**TCCTCCG, ACTC**CGAGT**CCTCCG, ACTCC**GAGTC**CTCCG, ACTCCG**AGTCC**TCCG, ACTCCGA**GTCCT**CCG, ACTCCGAG**TCCTC**CG, ACTCCGAGT**CCTCC**G, and ACTCCGAGTC**CTCCG**). Then let $N(c)$ equal the number of times the kmer c appears in $k_1, \ldots, k_n$ (for example, CTCCG appears twice in ACTCCGAGTCCTCCG). Then the entropy is defined as $\sum_C -\frac{N(c)}{n}\log\left(\frac{N(c)}{n}\right)$ (here C is the set of unique 5-mers in the read)
+18. `entropyR2`: Same as above
+19. `seqR1`: The read sequence
+20. `seqR2`: The read sequence
+21. `read_strand_compatible`: A 1 here indicates that the read strands are compatible, 0 indicates that they're not. This is 1 if `read_strandR1A` doesn't equal `read_strandR2A` and 0 otherwise. Note that this is **only** based on the "A" part of the read; cross-reference with `strand_crossR1` and `strand_crossR2` to verify that all read strands are in accordance. This is NA for single-end reads.
+22. `location_compatible`: A 1 here indicates that the locations are compatible, a 0 indicates that they're not. If `readClassR1` is `fus`, this is 1. If `readClassR1` is `sc`, this is 0. If `readClassR1` is `lin` and `read_strandR1` is +, then this is 1 if `posR1A` < `posR2A` and 0 otherwise. If `readClassR1` is `lin` and `read_strandR1` is -, then this is 1 if `posR1A` > `posR2A` and 0 otherwise. if `readClassR1` is `rev`, then this is 1 if `posR2A` is between `posR1A` and `posR1B` and 0 otherwise. Note that this is **only** based on the "A" part of read 2 for right now. This is NA for single-end reads.
+23. `strand_crossR1`: Here 1 indicates that there was a strand cross in read 1 (meaning `read_strandR1A` doesn't equal `read_strandR1B`) and 0 indicates that there wasn't a strand cross (meaning the read strands are equal) 
+24. `strand_crossR2`: Here 1 indicates that there was a strand cross in read 1 (meaning `read_strandR2A` doesn't equal `read_strandR2B`) and 0 indicates that there wasn't a strand cross (meaning the read strands are equal)
+25. `genomicAlignmentR1`: Here 1 indicates that there is a genomic alignment for read 1, and 0 indicates that there is not. 
+26. `chrR1A`: Chromosome that read 1 part A was aligned to
+27. `chrR1B`: Chromosome that read 1 part B was aligned to
+28. `chrR2A`: Chromosome that read 2 part A was aligned to
+29. `chrR2B`: Chromosome that read 2 part B was aligned to
+30. `geneR1A`: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on the annotation. 
+31. `geneR1B`: Gene that read 1 part B was aligned to.
+32. `geneR2A`: Gene that read 2 part A was aligned to.
+33. `geneR2B`: Gene that read 2 part B was aligned to.
+34. `juncPosR1A`: The last position part A of read 1 aligns to before the junction. If `fileTypeR1 = Chimeric`: if `flagR1A` is 0 or 256, this is equal to `posR1A + ` the sum of the M's, N's, and D's in the CIGAR string. If `flagR1A` is 16 or 272 this is equal to `posR1A`. If `fileTypeR1 = Aligned`, then this equals `posR1A` plus the sum of the M's, N's, and D's before the largest N value in the CIGAR string. 
+35. `juncPosR1B`: The first position of part B of read 1 that aligns after the junction. If `fileTypeR1 = Chimeric`: if `flagR1B` is 0 or 256, this is equal to `posR1B`. If `flagR1B` is 16 or 272 this is equal to `posR1B + ` the sum of the M's, N's, and D's in the CIGAR string. If `fileTypeR1 = Aligned`, then this equals `posR1B`. 
+36. `juncPosR2A`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
+37. `juncPosR2B`: This follows the same rules as those for read 1, except if the read doesn't contain a junction this is `NA`
+38. `gene_strandR1A`: The strand that the gene at `juncPosR1A` is on (`+` or `-`); if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+39. `gene_strandR1B`: The strand that the gene at `juncPosR1B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+40. `gene_strandR2A`: The strand that the gene at `juncPosR2A` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+41. `gene_strandR2B`: The strand that the gene at `juncPosR2B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+42. :octopus: `aScoreR1A`: alignment score from the SAM file after the `AS`.
+43. :octopus: `aScoreR1B`: alignment score from the SAM file after the `AS`.
+44. `aScoreR2A`: alignment score from the SAM file after the `AS`.
+45. `aScoreR2B`: alignment score from the SAM file after the `AS`.
+46. `flagR1A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+47. `flagR1B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+48. `flagR2A`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
+49. `flagR2B`: flag from the SAM file; 0 means forward strand primary alignment, 256 means forward strand secondary alignment, 16 means reverse strand primary alignment, 272 means reverse strand secondary alignment.
 
-48. `posR1A`: 1-based leftmost mapping position from the SAM file 
-49. `posR1B`: 1-based leftmost mapping position from the SAM file 
-50. `posR2A`: 1-based leftmost mapping position from the SAM file 
-51. `posR2B`: 1-based leftmost mapping position from the SAM file 
-52. `qualR1A`: Mapping quality of the first portion of read 1. From the manual: "The mapping quality MAPQ (column 5) is 255 for uniquely mapping reads, and int(-10\*log10(1-1/Nmap)) for multi-mapping reads" 
-53. `qualR1B`: Mapping quality for the second portion of read 1.
-54. `qualR2A`: Mapping quality of the first portion of read 2. 
-55. `qualR2B`: Mapping quality of the second portion of read 2.
+50. `posR1A`: 1-based leftmost mapping position from the SAM file 
+51. `posR1B`: 1-based leftmost mapping position from the SAM file 
+52. `posR2A`: 1-based leftmost mapping position from the SAM file 
+53. `posR2B`: 1-based leftmost mapping position from the SAM file 
+54. `qualR1A`: Mapping quality of the first portion of read 1. From the manual: "The mapping quality MAPQ (column 5) is 255 for uniquely mapping reads, and int(-10\*log10(1-1/Nmap)) for multi-mapping reads" 
+55. `qualR1B`: Mapping quality for the second portion of read 1.
+56. `qualR2A`: Mapping quality of the first portion of read 2. 
+57. `qualR2B`: Mapping quality of the second portion of read 2.
 
-56.`MDR1A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
-57. `MDR1B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
-58. `MDR2A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
-59. `MDR2B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
-60. :octopus: `nmmR1A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
-61. :octopus: `nmmR1B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
-62. `nmmR2A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
-63. `nmmR2B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
-64. `cigarR1A`: The cigar string for portion A (for Chimeric, this is without the softclipped portion that corresponds to B; for Aligned, this is without the long N sequence marking the intron and everything after)
-65. `cigarR2B`: The cigar string for portion B
-66. `cigarR2A`: The cigar string for portion A
+58.`MDR1A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+59. `MDR1B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+60. `MDR2A`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+61. `MDR2B`: The MD flag from the SAM file (indicates where mutations, insertions, and delections occur)
+62. :octopus: `nmmR1A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+63. :octopus: `nmmR1B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+64. `nmmR2A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+65. `nmmR2B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+66. `cigarR1A`: The cigar string for portion A (for Chimeric, this is without the softclipped portion that corresponds to B; for Aligned, this is without the long N sequence marking the intron and everything after)
 67. `cigarR2B`: The cigar string for portion B
-68. :whale: :octopus: `MR1A`: The number of M's in `cigarR1A` (this corresponds to the number of bases that have a match or mismatch with the reference)
-69. :whale: :octopus: `MR1B`: The number of M's in `cigarR1B`
-70. `MR2A`: The number of M's in `cigarR2A`
-71. `MR2B`: The number of M's in `cigarR2B`
-72. :whale: :octopus: `SR1A`: The number of S's in `cigarR1A` (this corresponds to the number of bases that have been softclipped)
-73. :whale: :octopus: `SR1B`: The number of S's in `cigarR1B`
-74. `SR2A`: The number of S's in `cigarR2A`
-75. `SR2B`: The number of S's in `cigarR2B`
-76. `NHR1A`: Number of reported alignments that contains the query in the current record
-77. `NHR1B`: Number of reported alignments that contains the query in the current record
-78. `NHR2A`: Number of reported alignments that contains the query in the current record
-79. `NHR2B`: Number of reported alignments that contains the query in the current record
-80. `HIR1A`: Query hit index, indicating the alignment record is the i-th one stored in SAM
-81. `HIR1B`: Query hit index, indicating the alignment record is the i-th one stored in SAM
-82. `HIR2A`: Query hit index, indicating the alignment record is the i-th one stored in SAM
-83. `HIR2B`: Query hit index, indicating the alignment record is the i-th one stored in SAM
-84. :octopus: `nMR1A`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
-85. :octopus: `nMR1B`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
-86. `nMR2A`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
-87. `nMR2B`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
-88. :octopus: `NMR1A`: Edit distance to the reference, including ambiguous bases but excluding clipping
-89. :octopus: `NMR1B`: Edit distance to the reference, including ambiguous bases but excluding clipping
-90. `NMR2A`: Edit distance to the reference, including ambiguous bases but excluding clipping
-91. `NMR2B`: Edit distance to the reference, including ambiguous bases but excluding clipping
-92. :octopus: `jMR1A`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
-jI:B:I,Start3,End1,Start2,End2,...
-93. :octopus: `jMR1B`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+68. `cigarR2A`: The cigar string for portion A
+69. `cigarR2B`: The cigar string for portion B
+70. :whale: :octopus: `MR1A`: The number of M's in `cigarR1A` (this corresponds to the number of bases that have a match or mismatch with the reference)
+71. :whale: :octopus: `MR1B`: The number of M's in `cigarR1B`
+72. `MR2A`: The number of M's in `cigarR2A`
+73. `MR2B`: The number of M's in `cigarR2B`
+74. :whale: :octopus: `SR1A`: The number of S's in `cigarR1A` (this corresponds to the number of bases that have been softclipped)
+75. :whale: :octopus: `SR1B`: The number of S's in `cigarR1B`
+76. `SR2A`: The number of S's in `cigarR2A`
+77. `SR2B`: The number of S's in `cigarR2B`
+78. `NHR1A`: Number of reported alignments that contains the query in the current record
+79. `NHR1B`: Number of reported alignments that contains the query in the current record
+80. `NHR2A`: Number of reported alignments that contains the query in the current record
+81. `NHR2B`: Number of reported alignments that contains the query in the current record
+82. `HIR1A`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+83. `HIR1B`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+84. `HIR2A`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+85. `HIR2B`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+86. :octopus: `nMR1A`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+87. :octopus: `nMR1B`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+88. `nMR2A`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+89. `nMR2B`: The number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches in each mate
+90. :octopus: `NMR1A`: Edit distance to the reference, including ambiguous bases but excluding clipping
+91. :octopus: `NMR1B`: Edit distance to the reference, including ambiguous bases but excluding clipping
+92. `NMR2A`: Edit distance to the reference, including ambiguous bases but excluding clipping
+93. `NMR2B`: Edit distance to the reference, including ambiguous bases but excluding clipping
+94. :octopus: `jMR1A`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+jI:B:I,Start4,End1,Start2,End2,...
+95. :octopus: `jMR1B`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
 jI:B:I,Start1,End1,Start2,End2,...
-94. `jMR2A`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+96. `jMR2A`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
 jI:B:I,Start1,End1,Start2,End2,...
-95. `jMR2B`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+97. `jMR2B`: intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
 jI:B:I,Start1,End1,Start2,End2,...
-96. :octopus: `jIR1A`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
-97. :octopus: `jIR1B`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
-98. `jIR2A`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
-99. `jIR2B`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
-100. `read_strandR1A`: The read strand
-101. `read_strandR1B`: The read strand
-102. `read_strandR2A`: The read strand
-103. `read_strandR2B`: The read strand
+98. :octopus: `jIR1A`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+99. :octopus: `jIR1B`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+100. `jIR2A`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+101. `jIR2B`: attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflink
+102. `read_strandR1A`: The read strand
+103. `read_strandR1B`: The read strand
+104. `read_strandR2A`: The read strand
+105. `read_strandR2B`: The read strand
 
 
 ### New columns in the class input file after run_ensembl step:
