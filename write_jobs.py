@@ -100,11 +100,11 @@ def class_input(out_path, name, assembly, gtf_file, single,dep=""):
   command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
     command += "--single"
-  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "24:00:00", "40Gb", command, dep=dep)
+  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "24:00:00", "60Gb", command, dep=dep)
   return submit_job("run_class_input.sh")
 
 
-def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, cMN, single, gtf_file, dep = ""):
+def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, sIO, sIB, single, gtf_file, dep = ""):
   """Run script to perform mapping job for STAR"""
   command = "mkdir -p {}{}\n".format(out_path, name)
   command += "STAR --version\n"
@@ -129,7 +129,8 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
     command += "--outSAMattributes All "
     command += "--chimOutType WithinBAM SoftClip Junctions "
     command += "--chimJunctionOverhangMin {} ".format(cJOM)
-    command += "--chimMultimapNmax {} ".format(cMN)
+    command += "--scoreInsOpen {} ".format(sIO)
+    command += "--scoreInsBase {} ".format(sIB) 
     command += "--alignSJstitchMismatchNmax {} -1 {} {} ".format(aSJMN, aSJMN, aSJMN)
     command += "--chimSegmentReadGapMax {} ".format(cSRGM)
     command += "--quantMode GeneCounts "
@@ -164,6 +165,8 @@ def main():
   chimJunctionOverhangMin = [10]
   alignSJstitchMismatchNmax = [0]
   chimSegmentReadGapMax = [0]
+  scoreInsOpen = [-1,0]
+  scoreInsBase = [-1,0]
 
   # benchmarking
 #  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/benchmarking/"
@@ -186,23 +189,23 @@ def main():
 
 
 # Tabula Sapiens pilot (10X)
-#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_1/"
-#  assembly = "hg38"
-#  run_name = "TS_pilot_10X_muscle"
-#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-#  names = ["TSP1_muscle_1_S19_L002","TSP1_muscle_1_S19_L003"]
-# # names = ["TSP1_muscle_1_S19_L001","TSP1_muscle_1_S19_L004"]
-#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-#  single = True
-#  bc_pattern = "C"*16 + "N"*10
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_3/"
+  assembly = "hg38"
+  run_name = "TS_pilot_10X_withinbam"
+  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+  names = ["TSP1_blood_3_S24_L004"]
+#  names = ["TSP1__1_S11_L001","TSP1_exopancreas2_3_3_S11_L004"]
+  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+  single = True
+  bc_pattern = "C"*16 + "N"*10
 
 
 # Tabula Sapiens pilot (smartseq)
-#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S135/"
+#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S115/"
 #  assembly = "hg38"
 #  run_name = "TS_pilot_smartseq_Chim_Multimap_test"
 #  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-#  names = ["B107809_A15_S135"]
+#  names = ["B107809_A15_S115"]
 #  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
 #  single = False
 
@@ -225,15 +228,25 @@ def main():
 #  single = False
 
 
-
-#Engstrom sim1
-#  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
+# CML sample
+#  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
 #  assembly = "hg38"
-#  run_name = "Engstrom"
-#  r_ends = ["_R1.fq", "_R2.fq"]
-#  names = ["Engstrom_sim1_trimmed"]
+#  run_name = "sim_101"
+#  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
+#  names = ["sim1_reads","sim2_reads","sim3_reads","sim4_reads","sim5_reads"]
 #  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
 #  single = False
+
+
+
+#Engstrom sim1
+  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
+  assembly = "hg38"
+  run_name = "Engstrom"
+  r_ends = ["_R1.fq", "_R2.fq"]
+  names = ["Engstrom_sim1_trimmed"]
+  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+  single = False
 
 
   # path that contains fastqs
@@ -249,12 +262,12 @@ def main():
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
   run_whitelist = False
   run_extract = False
-  run_map = False
-  run_star_fusion = False
-  run_ann = False
+  run_map = True
+  run_star_fusion = True
+  run_ann = True
   run_class = True
-  run_ensembl = False
-  run_compare = False
+  run_ensembl = True
+  run_compare = True
 
   if not single:
     run_whitelist = False
@@ -269,89 +282,90 @@ def main():
     for cJOM in chimJunctionOverhangMin:
       for aSJMN in alignSJstitchMismatchNmax:
         for cSRGM in chimSegmentReadGapMax:
-          for cMN in chimMultimapNmax:
-            cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_cMN_{}".format(cSM, cJOM, aSJMN, cSRGM, cMN)
+          for sIO in scoreInsOpen:
+            for sIB in scoreInsBase:
+              cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
 #           out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
-            out_path = "output/{}/".format(cond_run_name)
+              out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
 
         #   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 #           gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
         
         
-            curr_run_whitelist = False
-            curr_run_extract = False
-            total_jobs = []
-            total_job_names = []
-            for name in names:
-              jobs = []
-              job_nums = []
-              if single:
-                if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
-                  curr_run_whitelist = True
-                if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
-                  curr_run_extract = True
+              curr_run_whitelist = False
+              curr_run_extract = False
+              total_jobs = []
+              total_job_names = []
+              for name in names:
+                jobs = []
+                job_nums = []
+                if single:
+                  if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
+                    curr_run_whitelist = True
+                  if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
+                    curr_run_extract = True
 
-              if run_whitelist or curr_run_whitelist:
-                whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)
-                jobs.append("whitelist_{}.{}".format(name, whitelist_jobid))
-                job_nums.append(whitelist_jobid)
-              else:
-                whitelist_jobid = ""
-              if run_extract or curr_run_extract:
-                extract_jobid = extract(out_path, data_path, name, bc_pattern, r_ends, dep = ":".join(job_nums))
-                jobs.append("extract_{}.{}".format(name, extract_jobid))
-                job_nums.append(extract_jobid)
-              else:
-                extract_jobid = ""
-              if run_map:
-               
-                map_jobid = STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, cMN, single, gtf_file, dep = ":".join(job_nums))
-                jobs.append("map_{}.{}".format(name,map_jobid))
-                job_nums.append(map_jobid)
-              else:
-                map_jobid = ""
-              if run_star_fusion:
-                star_fusion_jobid = star_fusion(out_path, name, single, dep=":".join(job_nums))
-                jobs.append("star_fusion_{}.{}".format(name,star_fusion_jobid))
-                job_nums.append(star_fusion_jobid)
-              else:
-                star_fusion_jobid = ""
-        
-              if run_ann:
-                ann_SJ_jobid = ann_SJ(out_path, name, assembly, gtf_file, single, dep = ":".join(job_nums))
-                jobs.append("ann_SJ_{}.{}".format(name,ann_SJ_jobid))
-                job_nums.append(ann_SJ_jobid)
-              else:
-                ann_SJ_jobid =  ""
-        
-              if run_class:
-                class_input_jobid = class_input(out_path, name, assembly, gtf_file, single, dep=":".join(job_nums))
-                jobs.append("class_input_{}.{}".format(name,class_input_jobid))
-                job_nums.append(class_input_jobid)
-              else:
-                class_input_jobid = ""
+                if run_whitelist or curr_run_whitelist:
+                  whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)
+                  jobs.append("whitelist_{}.{}".format(name, whitelist_jobid))
+                  job_nums.append(whitelist_jobid)
+                else:
+                  whitelist_jobid = ""
+                if run_extract or curr_run_extract:
+                  extract_jobid = extract(out_path, data_path, name, bc_pattern, r_ends, dep = ":".join(job_nums))
+                  jobs.append("extract_{}.{}".format(name, extract_jobid))
+                  job_nums.append(extract_jobid)
+                else:
+                  extract_jobid = ""
+                if run_map:
                  
-              if run_ensembl:
-               ensembl_jobid = ensembl(out_path, name, single, dep=":".join(job_nums))
-               jobs.append("ensembl_{}.{}".format(name,ensembl_jobid))
-               job_nums.append(ensembl_jobid)
-              else:
-                ensembl_jobid =  ""
+                  map_jobid = STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, sIO, sIB, single, gtf_file, dep = ":".join(job_nums))
+                  jobs.append("map_{}.{}".format(name,map_jobid))
+                  job_nums.append(map_jobid)
+                else:
+                  map_jobid = ""
+                if run_star_fusion:
+                  star_fusion_jobid = star_fusion(out_path, name, single, dep=":".join(job_nums))
+                  jobs.append("star_fusion_{}.{}".format(name,star_fusion_jobid))
+                  job_nums.append(star_fusion_jobid)
+                else:
+                  star_fusion_jobid = ""
+        
+                if run_ann:
+                  ann_SJ_jobid = ann_SJ(out_path, name, assembly, gtf_file, single, dep = ":".join(job_nums))
+                  jobs.append("ann_SJ_{}.{}".format(name,ann_SJ_jobid))
+                  job_nums.append(ann_SJ_jobid)
+                else:
+                  ann_SJ_jobid =  ""
+        
+                if run_class:
+                  class_input_jobid = class_input(out_path, name, assembly, gtf_file, single, dep=":".join(job_nums))
+                  jobs.append("class_input_{}.{}".format(name,class_input_jobid))
+                  job_nums.append(class_input_jobid)
+                else:
+                  class_input_jobid = ""
+                 
+                if run_ensembl:
+                 ensembl_jobid = ensembl(out_path, name, single, dep=":".join(job_nums))
+                 jobs.append("ensembl_{}.{}".format(name,ensembl_jobid))
+                 job_nums.append(ensembl_jobid)
+                else:
+                  ensembl_jobid =  ""
             
-              if run_compare:
-               compare_jobid = compare(out_path, name, single, dep=":".join(job_nums))
-               jobs.append("compare_{}.{}".format(name,compare_jobid))
-               job_nums.append(compare_jobid)
-              else:
-                compare_jobid =  ""
+                if run_compare:
+                 compare_jobid = compare(out_path, name, single, dep=":".join(job_nums))
+                 jobs.append("compare_{}.{}".format(name,compare_jobid))
+                 job_nums.append(compare_jobid)
+                else:
+                  compare_jobid =  ""
 
         
-              log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
-              jobs.append("log_{}.{}".format(name,log_jobid))
-              job_nums.append(log_jobid)
+                log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
+                jobs.append("log_{}.{}".format(name,log_jobid))
+                job_nums.append(log_jobid)
         
-              total_jobs += job_nums
-              total_job_names += jobs 
-            log(out_path, "", sorted(total_job_names), dep = ":".join(total_jobs))
+                total_jobs += job_nums
+                total_job_names += jobs 
+              log(out_path, "", sorted(total_job_names), dep = ":".join(total_jobs))
 
 main()
