@@ -326,7 +326,7 @@ def main():
                   map_jobid = ""
                 if run_star_fusion:
                   star_fusion_jobid = star_fusion(out_path, name, single, dep=":".join(job_nums))
-                  jobs.append("star_fusion_{}.{}".format(name,star_fusion_jobid))
+                  jobs.append("fusion_{}.{}".format(name,star_fusion_jobid))
                   job_nums.append(star_fusion_jobid)
                 else:
                   star_fusion_jobid = ""
