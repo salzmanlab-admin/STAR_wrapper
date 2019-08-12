@@ -529,7 +529,7 @@ def chim_refName(flags, cigars, offsets, rnames, ann):
     else:
         juncType = "err"
 #    return "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], "", posFirst, signs[0], rnames[1], "", posSecond, signs[1], juncType)
-    unchanged = "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], "", posFirst, signs[0], rnames[1], "", posSecond, signs[1], juncType)
+    unchanged = "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], gene1, posFirst, strand1, rnames[1], gene2, posSecond, strand2, juncType)
 
     if juncType == "sc": 
       return unchanged, "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[0], gene1, posFirst, strand1, rnames[1], gene2, posSecond, strand2, juncType)
