@@ -54,10 +54,10 @@ write.table(gene_count,genecount_file,row.names = FALSE,sep = "\t",quote = FALSE
 class_input_files = list.files(directory, pattern = "class_input_WithinBAM", all.files = FALSE)
 for (counter in 1:1){
   class_input = fread(paste(directory,class_input_files[counter],sep = ""),sep = "\t",header = TRUE)
-  class_input[,geneR1A := NULL]
-  class_input[,geneR1B := NULL]
-  class_input[,geneR1A := strsplit(strsplit(refName_ABR2,split = "|",fixed = TRUE)[[1]][2],split = ":")[[1]][2],by = 1:nrow(class_input)]
-  class_input[,geneR1B := strsplit(refName_ABR2,split = ":")[[1]][2],by = 1:nrow(class_input)]
+#  class_input[,geneR1A := NULL]
+#  class_input[,geneR1B := NULL]
+#  class_input[,geneR1A := strsplit(strsplit(refName_ABR1,split = "|",fixed = TRUE)[[1]][2],split = ":")[[1]][2],by = 1:nrow(class_input)]
+#  class_input[,geneR1B := strsplit(refName_ABR2,split = ":")[[1]][2],by = 1:nrow(class_input)]
   if ( "geneR1B_name" %in% names(class_input) ){
      class_input[,geneR1A_name := NULL]
      class_input[,geneR1B_name := NULL]
@@ -66,6 +66,9 @@ for (counter in 1:1){
      class_input[,geneR1A_expression := NULL] 
      class_input[,geneR1B_expression := NULL]
   }
+ # class_input[,geneR1B_name := tail(strsplit(geneR1B,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
+ # class_input[,geneR1A_name := tail(strsplit(geneR1A,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
+ 
   class_input[,geneR1B_name := tail(strsplit(geneR1B,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
   class_input[,geneR1A_name := tail(strsplit(geneR1A,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
   

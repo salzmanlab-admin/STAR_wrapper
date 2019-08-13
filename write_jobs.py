@@ -19,7 +19,7 @@ def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "aft
   job_file.write("#SBATCH --time={}\n".format(time))
  # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p horence\n")
+  job_file.write("#SBATCH -p owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -165,8 +165,8 @@ def main():
   chimJunctionOverhangMin = [10]
   alignSJstitchMismatchNmax = [0]
   chimSegmentReadGapMax = [0]
-  scoreInsOpen = [-1,0]
-  scoreInsBase = [-1,0]
+  scoreInsOpen = [-2]
+  scoreInsBase = [-2]
 
   # benchmarking
 #  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/benchmarking/"
@@ -189,23 +189,23 @@ def main():
 
 
 # Tabula Sapiens pilot (10X)
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_3/"
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_3/"
   assembly = "hg38"
   run_name = "TS_pilot_10X_withinbam"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_blood_3_S24_L004"]
-#  names = ["TSP1__1_S11_L001","TSP1_exopancreas2_3_3_S11_L004"]
+  names = ["TSP1_muscle_3_S21_L001","TSP1_muscle_3_S21_L002","TSP1_muscle_3_S21_L003","TSP1_muscle_3_S21_L004"]
+  names = ["TSP1__1_S21_L001","TSP1_muscle_3_3_S21_L004"]
   gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
   single = True
   bc_pattern = "C"*16 + "N"*10
 
 
 # Tabula Sapiens pilot (smartseq)
-#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S115/"
+#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S215/"
 #  assembly = "hg38"
 #  run_name = "TS_pilot_smartseq_Chim_Multimap_test"
 #  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-#  names = ["B107809_A15_S115"]
+#  names = ["B107809_A15_S215"]
 #  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
 #  single = False
 
@@ -228,7 +228,7 @@ def main():
 #  single = False
 
 
-# CML sample
+# STAR_sim
 #  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
 #  assembly = "hg38"
 #  run_name = "sim_101"
@@ -240,13 +240,13 @@ def main():
 
 
 #Engstrom sim1
-  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
-  assembly = "hg38"
-  run_name = "Engstrom"
-  r_ends = ["_R1.fq", "_R2.fq"]
-  names = ["Engstrom_sim1_trimmed"]
-  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-  single = False
+#  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
+#  assembly = "hg38"
+#  run_name = "Engstrom"
+#  r_ends = ["_R1.fq", "_R2.fq"]
+#  names = ["Engstrom_sim1_trimmed"]
+#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+#  single = False
 
 
   # path that contains fastqs
@@ -262,9 +262,9 @@ def main():
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
   run_whitelist = False
   run_extract = False
-  run_map = True
-  run_star_fusion = True
-  run_ann = True
+  run_map = False
+  run_star_fusion = False
+  run_ann = False
   run_class = True
   run_ensembl = True
   run_compare = True
@@ -284,7 +284,8 @@ def main():
         for cSRGM in chimSegmentReadGapMax:
           for sIO in scoreInsOpen:
             for sIB in scoreInsBase:
-              cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
+              #cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
+              cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
 #           out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
               out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
 

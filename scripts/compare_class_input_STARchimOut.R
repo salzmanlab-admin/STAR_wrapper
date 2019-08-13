@@ -87,7 +87,7 @@ if ( nrow(star_fusion)>0 ) {
 }
 
 class_input_priority_Align[,junction_compatible := NULL]
-setnames(class_input_priority_Align,old = c("V5,V6,V7,V8,V9"),new = c("intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang")
+setnames(class_input_priority_Align,old = c("V5","V6","V7","V8","V9"),new = c("intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang"))
 
 in_star_chim_not_in_classinput_prio_align = chimeric1[!(junction %in% class_input_priority_Align$junction_compatible)]
 in_star_SJ_not_in_classinput_prio_align = star_SJ_output_1[ !(junction %in% class_input_priority_Align$junction_compatible)]
