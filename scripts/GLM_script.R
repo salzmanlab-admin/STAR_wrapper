@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
-## TheGLM script that first predict a per-read probability for each read alignment and then compute an aggregated score for each junction 
+## This script takes a class input file built based on STAR alignment and predicts a per-read probability for each read alignment using a GLM and then computes an aggregated score for each junction 
+
 require(data.table)
 library(glmnet)
 library(glmtlp)
