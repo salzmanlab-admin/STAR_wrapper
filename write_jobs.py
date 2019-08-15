@@ -42,7 +42,7 @@ def star_fusion(out_path, name, single, dep = ""):
   return submit_job("run_star_fusion.sh")
 
 def compare(out_path, name, single, dep = ""):
-  """Run script to comapre the junctions in the class input file with those in the STAR SJ.out, Chim.out and STAR-Fusion file"""
+  """Run the script that compares the junctions in the class input file with those in the STAR SJ.out, Chim.out and STAR-Fusion file"""
   command = "Rscript scripts/compare_class_input_STARchimOut.R {}{}/ ".format(out_path, name)
   if single:
     command += " 1 "
@@ -50,6 +50,16 @@ def compare(out_path, name, single, dep = ""):
     command += " 0 "
   sbatch_file("run_compare.sh", "compare_{}".format(name), "12:00:00", "25Gb", command, dep=dep)
   return submit_job("run_compare.sh")
+
+def GLM(out_path, name, single, dep = ""):
+  """Run the GLM script to compute the statistical scores for junctions in the class input file"""
+  command = "Rscript scripts/GLM_script.R {}{}/ ".format(out_path, name)
+  if single:
+    command += " 1 "
+  else:
+    command += " 0 "
+  sbatch_file("run_GLM.sh", "GLM_{}".format(name), "6:00:00", "60Gb", command, dep=dep)
+  return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
   command = "mkdir -p {}{}\n".format(out_path, name)
@@ -100,7 +110,7 @@ def class_input(out_path, name, assembly, gtf_file, single,dep=""):
   command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
     command += "--single"
-  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "24:00:00", "60Gb", command, dep=dep)
+  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "24:00:00", "80Gb", command, dep=dep)
   return submit_job("run_class_input.sh")
 
 
@@ -189,15 +199,14 @@ def main():
 
 
 # Tabula Sapiens pilot (10X)
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_3/"
-  assembly = "hg38"
-  run_name = "TS_pilot_10X_withinbam"
-  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_muscle_3_S21_L001","TSP1_muscle_3_S21_L002","TSP1_muscle_3_S21_L003","TSP1_muscle_3_S21_L004"]
-  names = ["TSP1__1_S21_L001","TSP1_muscle_3_3_S21_L004"]
-  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-  single = True
-  bc_pattern = "C"*16 + "N"*10
+#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_3/"
+#  assembly = "hg38"
+#  run_name = "TS_pilot_10X_withinbam"
+#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+#  names = ["TSP1_muscle_3_S21_L001","TSP1_muscle_3_S21_L002","TSP1_muscle_3_S21_L003","TSP1_muscle_3_S21_L004"]
+#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+#  single = True
+#  bc_pattern = "C"*16 + "N"*10
 
 
 # Tabula Sapiens pilot (smartseq)
@@ -239,14 +248,14 @@ def main():
 
 
 
-#Engstrom sim1
-#  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
-#  assembly = "hg38"
-#  run_name = "Engstrom"
-#  r_ends = ["_R1.fq", "_R2.fq"]
-#  names = ["Engstrom_sim1_trimmed"]
-#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-#  single = False
+#Engstrom
+  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
+  assembly = "hg38"
+  run_name = "Engstrom"
+  r_ends = ["_R1.fq", "_R2.fq"]
+  names = ["Engstrom_sim1_trimmed"]
+  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+  single = False
 
 
   # path that contains fastqs
@@ -265,9 +274,10 @@ def main():
   run_map = False
   run_star_fusion = False
   run_ann = False
-  run_class = True
-  run_ensembl = True
-  run_compare = True
+  run_class = False
+  run_ensembl = False
+  run_compare = False
+  run_GLM = True
 
   if not single:
     run_whitelist = False
@@ -300,11 +310,11 @@ def main():
               for name in names:
                 jobs = []
                 job_nums = []
-                if single:
-                  if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
-                    curr_run_whitelist = True
-                  if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
-                    curr_run_extract = True
+              #  if single:
+              #    if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
+              #      curr_run_whitelist = True
+              #    if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
+              #      curr_run_extract = True
 
                 if run_whitelist or curr_run_whitelist:
                   whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)
@@ -360,6 +370,12 @@ def main():
                 else:
                   compare_jobid =  ""
 
+                if run_GLM:
+                 GLM_jobid = GLM(out_path, name, single, dep=":".join(job_nums))
+                 jobs.append("GLM_{}.{}".format(name,GLM_jobid))
+                 job_nums.append(GLM_jobid)
+                else:
+                  GLM_jobid =  ""
         
                 log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
                 jobs.append("log_{}.{}".format(name,log_jobid))
