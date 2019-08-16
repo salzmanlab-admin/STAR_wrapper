@@ -199,11 +199,11 @@ def main():
 
 
 # Tabula Sapiens pilot (10X)
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_3/"
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_bladder_1/"
   assembly = "hg38"
   run_name = "TS_pilot_10X_withinbam"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_muscle_3_S21_L003","TSP1_muscle_3_S21_L004"]
+  names = ["TSP1_bladder_1_S13_L003","TSP1_bladder_1_S13_L004"]
   gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
   single = True
   bc_pattern = "C"*16 + "N"*10

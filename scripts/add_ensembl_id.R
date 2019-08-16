@@ -66,9 +66,9 @@ for (counter in 1:1){
      class_input[,geneR1A_expression := NULL] 
      class_input[,geneR1B_expression := NULL]
   }
- # class_input[,geneR1B_name := tail(strsplit(geneR1B,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
- # class_input[,geneR1A_name := tail(strsplit(geneR1A,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
- 
+ class_input = data.frame(class_input)
+ class_input = class_input[,!(names(class_input) %in% c("intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang"))]
+ class_input = data.table(class_input)
   class_input[,geneR1B_name := tail(strsplit(geneR1B,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
   class_input[,geneR1A_name := tail(strsplit(geneR1A,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
   
