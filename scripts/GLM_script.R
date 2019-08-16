@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript
 
-## This script takes a class input file built based on STAR alignment and predicts a per-read probability for each read alignment using a GLM and then computes an aggregated score for each junction 
-
+## TheGLM script that first predict a per-read probability for each read alignment and then compute an aggregated score for each junction 
 require(data.table)
 library(glmnet)
 library(glmtlp)
@@ -20,10 +19,12 @@ compute_class_error <- function(train_class,glm_predicted_prob){
 
 ###### Input arguments ##############
 args = commandArgs(trailingOnly = TRUE)
+directory = "" 
 directory = args[1]
 is.SE = as.numeric(args[2])
 #####################################
 
+#directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_withinbam_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TSP1_bladder_1_S13_L002/"
 
 ###### read in class input file #####################
 class_input_file = list.files(directory,pattern = "class_input_WithinBAM.tsv")
@@ -41,7 +42,11 @@ class_input[,numReads:=length(unique(id)),by = refName_ABR1]
 
 ####### Assign pos and neg training data for GLM training #######  
 class_input[genomicAlignmentR1==1 & fileTypeR1=="Aligned",train_class := 0]
-class_input[genomicAlignmentR1==0 & fileTypeR1=="Aligned",train_class := 1]
+n.pos = nrow(class_input[genomicAlignmentR1==0 & fileTypeR1=="Aligned"])
+n.neg = nrow(class_input[train_class == 0]) 
+n.pos = min(max(n.neg,n.pos),150000)  # number of positive reads that we want to subsample from the list of all reads
+all_pos_reads = which((class_input$genomicAlignmentR1==0) & (class_input$fileTypeR1=="Aligned"))
+class_input [sample(all_pos_reads,n.pos,replace=FALSE),train_class := 1]
 #################################################################
 
 
@@ -104,7 +109,7 @@ class_input[,fiveprime_partner_number:=length(unique(junc_pos1)),by = junc_pos2]
 
 
 ################ set the class-level weights for all reads within the same class
-n.neg = nrow(class_input[train_class == 0]) 
+
 n.pos = nrow(class_input[train_class == 1])
 class.weight = min(n.pos, n.neg)
 
@@ -171,7 +176,7 @@ if (is.SE==0){
 tic("glmnet")
 print("now glmnet model")
 x_glmnet = model.matrix(regression_formula, class_input[!is.na(train_class)])
-glmnet_model = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 40,nfolds = 3)
+glmnet_model = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50,nfolds = 5)
 toc()
 print("done with fitting glmnet")
 
@@ -199,13 +204,13 @@ if (is.SE==0){
 ######################################
 
 if(is.SE==0){
-  junction_predictions = unique(class_input[,list(refName_ABR1,numReads,readClassR1,p_predicted_glm,p_predicted_glmnet,p_predicted_glm_corrected,p_predicted_glmnet_corrected,threeprime_partner_number,fiveprime_partner_number,is.STAR_Chim,is.STAR_SJ,is.STAR_Fusion,geneR1A_expression,geneR1B_expression,geneR1B_ensembl,geneR1A_ensembl,geneR1B_name,geneR1A_name)])
+  junction_predictions = unique(class_input[,list(refName_ABR1,numReads,readClassR1,p_predicted_glm,p_predicted_glmnet,p_predicted_glm_corrected,p_predicted_glmnet_corrected,threeprime_partner_number,fiveprime_partner_number,is.STAR_Chim,is.STAR_SJ,is.STAR_Fusion,geneR1A_expression,geneR1B_expression,geneR1B_ensembl,geneR1A_ensembl,geneR1B_name,geneR1A_name,intron_motif,is.annotated,num_uniq_map_reads,num_multi_map_reads,maximum_SJ_overhang)])
 } else{
-  junction_predictions = unique(class_input[,list(refName_ABR1,numReads,readClassR1,p_predicted_glm,p_predicted_glmnet,threeprime_partner_number,fiveprime_partner_number,is.STAR_Chim,is.STAR_SJ,is.STAR_Fusion,geneR1A_expression,geneR1B_expression,geneR1B_ensembl,geneR1A_ensembl,geneR1B_name,geneR1A_name)])
+  junction_predictions = unique(class_input[,list(refName_ABR1,numReads,readClassR1,p_predicted_glm,p_predicted_glmnet,threeprime_partner_number,fiveprime_partner_number,is.STAR_Chim,is.STAR_SJ,is.STAR_Fusion,geneR1A_expression,geneR1B_expression,geneR1B_ensembl,geneR1A_ensembl,geneR1B_name,geneR1A_name,intron_motif,is.annotated,num_uniq_map_reads,num_multi_map_reads,maximum_SJ_overhang)])
 }
 
 write.table(junction_predictions,paste(directory,"GLM_output.txt",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
-#write.table(class_input,paste(directory,"class_input_WithinBAM.txt",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
+write.table(class_input,paste(directory,"class_input_WithinBAM.txt",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
 
 
 # ######################################

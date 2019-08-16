@@ -39,7 +39,7 @@ gtf_info = gtf_info[!(duplicated(gene_name))]
 ##########################################
 
 ########## read in gene synonyms file ######### 
-synonyms = fread(synonyms_file,sep = "\t",header = TRUE)
+#synonyms = fread(synonyms_file,sep = "\t",header = TRUE)
 ###############################################
 
 #add readable gene names to the gene count file
@@ -51,7 +51,7 @@ gene_count = gene_count[!duplicated(ensembl_id)]
 write.table(gene_count,genecount_file,row.names = FALSE,sep = "\t",quote = FALSE)
 
 # now process both class input files for align_priority and chimeric priority
-class_input_files = list.files(directory, pattern = "class_input_WithinBAM", all.files = FALSE)
+class_input_files = list.files(directory, pattern = "class_input_WithinBAM.tsv", all.files = FALSE)
 for (counter in 1:1){
   class_input = fread(paste(directory,class_input_files[counter],sep = ""),sep = "\t",header = TRUE)
 #  class_input[,geneR1A := NULL]

@@ -9,13 +9,13 @@ import sys
 import time
 import argparse
 
-def sbatch_file(file_name, job_name, time, mem, command, dep="", dep_type = "afterok"):
+def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", dep_type = "afterok"):
   """Write sbatch script given parameters"""
   job_file = open(file_name, "w")
   job_file.write("#!/bin/bash\n#\n")
   job_file.write("#SBATCH --job-name=" + job_name + "\n")
-  job_file.write("#SBATCH --output=job_output/{}.%j.out\n".format(job_name))
-  job_file.write("#SBATCH --error=job_output/{}.%j.err\n".format(job_name))
+  job_file.write("#SBATCH --output={}{}/log_files/{}.%j.out\n".format(out_path, name,job_name))
+  job_file.write("#SBATCH --error={}{}/log_files/{}.%j.err\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --time={}\n".format(time))
  # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
@@ -38,18 +38,28 @@ def star_fusion(out_path, name, single, dep = ""):
     command += "   {}{}/2Chimeric.out.junction --output_dir {}{}/star_fusion ".format(out_path, name,out_path,name)
   else:
     command += " {}{}/1Chimeric.out.junction --output_dir {}{}/star_fusion ".format(out_path, name,out_path,name)
-  sbatch_file("run_star_fusion.sh", "fusion_{}".format(name), "12:00:00", "20Gb", command, dep=dep)
+  sbatch_file("run_star_fusion.sh",out_path, name, "fusion_{}".format(name), "12:00:00", "20Gb", command, dep=dep)
   return submit_job("run_star_fusion.sh")
 
 def compare(out_path, name, single, dep = ""):
-  """Run script to comapre the junctions in the class input file with those in the STAR SJ.out, Chim.out and STAR-Fusion file"""
+  """Run the script that compares the junctions in the class input file with those in the STAR SJ.out, Chim.out and STAR-Fusion file"""
   command = "Rscript scripts/compare_class_input_STARchimOut.R {}{}/ ".format(out_path, name)
   if single:
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_compare.sh", "compare_{}".format(name), "12:00:00", "25Gb", command, dep=dep)
+  sbatch_file("run_compare.sh",out_path, name, "compare_{}".format(name), "12:00:00", "50Gb", command, dep=dep)
   return submit_job("run_compare.sh")
+
+def GLM(out_path, name, single, dep = ""):
+  """Run the GLM script to compute the statistical scores for junctions in the class input file"""
+  command = "Rscript scripts/GLM_script.R {}{}/ ".format(out_path, name)
+  if single:
+    command += " 1 "
+  else:
+    command += " 0 "
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "6:00:00", "60Gb", command, dep=dep)
+  return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
   command = "mkdir -p {}{}\n".format(out_path, name)
@@ -59,7 +69,7 @@ def whitelist(data_path,out_path, name, bc_pattern, r_ends):
   command += "--log2stderr > {}{}_whitelist.txt ".format(data_path,name)
   command += "--plot-prefix={}{} ".format(data_path, name)
   command += "--knee-method=density "
-  sbatch_file("run_whitelist.sh", "whitelist_{}".format(name), "2:00:00", "20Gb", command)
+  sbatch_file("run_whitelist.sh",out_path, name, "whitelist_{}".format(name), "2:00:00", "20Gb", command)
   return submit_job("run_whitelist.sh")
 
 def extract(out_path, data_path, name, bc_pattern, r_ends, dep = ""):
@@ -73,7 +83,7 @@ def extract(out_path, data_path, name, bc_pattern, r_ends, dep = ""):
   command += "--filter-cell-barcode "
   command += "--whitelist={}{}_whitelist.txt ".format(data_path, name)
   command += "--error-correct-cell "
-  sbatch_file("run_extract.sh", "extract_{}".format(name), "20:00:00", "20Gb", command, dep = dep)
+  sbatch_file("run_extract.sh", out_path, name,"extract_{}".format(name), "20:00:00", "20Gb", command, dep = dep)
   return submit_job("run_extract.sh")
 
 def ensembl(out_path, name, single, dep = ""):
@@ -83,7 +93,7 @@ def ensembl(out_path, name, single, dep = ""):
     command += " 1 "
   else:
     command += " 0 " 
-  sbatch_file("run_ensembl.sh", "ensembl_{}".format(name), "12:00:00", "25Gb", command, dep=dep)
+  sbatch_file("run_ensembl.sh", out_path, name,"ensembl_{}".format(name), "12:00:00", "50Gb", command, dep=dep)
   return submit_job("run_ensembl.sh")
 
 
@@ -92,7 +102,7 @@ def ann_SJ(out_path, name, assembly, gtf_file, single, dep = ""):
   command = "python3 scripts/annotate_SJ.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
     command += "--single "
-  sbatch_file("run_ann_SJ.sh", "ann_SJ_{}".format(name), "24:00:00", "40Gb", command, dep=dep)
+  sbatch_file("run_ann_SJ.sh", out_path, name,"ann_SJ_{}".format(name), "24:00:00", "40Gb", command, dep=dep)
   return submit_job("run_ann_SJ.sh")
 
 def class_input(out_path, name, assembly, gtf_file, single,dep=""):
@@ -100,7 +110,7 @@ def class_input(out_path, name, assembly, gtf_file, single,dep=""):
   command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
     command += "--single"
-  sbatch_file("run_class_input.sh", "class_input_{}".format(name), "24:00:00", "60Gb", command, dep=dep)
+  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "24:00:00", "60Gb", command, dep=dep)
   return submit_job("run_class_input.sh")
 
 
@@ -136,13 +146,13 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
     command += "--quantMode GeneCounts "
     command += "--sjdbGTFfile {} ".format(gtf_file)
     command += "--outReadsUnmapped Fastx \n\n"
-  sbatch_file("run_map.sh", "map_{}".format(name), "12:00:00", "60Gb", command, dep = dep)
+  sbatch_file("run_map.sh", out_path, name,"map_{}".format(name), "12:00:00", "60Gb", command, dep = dep)
   return submit_job("run_map.sh")
 
 def log(out_path, name, jobs, dep = ""):
   """Run job to concatenate all individual job outputs for the sample into one file"""
   command = "python3 scripts/create_log.py -i {}{}/ -j {}".format(out_path,name, " ".join(jobs))
-  sbatch_file("run_log.sh", "log_{}".format(name), "5:00", "500", command, dep = dep,dep_type = "afterany")
+  sbatch_file("run_log.sh", out_path, name,"log_{}".format(name), "5:00", "500", command, dep = dep,dep_type = "afterany")
   return submit_job("run_log.sh")
 
 def submit_job(file_name):
@@ -178,26 +188,25 @@ def main():
 #  single = True
 
  # Tabula Muris colon
- # data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
- # assembly = "mm10"
- # run_name = "GSE109774_colon"
- # r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
+  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
+  assembly = "mm10"
+  run_name = "GSE109774_colon"
+  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
-#  names = ["SRR65462{}".format(i) for i in range(75,76)]
-#  single = False
-#  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
+  names = ["SRR65462{}".format(i) for i in range(75,76)]
+  single = False
+  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 
 
 # Tabula Sapiens pilot (10X)
-#  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_mucle_3/"
-#  assembly = "hg38"
-#  run_name = "TS_pilot_10X_withinbam"
-#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-#  names = ["TSP1_mucle_3_S21_L001","TSP1_mucle_3_S21_L002","TSP1_mucle_3_S21_L003","TSP1_mucle_3_S21_L004"]
-#  names = ["TSP1__1_S21_L001","TSP1_mucle_3_3_S21_L004"]
-#  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
-#  single = True
-#  bc_pattern = "C"*16 + "N"*10
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_bladder_1/"
+  assembly = "hg38"
+  run_name = "TS_pilot_10X_withinbam"
+  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+  names = ["TSP1_bladder_1_S13_L003","TSP1_bladder_1_S13_L004"]
+  gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf"
+  single = True
+  bc_pattern = "C"*16 + "N"*10
 
 
 # Tabula Sapiens pilot (smartseq)
@@ -239,7 +248,7 @@ def main():
 
 
 
-#Engstrom sim1
+#Engstrom
 #  data_path = "/scratch/PI/horence/Roozbeh/data/Engstrom/"
 #  assembly = "hg38"
 #  run_name = "Engstrom"
@@ -267,7 +276,8 @@ def main():
   run_ann = False
   run_class = False
   run_ensembl = False
-  run_compare = True
+  run_compare = False
+  run_GLM = True
 
   if not single:
     run_whitelist = False
@@ -292,7 +302,6 @@ def main():
         #   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 #           gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
         
-        
               curr_run_whitelist = False
               curr_run_extract = False
               total_jobs = []
@@ -300,11 +309,14 @@ def main():
               for name in names:
                 jobs = []
                 job_nums = []
-                if single:
-                  if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
-                    curr_run_whitelist = True
-                  if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
-                    curr_run_extract = True
+              
+                if not os.path.exists("{}{}/log_files".format(out_path, name)):
+                  os.makedirs("{}{}/log_files".format(out_path, name))
+              #  if single:
+              #    if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
+              #      curr_run_whitelist = True
+              #    if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
+              #      curr_run_extract = True
 
                 if run_whitelist or curr_run_whitelist:
                   whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)
@@ -360,6 +372,12 @@ def main():
                 else:
                   compare_jobid =  ""
 
+                if run_GLM:
+                 GLM_jobid = GLM(out_path, name, single, dep=":".join(job_nums))
+                 jobs.append("GLM_{}.{}".format(name,GLM_jobid))
+                 job_nums.append(GLM_jobid)
+                else:
+                  GLM_jobid =  ""
         
                 log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
                 jobs.append("log_{}.{}".format(name,log_jobid))

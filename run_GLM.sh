@@ -1,12 +1,14 @@
 #!/bin/bash
 #
 #SBATCH --job-name=GLM_Engstrom_sim1_trimmed
-#SBATCH --output=job_output/GLM_Engstrom_sim1_trimmed.%j.out
-#SBATCH --error=job_output/GLM_Engstrom_sim1_trimmed.%j.err
+#SBATCH --output=/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/log_files/GLM_Engstrom_sim1_trimmed.%j.out
+#SBATCH --error=/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/log_files/GLM_Engstrom_sim1_trimmed.%j.err
 #SBATCH --time=6:00:00
-#SBATCH -p owners
+#SBATCH -p horence
 #SBATCH --nodes=1
-#SBATCH --mem=60Gb
+#SBATCH --mem=70Gb
+#SBATCH --dependency=afterok:48372814:48372815
+#SBATCH --kill-on-invalid-dep=yes
 date
 Rscript scripts/GLM_script.R /scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/  0 
 date

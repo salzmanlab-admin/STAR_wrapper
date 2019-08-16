@@ -71,6 +71,7 @@ if ( nrow(star_fusion)>0 ) {
   star_fusion[,junction := paste(chr1,pos1,chr2,pos2 ,sep = ":")]
 }
 #### first for class_input_priority_Align ####
+class_input_priority_Align[,!(names(class_input_priority_Align) %in% c("intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang"))]
 class_input_priority_Align[fileTypeR1 == "Chimeric",junction_compatible := paste(chrR1A,juncPosR1A,chrR1B,juncPosR1B,sep = ":")]
 class_input_priority_Align[fileTypeR1 == "Aligned",junction_compatible := paste(chrR1A,as.numeric(juncPosR1A) + 1,chrR1B,as.numeric(juncPosR1B) - 1,sep = ":")]
 
