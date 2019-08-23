@@ -26,6 +26,20 @@ import time
 import utils_os
 from utils_juncReads_minimal import *
 
+def count_stretch(s):
+  counts = {"A" : 0, "T" : 0, "C" : 0, "G" : 0}
+  # curr_stretch = 0
+  for i in range(len(s)):
+    if i == 0:
+      curr_stretch = 1
+    elif s[i] != s[i-1]:
+      counts[s[i-1]] = max(counts[s[i-1]], curr_stretch)
+      curr_stretch = 1
+    else:
+      curr_stretch += 1
+  counts[s[-1]] = max(counts[s[-1]], curr_stretch)
+  return counts
+
 
 def read_strand(flag, fill_char = "NA"):
   if flag == fill_char:
@@ -348,7 +362,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1"]
+  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2"]
   col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
               'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'read_strand']
   for c in col_base:
@@ -392,7 +406,10 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
 #        print("{},{},{}".format(r1.name,r1.refName, r2.refName))
         out_dict["refName_ABR1"] = r1.refName_AB
         out_dict["refName_readStrandR1"] = r1.refName_readStrand
-
+        counts = count_stretch(r1.seqA)
+        out_dict["AT_run_R1"] = max(counts["A"], counts["T"])
+        out_dict["GC_run_R1"] = max(counts["G"], counts["C"])
+        out_dict["max_run_R1"] = max(counts.values())
         out_dict["numNR1"] = r1.numN
         out_dict["readLenR1"] = r1.readLen
         out_dict["posR1A"] = r1.offsetA
@@ -420,6 +437,10 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
         out_dict["juncPosR1A"] = split_ref[0].split(":")[2]
         out_dict["juncPosR1B"] = split_ref[1].split(":")[2]
         out_dict["readClassR1"] = split_ref[2]
+        if out_dict["readClassR1"] == "fus":
+          out_dict["spliceDist"] = "NA"
+        else:
+          out_dict["spliceDist"] = abs(int(out_dict["juncPosR1A"]) - int(out_dict["juncPosR1B"]))
         out_dict["MDR1A"] = r1.MDA
         out_dict["MDR1B"] = r1.MDB
         out_dict["nmmR1A"] = r1.nmmA
@@ -501,6 +522,10 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
           out_dict["readLenR2"] = r2.readLen
           out_dict["refName_ABR2"] = r2.refName_AB
           out_dict["refName_readStrandR2"] = r2.refName_readStrand
+          counts = count_stretch(r2.seqA)
+          out_dict["AT_run_R2"] = max(counts["A"], counts["T"])
+          out_dict["GC_run_R2"] = max(counts["G"], counts["C"])
+          out_dict["max_run_R2"] = max(counts.values())
 
           out_dict["posR2A"] = r2.offsetA
           out_dict["posR2B"] = r2.offsetB
