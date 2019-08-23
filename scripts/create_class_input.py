@@ -87,20 +87,44 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
           first = False
         else:
           read = newReadObj(line.strip().split(), fastqIdStyle, ann)
+        test_name = "A00111:335:HLMG5DSXX:3:1348:13395:25222"
+        if read.name == test_name:
+          print("\nread", read)
 #        print("refname", read.refName)
         if readType == "r1":
+          if read.name == test_name:
+            print("\nread r1", read)
+
           if bam_read.has_tag("ch"):
+            if read.name == test_name:
+              print("\nread ch", read)
+
            
             if read.name not in read_junc_dict:
+              if read.name == test_name:
+                print("\nread read_junc_dict", read)
+
               if read.refName not in junc_read_dict:
+                if read.name == test_name:
+                  print("\nread junc_read_dict", read)
+
                 junc_read_dict[read.refName] = {}
               junc_read_dict[read.refName][read.name] = [read]
               read_junc_dict[read.name] = read.refName
   
           elif "|lin" in read.refName:
+            if read.name == test_name:
+              print("\nread lin", read)
+
 #            if "|lin" in read.refName:
             if read.name not in read_junc_dict:
+              if read.name == test_name:
+                print("\nread lin read_junc_dict", read)
+
               if read.refName not in junc_read_dict:
+                if read.name == test_name:
+                  print("\nread lin junc_read_dict", read)
+
                 junc_read_dict[read.refName] = {}
               junc_read_dict[read.refName][read.name] = [read]
               read_junc_dict[read.name] = read.refName
@@ -123,6 +147,9 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
         # add mates 
         elif readType == "r2":
           if read.name in read_junc_dict:
+            if read.name == test_name:
+              print("\nread r2", read)
+
             junc_read_dict[read_junc_dict[read.name]][read.name].append(read)
             
             assert len(junc_read_dict[read_junc_dict[read.name]][read.name]) == 2
