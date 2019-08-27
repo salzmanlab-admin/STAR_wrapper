@@ -39,7 +39,7 @@ def submit_job(file_name):
 
 
 def circle(data_path, name, p_thresh, single, end):
-  command = "python3 circ_summary.py --input_file {} --out_class_file {} --out_summary_file {} --p_thresh {}".format("{}{}/class_input_WithinBAM{}".format(data_path, name, end), "{}{}/class_input_WithinBAM{}".format(data_path, name, end), "{}{}/circ_summary.tsv".format(data_path, name), p_thresh)
+  command = "python3 circ_summary.py --input_file {} --out_class_file {} --out_summary_file {} --p_thresh {}".format("{}{}/class_input_WithinBAM{}".format(data_path, name, end), "{}{}/class_input_WithinBAM{}".format(data_path, name, end), "{}{}/junc_summary.tsv".format(data_path, name), p_thresh)
   if single:
     command += " --single"
   sbatch_file("../run_circ.sh", "circ_{}".format(name), "5:00:00", "60Gb", command)
@@ -81,7 +81,7 @@ def main():
   errs = 0
   for d in glob(data_path + "*/"):
     try:
-      with open(d + "circ_summary.tsv","r") as f:
+      with open(d + "junc_summary.tsv","r") as f:
         line = f.readline()[:-1].split("\t")
       done_names.append(d.split("/")[-2])  
     except:

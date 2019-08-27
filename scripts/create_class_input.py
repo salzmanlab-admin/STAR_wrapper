@@ -353,6 +353,15 @@ def get_SM(cigar):
 
 def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
   fill_char = "NA"
+  meta_df =  pd.read_csv("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/TS_Pilot_Plate_Info_051019_smartseq2.csv") 
+  plate = out_file.split("/")[-2].split("_")[0]
+  if plate in list(meta_df["Plate ID"]): 
+    organ = meta_df[meta_df["Plate ID"] == plate].iloc[0]["Organ"]
+    cell_type = "".join(meta_df[meta_df["Plate ID"] == plate].iloc[0]["Cell Type(s)"].split())
+  else:
+    organ = fill_char
+    cell_type = fill_char
+
   out = open(out_file,"w")
 #   out.write("\t".join(["id", "class", "posA", "qualA", "aScoreA", "numN", 
 #                        "posB", "qualB", "aScoreB", "readLen", "junction", "strandA", "strandB", "posR2A", 
@@ -362,7 +371,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2"]
+  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2", "Organ", "Cell_Type(s)"]
   col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
               'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'read_strand']
   for c in col_base:
@@ -384,6 +393,8 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
     for read_name in junc_read_dict[junc].keys():
       if (len(junc_read_dict[junc][read_name]) == 2 and not single) or (len(junc_read_dict[junc][read_name]) == 1 and single):
         out_dict["id"] = read_name
+        out_dict["Organ"] = organ
+        out_dict["Cell_Type(s)"] = cell_type
         if read_name in genomic_alignments:
           out_dict["genomicAlignmentR1"] = 1
         else:

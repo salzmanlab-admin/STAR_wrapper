@@ -42,12 +42,12 @@ def main():
 
   if args.single:
     p_col = "p_predicted_glmnet"
-    circ_df = df[(df["readClassR1"] == "rev") & (df[p_col] > args.p_thresh)]
+    circ_df = df[(df["readClassR1"].isin(["rev","lin"])) & (df[p_col] > args.p_thresh)]
 
 
   else:
     p_col = "p_predicted_glmnet_corrected"
-    circ_df = df[(df["readClassR1"] == "rev") & (df["location_compatible"] == 1) & 
+    circ_df = df[(df["readClassR1"].isin(["rev", "lin"])) & (df["location_compatible"] == 1) & 
              (df["read_strand_compatible"] == 1) & (df[p_col] > args.p_thresh)]
 
 
@@ -75,7 +75,8 @@ def main():
         sub_df = df[(df["chrR1" + half] == row["chrR1" + half]) & 
                (df["geneR1" + half] == row["geneR1" + half]) & 
                (df["juncPosR1" + half] == row["juncPosR1" + half]) &
-               (df[p_col] > args.p_thresh)]
+               (df[p_col] > args.p_thresh) & (df["location_compatible"] == 1) &
+               (df["read_strand_compatible"] == 1)]
         for c in classes:
           if c == "total":
             sub_sub_df = sub_df
@@ -85,13 +86,11 @@ def main():
           out_df.at[i,"{}_{}_{}".format(h, c, "unique")] = sub_sub_df["refName_ABR1"].nunique()
   
     # want
-    cols = ["refName_ABR1",
-    "readClassR1",
-    p_col,"refName_ABR1_count","seqR1"]
+    cols = ["refName_ABR1","readClassR1",p_col,"refName_ABR1_count","seqR1", "Organ", "Cell_Type(s)", "is.annotated", "posR1A"]
     out_df = out_df[cols + new_cols]
   
     out_df = out_df.sort_values(by=["refName_ABR1_count","donor_total_count","acceptor_total_count"], ascending = False)
-    join_df = df.set_index("refName_ABR1").join(out_df[new_cols + ["refName_ABR1_count", "refName_ABR1"]].set_index("refName_ABR1")).reset_index(level="refName_ABR1")
+    join_df = df[[c for c in df.columns if c not in new_cols + ["refName_ABR1_count"]]].set_index("refName_ABR1").join(out_df[new_cols + ["refName_ABR1_count", "refName_ABR1"]].set_index("refName_ABR1")).reset_index(level="refName_ABR1")
     out_df.to_csv(args.out_summary_file, index = False, sep = "\t")
     join_df.to_csv(args.out_class_file, index = False, sep = "\t")
     print(time.time() - t0)
