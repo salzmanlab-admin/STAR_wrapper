@@ -54,40 +54,44 @@ write.table(gene_count,genecount_file,row.names = FALSE,sep = "\t",quote = FALSE
 class_input_files = list.files(directory, pattern = "class_input_WithinBAM.tsv", all.files = FALSE)
 for (counter in 1:1){
   class_input = fread(paste(directory,class_input_files[counter],sep = ""),sep = "\t",header = TRUE)
-#  class_input[,geneR1A := NULL]
-#  class_input[,geneR1B := NULL]
-#  class_input[,geneR1A := strsplit(strsplit(refName_ABR1,split = "|",fixed = TRUE)[[1]][2],split = ":")[[1]][2],by = 1:nrow(class_input)]
-#  class_input[,geneR1B := strsplit(refName_ABR2,split = ":")[[1]][2],by = 1:nrow(class_input)]
+  #  class_input[,geneR1A := NULL]
+  #  class_input[,geneR1B := NULL]
+  #  class_input[,geneR1A := strsplit(strsplit(refName_ABR1,split = "|",fixed = TRUE)[[1]][2],split = ":")[[1]][2],by = 1:nrow(class_input)]
+  #  class_input[,geneR1B := strsplit(refName_ABR2,split = ":")[[1]][2],by = 1:nrow(class_input)]
   if ( "geneR1B_name" %in% names(class_input) ){
-     class_input[,geneR1A_name := NULL]
-     class_input[,geneR1B_name := NULL]
-     class_input[,geneR1A_ensembl := NULL]
-     class_input[,geneR1B_ensembl := NULL]
-     class_input[,geneR1A_expression := NULL] 
-     class_input[,geneR1B_expression := NULL]
+    class_input[,geneR1A_name := NULL]
+    class_input[,geneR1B_name := NULL]
+    class_input[,geneR1A_ensembl := NULL]
+    class_input[,geneR1B_ensembl := NULL]
+    class_input[,geneR1A_expression_stranded := NULL] 
+    class_input[,geneR1B_expression_stranded := NULL]
+    class_input[,geneR1A_expression_unstranded := NULL]
+    class_input[,geneR1B_expression_unstranded := NULL]
+    class_input[,geneR1A_expression := NULL]
+    class_input[,geneR1B_expression := NULL]
   }
- class_input = data.frame(class_input)
- class_input = class_input[,!(names(class_input) %in% c("intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang"))]
- class_input = data.table(class_input)
-  class_input[,geneR1B_name := tail(strsplit(geneR1B,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
-  class_input[,geneR1A_name := tail(strsplit(geneR1A,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
+  class_input = data.frame(class_input)
+  class_input = class_input[,!(names(class_input) %in% c("intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang"))]
+  class_input = data.table(class_input)
+#  class_input[,geneR1B_name := tail(strsplit(geneR1B,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
+#  class_input[,geneR1A_name := tail(strsplit(geneR1A,split = ",")[[1]],n = 1),by = 1:nrow(class_input)]
   
-  class_input = merge(class_input,unique(gtf_info[,list(gene_name,gene_id)]),by.x = "geneR1A_name",by.y = "gene_name",all.x = TRUE,all.y = FALSE)
+  class_input = merge(class_input,unique(gtf_info[,list(gene_name,gene_id)]),by.x = "geneR1A_uniq",by.y = "gene_name",all.x = TRUE,all.y = FALSE)
   setnames(class_input,old = "gene_id" ,new = "geneR1A_ensembl")
-  class_input = merge(class_input,unique(gtf_info[,list(gene_name,gene_id)]),by.x = "geneR1B_name",by.y = "gene_name",all.x = TRUE,all.y = FALSE)
+  class_input = merge(class_input,unique(gtf_info[,list(gene_name,gene_id)]),by.x = "geneR1B_uniq",by.y = "gene_name",all.x = TRUE,all.y = FALSE)
   setnames(class_input,old = "gene_id" ,new = "geneR1B_ensembl")
   
-  class_input = merge(class_input,gene_count[,list(ensembl_id,V3)],by.x = "geneR1A_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
-  setnames(class_input,old = "V3" ,new = "geneR1A_expression")
-  class_input = merge(class_input,gene_count[,list(ensembl_id,V3)],by.x = "geneR1B_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
-  setnames(class_input,old = "V3" ,new = "geneR1B_expression")
+  class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3)],by.x = "geneR1A_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
+  setnames(class_input,old = c("V2","V3") ,new = c("geneR1A_expression_unstranded","geneR1A_expression_stranded"))
+  class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3)],by.x = "geneR1B_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
+  setnames(class_input,old = c("V2","V3") ,new = c("geneR1B_expression_unstranded","geneR1B_expression_stranded"))
   
- # class_input_1 = class_input[is.na(geneR1A_ensembl)]
- # ensemble_ids = apply(class_input_1,1,function(x) synonyms[Synonyms%like%x['geneR1A_name']]$ensemble1[1])
- # class_input[is.na(geneR1A_ensembl)]$geneR1A_ensembl = ensemble_ids
- # class_input_2 = class_input[is.na(geneR1B_ensembl)]
- # ensemble_ids = apply(class_input_2,1,function(x) synonyms[Synonyms%like%x['geneR1B_name']]$ensemble1[1])
- # class_input[is.na(geneR1B_ensembl)]$geneR1B_ensembl = ensemble_ids
+  # class_input_1 = class_input[is.na(geneR1A_ensembl)]
+  # ensemble_ids = apply(class_input_1,1,function(x) synonyms[Synonyms%like%x['geneR1A_name']]$ensemble1[1])
+  # class_input[is.na(geneR1A_ensembl)]$geneR1A_ensembl = ensemble_ids
+  # class_input_2 = class_input[is.na(geneR1B_ensembl)]
+  # ensemble_ids = apply(class_input_2,1,function(x) synonyms[Synonyms%like%x['geneR1B_name']]$ensemble1[1])
+  # class_input[is.na(geneR1B_ensembl)]$geneR1B_ensembl = ensemble_ids
   
   write.table(class_input,paste(directory,class_input_files[counter],sep = ""),row.names = FALSE, quote = FALSE, sep = "\t")
 }

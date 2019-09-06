@@ -27,7 +27,7 @@ import utils_os
 from utils_juncReads_minimal import *
 
 def count_stretch(s):
-  counts = {"A" : 0, "T" : 0, "C" : 0, "G" : 0}
+  counts = {"A" : 0, "T" : 0, "C" : 0, "G" : 0, "N" : 0}
   # curr_stretch = 0
   for i in range(len(s)):
     if i == 0:

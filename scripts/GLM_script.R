@@ -19,12 +19,15 @@ compute_class_error <- function(train_class,glm_predicted_prob){
 
 ###### Input arguments ##############
 args = commandArgs(trailingOnly = TRUE)
-directory = "" 
+#directory = "" 
 directory = args[1]
 is.SE = as.numeric(args[2])
 #####################################
 
-#directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_withinbam_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TSP1_bladder_1_S13_L002/"
+### arguments for debugging ######
+#is.SE = 0
+#directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107810_P10_S187/"
+##################################
 
 ###### read in class input file #####################
 class_input_file = list.files(directory,pattern = "class_input_WithinBAM.tsv")
@@ -38,21 +41,15 @@ class_input =  fread(paste(directory,class_input_file,sep = ""),sep = "\t",heade
 #class_input[,minHIR1A:=min(HIR1A),by=junction_compatible]
 ###################################################################################
 
-class_input[,numReads:=length(unique(id)),by = refName_ABR1]
+class_input[,numReads:=length(unique(id)),by = refName_newR1]
 
-####### Assign pos and neg training data for GLM training #######  
-class_input[genomicAlignmentR1==1 & fileTypeR1=="Aligned",train_class := 0]
-n.pos = nrow(class_input[genomicAlignmentR1==0 & fileTypeR1=="Aligned"])
-n.neg = nrow(class_input[train_class == 0]) 
-n.pos = min(max(n.neg,n.pos),150000)  # number of positive reads that we want to subsample from the list of all reads
-all_pos_reads = which((class_input$genomicAlignmentR1==0) & (class_input$fileTypeR1=="Aligned"))
-class_input [sample(all_pos_reads,n.pos,replace=FALSE),train_class := 1]
-#################################################################
 
 
 ### obtain fragment lengths for chimeric reads for computing length adjusted AS ##########
 class_input[fileTypeR1 == "Aligned",length_adj_AS_R1:= aScoreR1A/readLenR1]
 class_input[fileTypeR1 == "Chimeric",length_adj_AS_R1 := (aScoreR1A + aScoreR1B)/ (MR1A + MR1B + SR1A + SR1B)]
+class_input[,length_adj_AS_R1A:= aScoreR1A / (MR1A + SR1A),by=1:nrow(class_input)]
+class_input[,length_adj_AS_R1B:= aScoreR1B / (MR1B + SR1B),by=1:nrow(class_input)]
 ###########################################################################################
 
 ### obtain the number of smismatches per alignment ##########
@@ -68,7 +65,18 @@ class_input[fileTypeR1 == "Chimeric",qual_R1 := (qualR1A + qualR1B) / 2]
 #### obtain junction overlap #########
 class_input[,overlap_R1 := min(MR1A,MR1B),by=1:nrow(class_input)]
 class_input[,max_overlap_R1 := max(MR1A,MR1B),by=1:nrow(class_input)]
+class_input[,median_overlap_R1 := round(median(overlap_R1)),by = refName_newR1]
 ######################################
+
+### categorical variable for zero mismatches ###########
+class_input[,is.zero_nmm:= 0]
+class_input[nmmR1==0,is.zero_nmm:= 1]
+#######################################################
+
+###### categorical variable for multimapping ###########
+class_input[,is.multimapping := 0]
+class_input[NHR1A>2,is.multimapping := 1]
+#####################################################
 
 ###### compute noisy junction score ########
 round.bin = 50
@@ -76,7 +84,19 @@ class_input[,binR1A:=round(juncPosR1A/round.bin)*round.bin]
 class_input[,binR1B:=round(juncPosR1B/round.bin)*round.bin]
 class_input[,njunc_binR1A:=length(unique(refName_readStrandR1)),by=paste(binR1A,chrR1A)]
 class_input[,njunc_binR1B:=length(unique(refName_readStrandR1)),by=paste(binR1B,chrR1B)]
+class_input[,binR1A:=NULL]
+class_input[,binR1B:=NULL]
 ############################################
+
+#### get the number of distinct partners for each splice site ###########
+class_input[,junc_pos1_R1:=paste(chrR1A,juncPosR1A,sep=":"),by = 1:nrow(class_input)]
+class_input[,junc_pos2_R1:=paste(chrR1B,juncPosR1B,sep=":"),by = 1:nrow(class_input)]
+class_input[,threeprime_partner_number_R1:=length(unique(junc_pos2_R1)),by = junc_pos1_R1]
+class_input[,fiveprime_partner_number_R1:=length(unique(junc_pos1_R1)),by = junc_pos2_R1]
+class_input[,junc_pos1_R1:=NULL]
+class_input[,junc_pos2_R1:=NULL]
+###########################################################################
+
 
 ## the same predictors for R2
 ### obtain fragment lengths for chimeric reads for computing length adjusted AS ##########
@@ -99,18 +119,20 @@ class_input[,overlap_R2 := min(MR2A,MR2B),by=1:nrow(class_input)]
 class_input[,max_overlap_R2 := max(MR2A,MR2B),by=1:nrow(class_input)]
 ######################################
 
-#### get the number of distinct partners for each splice site ###########
-class_input[,junc_pos1:=paste(chrR1A,juncPosR1A,sep=":"),by = 1:nrow(class_input)]
-class_input[,junc_pos2:=paste(chrR1B,juncPosR1B,sep=":"),by = 1:nrow(class_input)]
-class_input[,threeprime_partner_number:=length(unique(junc_pos2)),by = junc_pos1]
-class_input[,fiveprime_partner_number:=length(unique(junc_pos1)),by = junc_pos2]
-###########################################################################
 
 
+####### Assign pos and neg training data for GLM training #######  
+n.neg = nrow(class_input[genomicAlignmentR1==1 & fileTypeR1=="Aligned"])
+n.pos = nrow(class_input[genomicAlignmentR1==0 & fileTypeR1=="Aligned"])
+n.neg = min(n.neg,150000)
+n.pos = min(n.pos,150000)  # number of positive reads that we want to subsample from the list of all reads
+all_neg_reads = which((class_input$genomicAlignmentR1==1) & (class_input$fileTypeR1=="Aligned"))
+all_pos_reads = which((class_input$genomicAlignmentR1==0) & (class_input$fileTypeR1=="Aligned"))
+class_input[sample(all_neg_reads,n.neg,replace=FALSE),train_class := 0]
+class_input[sample(all_pos_reads,n.pos,replace=FALSE),train_class := 1]
+#################################################################
 
-################ set the class-level weights for all reads within the same class
-
-n.pos = nrow(class_input[train_class == 1])
+#set the training reads and class-wise weights for the reads within the same class
 class.weight = min(n.pos, n.neg)
 
 if (n.pos >= n.neg){
@@ -130,17 +152,16 @@ if (n.pos >= n.neg){
 # if we use type = "link", it gives the fitted value in the scale of linear predictors, if we use type = "response", it gives the response in the scale of the response variable
 
 if (is.SE == 0){
-  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A +  MR1B:SR1B + entropyR1*entropyR2 + location_compatible + read_strand_compatible + length_adj_AS_R1 + length_adj_AS_R2 + NHR2A + njunc_binR1A + njunc_binR1B")
+  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A + MR1B:SR1B + length_adj_AS_R1 + nmmR2 + length_adj_AS_R2 + NHR2A + entropyR1*entropyR2 + location_compatible + read_strand_compatible")
 } else {
-  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A +  MR1B:SR1B + entropyR1 + length_adj_AS_R1  +  njunc_binR1A + njunc_binR1B")
+  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A +  MR1B:SR1B + entropyR1 + length_adj_AS_R1")
 }
 
 
-######################################
-##### first simple glm model  ########
-######################################
-print("first simple glm model")
-
+###########################
+##### GLM model  ##########
+###########################
+print("first glm model")
 tic("glm")
 glm_model = glm( update(regression_formula, ~ . -1), data = class_input[!is.na(train_class)], family = binomial(link="logit"), weights = class_input[!is.na(train_class),cur_weight])
 toc()
@@ -150,20 +171,20 @@ print(summary(glm_model))
 class_input$glm_per_read_prob = predict(glm_model,newdata = class_input, type = "response",se.fit = TRUE)$fit 
 
 # compute aggregated score for each junction
-class_input[,p_predicted_glm:= 1/( exp(sum(log( (1 - glm_per_read_prob)/glm_per_read_prob ))) + 1) ,by = refName_ABR1]
+class_input[,p_predicted_glm:= 1/( exp(sum(log( (1 - glm_per_read_prob)/glm_per_read_prob ))) + 1) ,by = refName_newR1]
 
 #compute classification error for the trained model
 compute_class_error(class_input[!is.na(train_class)]$train_class,class_input[!is.na(train_class)]$glm_per_read_prob)
 
 # compute aggregated score for each junction
-class_input[,p_predicted_glm:= 1/( exp(sum(log( (1 - glm_per_read_prob)/glm_per_read_prob ))) + 1) ,by = refName_ABR1]
+class_input[,p_predicted_glm:= 1/( exp(sum(log( (1 - glm_per_read_prob)/glm_per_read_prob ))) + 1) ,by = refName_newR1]
 print("done with glm")
 
 #for PE data we have the option of correcting per-read scores for anomalous reads
 if (is.SE==0){
   class_input[,glm_per_read_prob_corrected := glm_per_read_prob]
   class_input[(location_compatible==0 | read_strand_compatible==0),glm_per_read_prob_corrected:=glm_per_read_prob/(1 + glm_per_read_prob)]
-  class_input[,p_predicted_glm_corrected := 1/( exp(sum(log( (1 - glm_per_read_prob_corrected)/glm_per_read_prob_corrected ))) + 1) ,by = refName_ABR1]
+  class_input[,p_predicted_glm_corrected := 1/( exp(sum(log( (1 - glm_per_read_prob_corrected)/glm_per_read_prob_corrected ))) + 1) ,by = refName_newR1]
 }
 ######################################
 ######################################
@@ -184,33 +205,89 @@ print(coef(glmnet_model, s = "lambda.1se"))
 print(glmnet_model)
 
 # predict for all read alignments in the class input file
-class_input_glmnet = model.matrix(update(regression_formula, refName_ABR1 ~ .) , class_input)
+class_input_glmnet = model.matrix(update(regression_formula, refName_newR1 ~ .) , class_input)
 class_input$glmnet_per_read_prob = predict(glmnet_model,newx = class_input_glmnet, type = "response",s = "lambda.1se", se.fit = TRUE)
 
 # compute the fitted classification error based on training data
 compute_class_error(class_input[!is.na(train_class)]$train_class,class_input[!is.na(train_class)]$glmnet_per_read_prob)
 
 # compute aggregated score for each junction
-class_input[,p_predicted_glmnet:= 1/( exp(sum(log( (1 - glmnet_per_read_prob)/glmnet_per_read_prob ))) + 1) ,by = refName_ABR1]
+class_input[,p_predicted_glmnet:= 1/( exp(sum(log( (1 - glmnet_per_read_prob)/glmnet_per_read_prob ))) + 1) ,by = refName_newR1]
 
 
 if (is.SE==0){
   class_input[,glmnet_per_read_prob_corrected := glmnet_per_read_prob]
   class_input[(location_compatible==0 | read_strand_compatible==0),glmnet_per_read_prob_corrected:=glmnet_per_read_prob/(1 + glmnet_per_read_prob)]
-  class_input[,p_predicted_glmnet_corrected := 1/( exp(sum(log( (1 - glmnet_per_read_prob_corrected)/glmnet_per_read_prob_corrected ))) + 1) ,by = refName_ABR1]
+  class_input[,p_predicted_glmnet_corrected := 1/( exp(sum(log( (1 - glmnet_per_read_prob_corrected)/glmnet_per_read_prob_corrected ))) + 1) ,by = refName_newR1]
 }
+
+######################################################
+######################################################
+#### now we do the two-step GLM for chimeric reads ###
+######################################################
+######################################################
+class_input[,train_class :=NULL]
+p_predicted_quantile = quantile(class_input[!(duplicated(refName_newR1)) & (fileTypeR1 == "Chimeric")]$p_predicted_glmnet,probs = c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)) # the percentiles for the scores based on linear GLM
+p_predicted_neg_cutoff = p_predicted_quantile[[2]]
+p_predicted_pos_cutoff = p_predicted_quantile[[8]]
+
+####### Assign pos and neg training data for GLM training #######  
+n.neg = nrow(class_input[fileTypeR1=="Chimeric"][p_predicted_glmnet <= p_predicted_neg_cutoff])
+n.pos = nrow(class_input[fileTypeR1=="Chimeric"][p_predicted_glmnet >= p_predicted_pos_cutoff])
+n.neg = min(n.neg,150000)
+n.pos = min(n.pos,150000)  # number of positive reads that we want to subsample from the list of all reads
+all_neg_reads = which((class_input$fileTypeR1=="Chimeric") & (class_input$p_predicted_glmnet <= p_predicted_neg_cutoff))
+all_pos_reads = which((class_input$fileTypeR1=="Chimeric") & (class_input$p_predicted_glmnet >= p_predicted_pos_cutoff))
+class_input[sample(all_neg_reads,n.neg,replace=FALSE),train_class := 0]
+class_input[sample(all_pos_reads,n.pos,replace=FALSE),train_class := 1]
+#################################################################
+
+class.weight = min(n.pos, n.neg)
+if (n.pos >= n.neg){
+  class_input[train_class == 0,cur_weight := 1]
+  class_input[train_class == 1,cur_weight := n.neg / n.pos]
+} else {
+  class_input[train_class == 0,cur_weight := n.pos/n.neg]
+  class_input[train_class == 1,cur_weight := 1]
+}
+
+regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1  + nmmR1 + length_adj_AS_R1A + length_adj_AS_R1B + nmmR2 + entropyR1*entropyR2 + length_adj_AS_R2")
+
+################################################################
+######## Building the GLMnet for chimeric junctions ############
+################################################################
+tic("glmnet")
+print("now glmnet model")
+x_glmnet = model.matrix(regression_formula, class_input[!is.na(train_class)])
+glmnet_model = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50,nfolds = 5)
+toc()
+print("done with fitting glmnet")
+
+print(coef(glmnet_model, s = "lambda.1se"))
+print(glmnet_model)
+
+# predict for all read alignments in the class input file
+class_input_glmnet = model.matrix(update(regression_formula, refName_newR1 ~ .) , class_input[fileTypeR1=="Chimeric"])
+class_input[fileTypeR1=="Chimeric",glmnet_twostep_per_read_prob:=0]
+class_input[fileTypeR1=="Chimeric"]$glmnet_twostep_per_read_prob  = predict(glmnet_model,newx = class_input_glmnet, type = "response",s = "lambda.1se", se.fit = TRUE)
+
+# compute the fitted classification error based on training data
+compute_class_error(class_input[!is.na(train_class)]$train_class,class_input[!is.na(train_class)]$glmnet_twostep_per_read_prob)
+
+# compute aggregated score for each junction
+class_input[fileTypeR1=="Chimeric",p_predicted_glmnet_twostep:= 1/( exp(sum(log( (1 - glmnet_twostep_per_read_prob)/glmnet_twostep_per_read_prob ))) + 1) ,by = refName_newR1]
+
 
 ######################################
 ######################################
 
-if(is.SE==0){
-  junction_predictions = unique(class_input[,list(refName_ABR1,numReads,readClassR1,p_predicted_glm,p_predicted_glmnet,p_predicted_glm_corrected,p_predicted_glmnet_corrected,threeprime_partner_number,fiveprime_partner_number,is.STAR_Chim,is.STAR_SJ,is.STAR_Fusion,geneR1A_expression,geneR1B_expression,geneR1B_ensembl,geneR1A_ensembl,geneR1B_name,geneR1A_name,intron_motif,is.annotated,num_uniq_map_reads,num_multi_map_reads,maximum_SJ_overhang)])
-} else{
-  junction_predictions = unique(class_input[,list(refName_ABR1,numReads,readClassR1,p_predicted_glm,p_predicted_glmnet,threeprime_partner_number,fiveprime_partner_number,is.STAR_Chim,is.STAR_SJ,is.STAR_Fusion,geneR1A_expression,geneR1B_expression,geneR1B_ensembl,geneR1A_ensembl,geneR1B_name,geneR1A_name,intron_motif,is.annotated,num_uniq_map_reads,num_multi_map_reads,maximum_SJ_overhang)])
-}
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","numReads","readClassR1","fileTypeR1","p_predicted_glm","p_predicted_glmnet","p_predicted_glm_corrected","p_predicted_glmnet_corrected","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion")
 
-write.table(junction_predictions,paste(directory,"GLM_output.txt",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
-write.table(class_input,paste(directory,"class_input_WithinBAM.txt",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
+junction_prediction = unique(class_input[,colnames(class_input)%in%col_names_to_keep_in_junc_pred_file,with = FALSE])
+junction_prediction = junction_prediction[!(duplicated(refName_newR1))]
+
+write.table(junction_prediction,paste(directory,"GLM_output.txt",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
+write.table(class_input,paste(directory,"class_input_WithinBAM.tsv",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
 
 
 # ######################################
@@ -231,23 +308,3 @@ write.table(class_input,paste(directory,"class_input_WithinBAM.txt",sep = ""),ro
 # class_input[,p_predicted_glmtlp:= 1/( exp(sum(log( (1 - glmtlp_per_read_prob)/glmtlp_per_read_prob ))) + 1) ,by = refNameR1]
 # ######################################
 # ######################################
-
-
-
-# ## compute the median of the variables for each junction
-# f = data.table(class_input_glmnet)
-# f = cbind(class_input$refNameR1,f)
-# names(f)[1]="refNameR1"
-# f[,median_overlap := round(median(overlap)),by=refNameR1]
-# f[,median_max_overlap := round(median(max_overlap)),by=refNameR1]
-# f[,median_MR1A := round(median(MR1A)),by=refNameR1]
-# f[,median_nmmR1 := round(median(nmmR1)),by=refNameR1]
-# f[,median_AS := round(median(nmmR1)),by=refNameR1]
-# f[,median_threeprime_num := round(median(threeprime_partner_number)),by=refNameR1]
-# f[,median_fiveprime_num := round(median(fiveprime_partner_number)),by=refNameR1]
-# f = unique(f[,list(refNameR1,median_overlap,median_max_overlap,median_MR1A,median_nmmR1,median_AS,median_threeprime_num,median_fiveprime_num)])
-# names(f) = c("refNameR1","overlap","max_overlap","MR1A","nmmR1","length_adj_AS_R1","threeprime_partner_number","fiveprime_partner_number")
-# f_glmnet = model.matrix(refNameR1~overlap + max_overlap + MR1A + nmmR1 + length_adj_AS_R1  + threeprime_partner_number + fiveprime_partner_number , f)
-# f$predicted_prob = predict(glmnet_model,newx = f_glmnet, type = "response",s="lambda.1se", se.fit = TRUE)
-# f[,class:=strsplit(refNameR1,split = "|",fixed = TRUE)[[1]][3],by = 1:nrow(f)]
-

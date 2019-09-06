@@ -17,7 +17,7 @@ def main():
   for job in args.job_ids:
     log.write("\n=====================> {} <=====================\n\n".format(job))
 #    job_type = job.split("_")[0]
-    with open("job_output/{}.err".format(job),"r") as err, open("job_output/{}.out".format(job),"r") as out:
+    with open("{}log_files/{}.err".format(args.input_path,job),"r") as err, open("{}log_files/{}.out".format(args.input_path,job),"r") as out:
       log.write(out.read())
       log.write(err.read())
 #      if job_type == "cat" or job_type == "group":
