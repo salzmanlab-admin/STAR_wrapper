@@ -113,16 +113,17 @@ def ann_SJ(out_path, name, assembly, gtf_file, single, dep = ""):
   sbatch_file("run_ann_SJ.sh", out_path, name,"ann_SJ_{}".format(name), "24:00:00", "40Gb", command, dep=dep)
   return submit_job("run_ann_SJ.sh")
 
-def class_input(out_path, name, assembly, gtf_file, single,dep=""):
+def class_input(out_path, name, assembly, gtf_file, tenX, single,dep=""):
   """Run script to create class input file"""
   command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
-    command += "--single"
+    command += "--single "
+  if tenX:
+    command += "--tenX"
   sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "24:00:00", "60Gb", command, dep=dep)
   return submit_job("run_class_input.sh")
 
-
-def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, sIO, sIB, single, gtf_file, dep = ""):
+def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, sIO, sIB, single, gtf_file, tenX, dep = ""):
   """Run script to perform mapping job for STAR"""
   command = "mkdir -p {}{}\n".format(out_path, name)
   command += "STAR --version\n"
@@ -134,7 +135,7 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
     command += "/scratch/PI/horence/Roozbeh/STAR-2.7.1a/bin/Linux_x86_64/STAR --runThreadN 4 "
     command += "--alignIntronMax 21 "
     command += "--genomeDir /scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_index_2.7.1a ".format(assembly)
-    if single:
+    if tenX:
       command += "--readFilesIn {}{}_extracted{} ".format(data_path, name, r_ends[i])
     else:
       command += "--readFilesIn {}{}{} ".format(data_path, name, r_ends[i])
@@ -196,6 +197,7 @@ def main():
 #  names = ["SRR6782109", "SRR6782110", "SRR6782111", "SRR6782112", "SRR8606521"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = True
+#  tenX = False
 
  # Tabula Muris colon
   data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
@@ -205,6 +207,7 @@ def main():
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
   names = ["SRR65462{}".format(i) for i in range(75,76)]
   single = False
+  tenX = False
   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 
 
@@ -216,6 +219,7 @@ def main():
   names = ["TSP1_bladder_1_S13_L004"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
+  tenX = True
   bc_pattern = "C"*16 + "N"*10
 
 
@@ -227,6 +231,7 @@ def main():
 #  names = ["B107809_A15_S215"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
+#  tenX = False
 
 # Tabula Sapiens pilot (smartseq)
 #  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/"+args.sample+"/"
@@ -236,6 +241,7 @@ def main():
 #  names = [args.sample]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
+#  tenX = False
 
 # CML sample
   data_path = "/scratch/PI/horence/jorda/data/CML_fastq_files/"
@@ -245,6 +251,7 @@ def main():
   names = ["CMLUConn_SRR3192410_trimmed"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = False
+  tenX = False
 
 
 # STAR_sim
@@ -265,6 +272,7 @@ def main():
   names = ["SRR027963","SRR078586"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
+  tenX = False
 
 #DNA-Seq (1000 Genome)
 #  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/1000_Genome/"
@@ -274,6 +282,7 @@ def main():
 #  names = ["SRR9134109","SRR9134112","SRR9644810"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
+#  tenX = False
 
 #HISAT sim data
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
@@ -283,6 +292,7 @@ def main():
 #  names = ["reads_mismatch_20M"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
+#  tenX = False
 
 #HISAT sim data
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_perfect/"
@@ -292,6 +302,7 @@ def main():
 #  names = ["reads_perfect_20M"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
+#  tenX = False
 
 
 #Engstrom
@@ -302,6 +313,7 @@ def main():
 #  names = ["Engstrom_sim1_trimmed","Engstrom_sim2_trimmed"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
+#  tenX = False
 
 
   # path that contains fastqs
@@ -381,7 +393,7 @@ def main():
                       extract_jobid = ""
                     if run_map:
                  
-                      map_jobid = STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, sIO, sIB, single, gtf_file, dep = ":".join(job_nums))
+                      map_jobid = STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, sIO, sIB, single, gtf_file, tenX, dep = ":".join(job_nums))
                       jobs.append("map_{}.{}".format(name,map_jobid))
                       job_nums.append(map_jobid)
                     else:
@@ -401,7 +413,7 @@ def main():
                       ann_SJ_jobid =  ""
         
                     if run_class:
-                      class_input_jobid = class_input(out_path, name, assembly, gtf_file, single, dep=":".join(job_nums))
+                      class_input_jobid = class_input(out_path, name, assembly, gtf_file, tenX, single, dep=":".join(job_nums))
                       jobs.append("class_input_{}.{}".format(name,class_input_jobid))
                       job_nums.append(class_input_jobid)
                     else:
