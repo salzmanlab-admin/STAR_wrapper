@@ -19,14 +19,14 @@ compute_class_error <- function(train_class,glm_predicted_prob){
 
 ###### Input arguments ##############
 args = commandArgs(trailingOnly = TRUE)
-#directory = "" 
 directory = args[1]
 is.SE = as.numeric(args[2])
 #####################################
 
 ### arguments for debugging ######
 #is.SE = 0
-#directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107810_P10_S187/"
+#directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/test.txt"
+#class_input =  fread("/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/test.txt",sep = "\t",header = TRUE)
 ##################################
 
 ###### read in class input file #####################
@@ -65,7 +65,7 @@ class_input[fileTypeR1 == "Chimeric",qual_R1 := (qualR1A + qualR1B) / 2]
 #### obtain junction overlap #########
 class_input[,overlap_R1 := min(MR1A,MR1B),by=1:nrow(class_input)]
 class_input[,max_overlap_R1 := max(MR1A,MR1B),by=1:nrow(class_input)]
-class_input[,median_overlap_R1 := round(median(overlap_R1)),by = refName_newR1]
+class_input[,median_overlap_R1 := as.integer(round(median(overlap_R1))),by = refName_newR1]
 ######################################
 
 ### categorical variable for zero mismatches ###########
@@ -120,7 +120,8 @@ class_input[,max_overlap_R2 := max(MR2A,MR2B),by=1:nrow(class_input)]
 ######################################
 
 
-
+class_input[,cur_weight:=NULL]
+class_input[,train_class:=NULL]
 ####### Assign pos and neg training data for GLM training #######  
 n.neg = nrow(class_input[genomicAlignmentR1==1 & fileTypeR1=="Aligned"])
 n.pos = nrow(class_input[genomicAlignmentR1==0 & fileTypeR1=="Aligned"])
@@ -227,6 +228,7 @@ if (is.SE==0){
 ######################################################
 ######################################################
 class_input[,train_class :=NULL]
+class_input[,cur_weight :=NULL]
 p_predicted_quantile = quantile(class_input[!(duplicated(refName_newR1)) & (fileTypeR1 == "Chimeric")]$p_predicted_glmnet,probs = c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)) # the percentiles for the scores based on linear GLM
 p_predicted_neg_cutoff = p_predicted_quantile[[2]]
 p_predicted_pos_cutoff = p_predicted_quantile[[8]]
@@ -281,10 +283,13 @@ class_input[fileTypeR1=="Chimeric",p_predicted_glmnet_twostep:= 1/( exp(sum(log(
 ######################################
 ######################################
 
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","numReads","readClassR1","fileTypeR1","p_predicted_glm","p_predicted_glmnet","p_predicted_glm_corrected","p_predicted_glmnet_corrected","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion")
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","numReads","readClassR1","p_predicted_glm","p_predicted_glmnet","p_predicted_glm_corrected","p_predicted_glmnet_corrected","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","glmnet_twostep_per_read_prob","p_predicted_glmnet_twostep")
 
 junction_prediction = unique(class_input[,colnames(class_input)%in%col_names_to_keep_in_junc_pred_file,with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]
+
+class_input[,cur_weight:=NULL]
+class_input[,train_class:=NULL]
 
 write.table(junction_prediction,paste(directory,"GLM_output.txt",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
 write.table(class_input,paste(directory,"class_input_WithinBAM.tsv",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")

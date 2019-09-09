@@ -19,7 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
  # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p owners\n")
+  job_file.write("#SBATCH -p horence\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -250,21 +250,21 @@ def main():
 # STAR_sim
   data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
   assembly = "hg38"
-  run_name = "sim_101_newgtf"
+  run_name = "sim_101"
   r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
-  names = ["sim2_reads"]
+  names = ["sim1_reads","sim2_reads","sim3_reads","sim4_reads","sim5_reads"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = False
 
 
 # DNA_Seq
-#  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/"
-#  assembly = "hg38"
-#  run_name = "DNA_Seq"
-#  r_ends = ["_1.fastq", "_2.fastq"]
-#  names = ["SRR027963","SRR078586"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
+  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/"
+  assembly = "hg38"
+  run_name = "DNA_Seq"
+  r_ends = ["_1.fastq", "_2.fastq"]
+  names = ["SRR027963","SRR078586"]
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+  single = True
 
 #DNA-Seq (1000 Genome)
 #  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/1000_Genome/"
@@ -276,32 +276,33 @@ def main():
 #  single = False
 
 #HISAT sim data
-#  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/"
+#  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
 #  assembly = "hg38"
 #  run_name = "HISAT_sim_data"
 #  r_ends = ["_1.fq", "_2.fq"]
-#  names = ["reads_mismatch_20M","reads_perfect_20M"]
+#  names = ["reads_mismatch_20M"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
+
+#HISAT sim data
+#  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_perfect/"
+#  assembly = "hg38"
+#  run_name = "HISAT_sim_data"
+#  r_ends = ["_1.fq", "_2.fq"]
+#  names = ["reads_perfect_20M"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
 
 
-#Engstrom_sim1
-  data_path = "/scratch/PI/horence/Roozbeh/Engstrom/data/"
-  assembly = "hg38"
-  run_name = "Engstrom_newgtf"
-  r_ends = ["_R1.fq", "_R2.fq"]
-  names = ["Engstrom_sim1_trimmed"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
-
-#Engstrom_sim2
+#Engstrom
 #  data_path = "/scratch/PI/horence/Roozbeh/Engstrom/data/"
 #  assembly = "hg38"
-#  run_name = "Engstrom_newgtf"
+#  run_name = "Engstrom"
 #  r_ends = ["_R1.fq.gz", "_R2.fq.gz"]
-#  names = ["Engstrom_sim2_trimmed"]
+#  names = ["Engstrom_sim1_trimmed","Engstrom_sim2_trimmed"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
+
 
   # path that contains fastqs
 #  data_path = ""
@@ -319,7 +320,7 @@ def main():
   run_map = False
   run_star_fusion = False
   run_ann = False
-  run_class = False
+  run_class = True
   run_modify_class = True
   run_ensembl = True
   run_compare = True

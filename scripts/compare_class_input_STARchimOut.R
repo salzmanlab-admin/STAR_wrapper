@@ -21,15 +21,15 @@ args = commandArgs(trailingOnly = TRUE)
 ###### input files #############
 directory = args[1]
 is_SE = as.numeric(args[2])
+################################
 
-
+####### inputs for debugging ##############
 #directory = "/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_demultiplexed_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/"
 #is_SE = 1
-#run_set = tail(strsplit(directory,split = "/")[[1]],n = 1)
-#dir.create(paste("/scratch/PI/horence/Roozbeh/single_cell_project/class_input_vs_STAR_output_files/",run_set,sep = ""))
+###########################################
+
 options(scipen = 999)  # this will make sure that the modified coordinates in chimeric or SJ files won't be written in scientific representation as we want to compare them with those in the class input file 
 class_input_priority_Align_file = list.files(directory,pattern = "class_input_WithinBAM.tsv")
-#class_input_priority_Chimeric_file = list.files(directory,pattern = "class_input_priorityChimeric.tsv")
 star_SJ_output_1_file = list.files(directory,pattern = "2SJ.out.tab")
 star_chimeric_output_1_file = list.files(directory,pattern = "2Chimeric.out.junction")
 star_fusion_file = list.files(directory,pattern = "star-fusion.fusion_predictions.abridged.tsv" , recursive = TRUE)
@@ -44,11 +44,16 @@ if (is_SE == 0){
 ####### read in files ############
 chimeric1 =  fread(paste(directory,star_chimeric_output_1_file,sep = ""),sep = "\t",header = FALSE)
 class_input_priority_Align =  fread(paste(directory,class_input_priority_Align_file,sep = ""),sep = "\t",header = TRUE)
-#class_input_priority_Chimeric =  fread(paste(directory,class_input_priority_Chimeric_file,sep = ""),sep = "\t",header = TRUE)
 star_SJ_output_1 =  fread(paste(directory,star_SJ_output_1_file,sep = ""),sep = "\t",header = FALSE)
 star_fusion = fread(paste(directory,star_fusion_file,sep = ""),sep = "\t" , header = TRUE)
 #############################
 
+# if the script has been run previously on the class inout file, delete the following columns to avoid duplicate column names
+class_input_priority_Align[,intron_motif:=NULL]
+class_input_priority_Align[,is.annotated:=NULL]
+class_input_priority_Align[,num_uniq_map_reads:=NULL]
+class_input_priority_Align[,num_multi_map_reads:=NULL]
+class_input_priority_Align[,maximum_SJ_overhang:=NULL]
 
 #converting intronic positions to exonic positions for chimeric junction output file for R1 
 chimeric1[V3 == "+", V2_exonic := V2 - 1]
@@ -58,7 +63,6 @@ chimeric1[V6 == "-", V5_exonic := V5 - 1]
 chimeric1[,junction := paste(V1,V2_exonic,V4,V5_exonic,sep = ":")]
 
 star_SJ_output_1[,junction := paste(V1,V2,V1,V3,sep = ":")]
-
 
 # building compatible junction coordinates for fusions called by STAR-Fusion
 if ( nrow(star_fusion)>0 ) {
@@ -70,6 +74,7 @@ if ( nrow(star_fusion)>0 ) {
   star_fusion[,strand2 := strsplit(RightBreakpoint,split = ":",fixed = TRUE)[[1]][3],by = 1:nrow(star_fusion)]  
   star_fusion[,junction := paste(chr1,pos1,chr2,pos2 ,sep = ":")]
 }
+
 #### first for class_input_priority_Align ####
 class_input_priority_Align = data.frame(class_input_priority_Align) 
 class_input_priority_Align = class_input_priority_Align[,!(names(class_input_priority_Align) %in% c("intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang"))]
@@ -84,7 +89,7 @@ class_input_priority_Align[fileTypeR1 == "Aligned",is.STAR_SJ := 1]
 class_input_priority_Align[fileTypeR1 == "Aligned" & !(junction_compatible %in% star_SJ_output_1$junction) ,is.STAR_SJ := 0] 
 class_input_priority_Align = merge(class_input_priority_Align,star_SJ_output_1[,list(junction,V5,V6,V7,V8,V9)],by.x = "junction_compatible",by.y = "junction",all.x = TRUE,all.y = FALSE )
 
-class_input_priority_Align[fileTypeR1 == "Chimeric",is.STAR_Fusion := 0]
+class_input_priority_Align[fileTypeR1 == "Chimeric", is.STAR_Fusion := 0]
 if ( nrow(star_fusion)>0 ) {
   class_input_priority_Align[fileTypeR1 == "Chimeric" & (junction_compatible %in% star_fusion$junction) ,is.STAR_Fusion := 1]
 }
@@ -93,8 +98,7 @@ in_star_chim_not_in_classinput_prio_align = chimeric1[!(junction %in% class_inpu
 in_star_SJ_not_in_classinput_prio_align = star_SJ_output_1[ !(junction %in% class_input_priority_Align$junction_compatible)]
 
 class_input_priority_Align[,junction_compatible := NULL]
-setnames(class_input_priority_Align,old = c("V5","V6","V7","V8","V9"),new = c("intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang"))
-
+setnames(class_input_priority_Align,old = c("V5","V6","V7","V8","V9"), new = c("intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang"))
 ################################################
 
 
