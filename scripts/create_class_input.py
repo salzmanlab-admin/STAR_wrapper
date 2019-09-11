@@ -351,7 +351,7 @@ def get_SM(cigar):
       S += int(m[0])
   return M, S
 
-def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
+def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
   fill_char = "NA"
   meta_df =  pd.read_csv("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/TS_Pilot_Plate_Info_051019_smartseq2.csv") 
   plate = out_file.split("/")[-2].split("_")[0]
@@ -399,17 +399,17 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments):
           out_dict["genomicAlignmentR1"] = 1
         else:
           out_dict["genomicAlignmentR1"] = 0
-
-        if single:
+        if tenX:
           read_vals = read_name.split("_")
           out_dict["barcode"] = read_vals[-2]
           out_dict["UMI"] = read_vals[-1]
-          out_dict["read_strand_compatible"] = fill_char
-          out_dict["location_compatible"] = fill_char
-
         else:
           out_dict["barcode"] = fill_char
           out_dict["UMI"] = fill_char
+        if single:
+          out_dict["read_strand_compatible"] = fill_char
+          out_dict["location_compatible"] = fill_char
+
 #         info = [read_name]
         r1 = junc_read_dict[junc][read_name][0]
 #        r2 = junc_read_dict[junc][read_name][1]
@@ -632,6 +632,7 @@ def main():
   parser.add_argument("-a", "--assembly", help="The name of the assembly to pre-load annotation (so, mm10 for the 10th mouse assembly)")
   parser.add_argument("-i", "--input_path", help="the prefix to the STAR Aligned.out.sam and Chimeric.out.sam directory")
   parser.add_argument("-s", "--single", action="store_true", help="use this flag if the reads you are running on are single-ended")
+  parser.add_argument("-t", "--tenX", action="store_true", help="indicate whether this is 10X data (with UMIs and barcodes)")
   args = parser.parse_args()
 #  gtf_data = pyensembl.Genome(reference_name='hg38', annotation_name='my_genome_features', gtf_path_or_url='/scratch/PI/horence/JuliaO/single_cell/STAR_output/mm10_files/mm10.gtf')
 #  gtf_data.index()
@@ -718,8 +719,7 @@ def main():
 
 #  print("parsed all {}".format(regime), time.time() - t0)
 #  write_class_file(junc_read_dict,"/scratch/PI/horence/JuliaO/single_cell/scripts/output/create_class_input/{}.tsv".format(fastq_id))
-  write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single, genomic_alignments)
-
+  write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single, genomic_alignments, args.tenX)
 
 #time.time() - t0
 
