@@ -24,9 +24,9 @@ is.SE = as.numeric(args[2])
 #####################################
 
 ### arguments for debugging ######
-#is.SE = 0
+#is.SE = 1
 #directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/test.txt"
-#class_input =  fread("/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/test.txt",sep = "\t",header = TRUE)
+#class_input =  fread("/scratch/PI/horence/Roozbeh/single_cell_project/output/DNA_Seq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/SRR027963/class_input_WithinBAM.tsv",sep = "\t",header = TRUE)
 ##################################
 
 ###### read in class input file #####################
@@ -99,26 +99,27 @@ class_input[,junc_pos2_R1:=NULL]
 
 
 ## the same predictors for R2
-### obtain fragment lengths for chimeric reads for computing length adjusted AS ##########
-class_input[fileTypeR2 == "Aligned",length_adj_AS_R2:= aScoreR2A/readLenR2]
-class_input[fileTypeR2 == "Chimeric",length_adj_AS_R2 := (aScoreR2A + aScoreR2B)/ (MR2A + MR2B + SR2A + SR2B)]
-###########################################################################################
-
-### obtain the number of mismatches per alignment ##########
-class_input[fileTypeR2 == "Aligned",nmmR2:= nmmR2A]
-class_input[fileTypeR2 == "Chimeric",nmmR2:=nmmR2A + nmmR2B]
-##########################################################################
-
-#### obtain mapping quality values for chimeric reads ###################
-class_input[fileTypeR2 == "Aligned",qual_R2 := qualR2A]
-class_input[fileTypeR2 == "Chimeric",qual_R2 := (qualR2A + qualR2B) / 2]
-#########################################################################
-
-#### obtain junction overlap #########
-class_input[,overlap_R2 := min(MR2A,MR2B),by=1:nrow(class_input)]
-class_input[,max_overlap_R2 := max(MR2A,MR2B),by=1:nrow(class_input)]
-######################################
-
+if (is.SE == 0){
+  ### obtain fragment lengths for chimeric reads for computing length adjusted AS ##########
+  class_input[fileTypeR2 == "Aligned",length_adj_AS_R2:= aScoreR2A/readLenR2]
+  class_input[fileTypeR2 == "Chimeric",length_adj_AS_R2 := (aScoreR2A + aScoreR2B)/ (MR2A + MR2B + SR2A + SR2B)]
+  ###########################################################################################
+  
+  ### obtain the number of mismatches per alignment ##########
+  class_input[fileTypeR2 == "Aligned",nmmR2:= nmmR2A]
+  class_input[fileTypeR2 == "Chimeric",nmmR2:=nmmR2A + nmmR2B]
+  ##########################################################################
+  
+  #### obtain mapping quality values for chimeric reads ###################
+  class_input[fileTypeR2 == "Aligned",qual_R2 := qualR2A]
+  class_input[fileTypeR2 == "Chimeric",qual_R2 := (qualR2A + qualR2B) / 2]
+  #########################################################################
+  
+  #### obtain junction overlap #########
+  class_input[,overlap_R2 := min(MR2A,MR2B),by=1:nrow(class_input)]
+  class_input[,max_overlap_R2 := max(MR2A,MR2B),by=1:nrow(class_input)]
+  ######################################
+}
 
 class_input[,cur_weight:=NULL]
 class_input[,train_class:=NULL]
@@ -253,7 +254,11 @@ if (n.pos >= n.neg){
   class_input[train_class == 1,cur_weight := 1]
 }
 
-regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1  + nmmR1 + length_adj_AS_R1A + length_adj_AS_R1B + nmmR2 + entropyR1*entropyR2 + length_adj_AS_R2")
+if (is.SE == 0){
+  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1  + nmmR1 + length_adj_AS_R1A + length_adj_AS_R1B + nmmR2 + entropyR1*entropyR2 + length_adj_AS_R2")
+} else{
+  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1  + nmmR1 + length_adj_AS_R1A + length_adj_AS_R1B + entropyR1")
+}
 
 ################################################################
 ######## Building the GLMnet for chimeric junctions ############
@@ -283,7 +288,7 @@ class_input[fileTypeR1=="Chimeric",p_predicted_glmnet_twostep:= 1/( exp(sum(log(
 ######################################
 ######################################
 
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","numReads","readClassR1","p_predicted_glm","p_predicted_glmnet","p_predicted_glm_corrected","p_predicted_glmnet_corrected","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","glmnet_twostep_per_read_prob","p_predicted_glmnet_twostep")
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","numReads","readClassR1","p_predicted_glm","p_predicted_glmnet","p_predicted_glm_corrected","p_predicted_glmnet_corrected","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glmnet_twostep")
 
 junction_prediction = unique(class_input[,colnames(class_input)%in%col_names_to_keep_in_junc_pred_file,with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]

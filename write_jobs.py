@@ -19,7 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
  # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p horence\n")
+  job_file.write("#SBATCH -p owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -248,13 +248,13 @@ def main():
 
 
 # STAR_sim
-  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
-  assembly = "hg38"
-  run_name = "sim_101"
-  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
-  names = ["sim1_reads","sim2_reads","sim3_reads","sim4_reads","sim5_reads"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
+#  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
+#  assembly = "hg38"
+#  run_name = "sim_101"
+#  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
+#  names = ["sim1_reads","sim2_reads","sim3_reads","sim4_reads","sim5_reads"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
 
 
 # DNA_Seq
@@ -320,10 +320,10 @@ def main():
   run_map = False
   run_star_fusion = False
   run_ann = False
-  run_class = True
-  run_modify_class = True
-  run_ensembl = True
-  run_compare = True
+  run_class = False
+  run_modify_class = False
+  run_ensembl = False
+  run_compare = False
   run_GLM = True
 
   if not single:

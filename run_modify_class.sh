@@ -7,8 +7,6 @@
 #SBATCH -p horence
 #SBATCH --nodes=1
 #SBATCH --mem=50Gb
-#SBATCH --dependency=afterok:49931835
-#SBATCH --kill-on-invalid-dep=yes
 date
 Rscript scripts/modify_junction_ids.R /scratch/PI/horence/Roozbeh/single_cell_project/output/DNA_Seq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/SRR078586/ 
 date
