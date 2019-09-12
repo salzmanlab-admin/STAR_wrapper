@@ -82,8 +82,8 @@ class_input[NHR1A>2,is.multimapping := 1]
 round.bin = 50
 class_input[,binR1A:=round(juncPosR1A/round.bin)*round.bin]
 class_input[,binR1B:=round(juncPosR1B/round.bin)*round.bin]
-class_input[,njunc_binR1A:=length(unique(refName_readStrandR1)),by=paste(binR1A,chrR1A)]
-class_input[,njunc_binR1B:=length(unique(refName_readStrandR1)),by=paste(binR1B,chrR1B)]
+class_input[,njunc_binR1A:=length(unique(refName_newR1)),by=paste(binR1A,chrR1A)]
+class_input[,njunc_binR1B:=length(unique(refName_newR1)),by=paste(binR1B,chrR1B)]
 class_input[,binR1A:=NULL]
 class_input[,binR1B:=NULL]
 ############################################
@@ -288,7 +288,7 @@ class_input[fileTypeR1=="Chimeric",p_predicted_glmnet_twostep:= 1/( exp(sum(log(
 ######################################
 ######################################
 
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","numReads","readClassR1","p_predicted_glm","p_predicted_glmnet","p_predicted_glm_corrected","p_predicted_glmnet_corrected","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glmnet_twostep")
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","numReads","readClassR1","p_predicted_glm","p_predicted_glmnet","p_predicted_glm_corrected","njunc_binR1B","njunc_binR1A","median_overlap_R1","p_predicted_glmnet_corrected","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glmnet_twostep")
 
 junction_prediction = unique(class_input[,colnames(class_input)%in%col_names_to_keep_in_junc_pred_file,with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]

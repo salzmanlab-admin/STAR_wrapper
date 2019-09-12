@@ -212,11 +212,11 @@ def main():
 
 
 # Tabula Sapiens pilot (10X)
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_bladder_1/"
+  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_3/"
   assembly = "hg38"
   run_name = "TS_pilot_10X_withinbam"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_bladder_1_S13_L004"]
+  names = ["TSP1_muscle_3_S21_L001","TSP1_muscle_3_S21_L002","TSP1_muscle_3_S21_L003","TSP1_muscle_3_S21_L004"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
   tenX = True
@@ -244,14 +244,14 @@ def main():
 #  tenX = False
 
 # CML sample
-  data_path = "/scratch/PI/horence/jorda/data/CML_fastq_files/"
-  assembly = "hg38"
-  run_name = "CML_2410"
-  r_ends = ["_R1.fq", "_R2.fq"]
-  names = ["CMLUConn_SRR3192410_trimmed"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
-  tenX = False
+#  data_path = "/scratch/PI/horence/jorda/data/CML_fastq_files/"
+#  assembly = "hg38"
+#  run_name = "CML_2410"
+#  r_ends = ["_R1.fq", "_R2.fq"]
+#  names = ["CMLUConn_SRR3192410_trimmed"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
+#  tenX = False
 
 
 # STAR_sim
@@ -265,24 +265,24 @@ def main():
 
 
 # DNA_Seq
-  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/"
+#  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/"
+#  assembly = "hg38"
+#  run_name = "DNA_Seq"
+#  r_ends = ["_1.fastq", "_2.fastq"]
+#  names = ["SRR027963","SRR078586"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = True
+#  tenX = False
+
+#DNA-Seq (1000 Genome)
+  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/1000_Genome/"
   assembly = "hg38"
-  run_name = "DNA_Seq"
-  r_ends = ["_1.fastq", "_2.fastq"]
-  names = ["SRR027963","SRR078586"]
+  run_name = "1000_Genome"
+  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
+  names = ["SRR9134109"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
   tenX = False
-
-#DNA-Seq (1000 Genome)
-#  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/1000_Genome/"
-#  assembly = "hg38"
-#  run_name = "1000_Genome"
-#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-#  names = ["SRR9134109","SRR9134112","SRR9644810"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
 
 #HISAT sim data
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
@@ -332,10 +332,10 @@ def main():
   run_map = False
   run_star_fusion = False
   run_ann = False
-  run_class = False
-  run_modify_class = False
-  run_ensembl = False
-  run_compare = False
+  run_class = True
+  run_modify_class = True
+  run_ensembl = True
+  run_compare = True
   run_GLM = True
 
   if not single:
