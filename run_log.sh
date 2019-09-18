@@ -1,14 +1,14 @@
 #!/bin/bash
 #
 #SBATCH --job-name=log_
-#SBATCH --output=/scratch/PI/horence/Roozbeh/single_cell_project/output/DNA_Seq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0//log_files/log_.%j.out
-#SBATCH --error=/scratch/PI/horence/Roozbeh/single_cell_project/output/DNA_Seq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0//log_files/log_.%j.err
+#SBATCH --output=/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0//log_files/log_.%j.out
+#SBATCH --error=/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0//log_files/log_.%j.err
 #SBATCH --time=5:00
-#SBATCH -p horence
+#SBATCH -p owners
 #SBATCH --nodes=1
 #SBATCH --mem=500
-#SBATCH --dependency=afterany:49931829:49931830:49931831:49931832:49931833:49931834:49931835:49931836:49931838:49931839:49931840:49931841
+#SBATCH --dependency=afterany:50094746:50094748:50094749:50094750:50094751:50094752:50094753:50094754:50094755
 #SBATCH --kill-on-invalid-dep=yes
 date
-python3 scripts/create_log.py -i /scratch/PI/horence/Roozbeh/single_cell_project/output/DNA_Seq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0// -j GLM_SRR027963.49931833 GLM_SRR078586.49931840 class_input_SRR027963.49931829 class_input_SRR078586.49931835 compare_SRR027963.49931832 compare_SRR078586.49931839 ensembl_SRR027963.49931831 ensembl_SRR078586.49931838 log_SRR027963.49931834 log_SRR078586.49931841 modify_class_SRR027963.49931830 modify_class_SRR078586.49931836
+python3 scripts/create_log.py -i /scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0// -j GLM_B107826_F15_S194.50094754 ann_SJ_B107826_F15_S194.50094749 class_input_B107826_F15_S194.50094750 compare_B107826_F15_S194.50094753 ensembl_B107826_F15_S194.50094752 fusion_B107826_F15_S194.50094748 log_B107826_F15_S194.50094755 map_B107826_F15_S194.50094746 modify_class_B107826_F15_S194.50094751
 date

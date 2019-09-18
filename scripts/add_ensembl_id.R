@@ -73,4 +73,4 @@ setnames(class_input,old = c("V2","V3") ,new = c("geneR1B_expression_unstranded"
 
 ## write output files
 write.table(gene_count,genecount_file,row.names = FALSE,sep = "\t",quote = FALSE)
-write.table(class_input,paste(directory,class_input_files[counter],sep = ""),row.names = FALSE, quote = FALSE, sep = "\t")
+write.table(class_input,paste(directory,"class_input_WithinBAM.tsv",sep = ""),row.names = FALSE, quote = FALSE, sep = "\t")
