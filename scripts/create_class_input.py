@@ -26,6 +26,32 @@ import time
 import utils_os
 from utils_juncReads_minimal import *
 
+def get_read_fragment(posR1A, posR1B, juncPosR1A, juncPosR1B, seqR1):
+  
+  f1 = seqR1[:1 + int(abs(posR1A - juncPosR1A))]
+  f2 = seqR1[1 + int(abs(posR1A - juncPosR1A)):]
+
+  f1 = seqR1[:1 + int(abs(posR1B - juncPosR1B))]
+  f2 = seqR1[1 + int(abs(posR1B - juncPosR1B)):]
+
+def most_unique_kmer(k, kmer_dict, seq):
+  min_val = ""
+  max_val = 0
+  for i in range(len(seq) - k + 1):
+    kmer = seq[i:i + k]
+    if kmer in kmer_dict:
+      kmer_val = kmer_dict[kmer]
+      if min_val == "":
+        min_val = kmer_val
+      elif kmer_val < min_val:
+        min_val = kmer_val
+      if kmer_val > max_val:
+        max_val = kmer_val
+  return max_val, min_val
+     
+    
+
+
 def count_stretch(s):
   counts = {"A" : 0, "T" : 0, "C" : 0, "G" : 0, "N" : 0}
   # curr_stretch = 0
@@ -352,6 +378,8 @@ def get_SM(cigar):
   return M, S
 
 def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
+  k = 12
+  kmer_dict = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/kmer_dict_{}.pkl".format(k),"rb"))
   fill_char = "NA"
   meta_df =  pd.read_csv("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/TS_Pilot_Plate_Info_051019_smartseq2.csv") 
   plate = out_file.split("/")[-2].split("_")[0]
@@ -371,7 +399,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2", "Organ", "Cell_Type(s)"]
+  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2", "Organ", "Cell_Type(s)", "min_mapping_{}mer".format(k), "max_mapping_{}mer".format(k)]
   col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
               'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'read_strand']
   for c in col_base:
@@ -415,6 +443,9 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
 #        r2 = junc_read_dict[junc][read_name][1]
         split_ref = r1.refName.split("|")
 #        print("{},{},{}".format(r1.name,r1.refName, r2.refName))
+        max_val, min_val = most_unique_kmer(k, kmer_dict, r1.seqA)
+        out_dict["min_mapping_{}mer".format(k)] = min_val
+        out_dict["max_mapping_{}mer".format(k)] = max_val
         out_dict["refName_ABR1"] = r1.refName_AB
         out_dict["refName_readStrandR1"] = r1.refName_readStrand
         counts = count_stretch(r1.seqA)

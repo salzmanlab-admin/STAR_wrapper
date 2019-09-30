@@ -62,7 +62,10 @@ def write_seq(juncName, out_file, seq_df, out = "True"):
 def view_seq_CI(CI, juncName, num_seqs = 100):
   seq_df = pd.DataFrame(columns=["seqR1", "posR1A", "posR1B", "juncPosR1A", "juncPosR1B"])
   seq_df = seq_df.append(CI[CI["refName_newR1"] == juncName][seq_df.columns])
-  seq_df = seq_df.sample(n=num_seqs)
+  try:
+    seq_df = seq_df.sample(n=num_seqs)
+  except:
+    print("too few samples")
   seq_df = seq_df.sort_values(by=["posR1A","posR1B"])
   return seq_df
 
@@ -78,9 +81,13 @@ def view_seq(files, juncName):
 def main():
   t0 = time.time()
   name = "TSP1_lung_1_S16_L003"
-  df = pd.read_csv("/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_withinbam_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/{}/class_input_WithinBAM.tsv".format(name), sep = "\t")
-  #pickle.dump(df, open("/oak/stanford/groups/horence/JuliaO/pickled/tenX_CI_df.pkl", "wb"))
-#  df = pickle.load(open("/oak/stanford/groups/horence/JuliaO/pickled/tenX_df.pkl", "rb"))
+  usecols = ["seqR1", "posR1A", "posR1B", "juncPosR1A", "juncPosR1B"]
+#  df = pd.read_csv("/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_withinbam_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/{}/class_input_WithinBAM.tsv".format(name), sep = "\t", 
+#        usecols = ["refName_newR1", "seqR1", "posR1A", "juncPosR1A", "juncPosR1B", "posR1B"],
+#        dtype = {"juncPosR1A" : "int32",
+#                                "juncPosR1B" : "int32", "refName_newR1" : "category", "posR1A" : "int32"})
+#  pickle.dump(df, open("/oak/stanford/groups/horence/JuliaO/pickled/tenX_CI_df.pkl", "wb"))
+  df = pickle.load(open("/oak/stanford/groups/horence/JuliaO/pickled/tenX_CI_df.pkl", "rb"))
 
 #  name = "B107921_M23_S267"
 #  df = pd.read_csv("/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/{}/class_input_WithinBAM.tsv".format(name), sep = "\t")
@@ -88,7 +95,10 @@ def main():
   juncName = "chr11:H19_3,Y_RNA,Metazoa_SRP,SNORA7,snoU13,SNORA1,SCGB1A1,CTD-2531D15.4:62422408:?|chr11:H19_3,Y_RNA,Metazoa_SRP,SNORA7,snoU13,SNORA1,SCGB1A1,CTD-2531D15.4:62423069:?|lin"
   while juncName != "done":
     juncName = input("juncName to view (write 'done' to stop):")
-    seq_df = view_seq_CI(df, juncName, num_seqs = 7)
+#    try:
+    seq_df = view_seq_CI(df, juncName, num_seqs = 25)
     write_seq(juncName, "out.txt", seq_df, out = False)
+#    except:
+#      print("juncName not found")
   
 main()
