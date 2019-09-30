@@ -378,7 +378,7 @@ def get_SM(cigar):
   return M, S
 
 def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
-  k = 12
+  k = 14
   kmer_dict = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/kmer_dict_{}.pkl".format(k),"rb"))
   fill_char = "NA"
   meta_df =  pd.read_csv("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/TS_Pilot_Plate_Info_051019_smartseq2.csv") 
