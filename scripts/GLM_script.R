@@ -18,20 +18,22 @@ compute_class_error <- function(train_class,glm_predicted_prob){
 }
 
 ###### Input arguments ##############
-args = commandArgs(trailingOnly = TRUE)
-directory = args[1]
-is.SE = as.numeric(args[2])
+#args = commandArgs(trailingOnly = TRUE)
+#directory = args[1]
+#is.SE = as.numeric(args[2])
 #####################################
 
 ### arguments for debugging ######
-#is.SE = 1
-#directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/test.txt"
-#class_input =  fread("/scratch/PI/horence/Roozbeh/single_cell_project/output/DNA_Seq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/SRR027963/class_input_WithinBAM.tsv",sep = "\t",header = TRUE)
+is.SE = 1
+directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/test.txt"
+class_input =  fread("G:\\Shared drives\\Salzman Lab Team Drive\\Members\\Roozbeh\\Projects\\Tabula-Sapiens\\class_input_files\\HISAT\\HISAT_mismatch\\class_input_WithinBAM_benchmark_OL1.tsv",nrows = 1500000, sep = "\t",header = TRUE)
+#class_input =  fread("G:\\Shared drives\\Salzman Lab Team Drive\\Members\\Roozbeh\\Projects\\Tabula-Sapiens\\class_input_files\\DNA_seq\\1000genome\\SRR9134109\\class_input_WithinBAM.tsv", sep = "\t",header = TRUE)
+
 ##################################
 
 ###### read in class input file #####################
-class_input_file = list.files(directory,pattern = "class_input_WithinBAM.tsv")
-class_input =  fread(paste(directory,class_input_file,sep = ""),sep = "\t",header = TRUE)
+#class_input_file = list.files(directory,pattern = "class_input_WithinBAM.tsv")
+#class_input =  fread(paste(directory,class_input_file,sep = ""),sep = "\t",header = TRUE)
 ###############################################
 
 
@@ -178,16 +180,81 @@ class_input[,p_predicted_glm:= 1/( exp(sum(log( (1 - glm_per_read_prob)/glm_per_
 #compute classification error for the trained model
 compute_class_error(class_input[!is.na(train_class)]$train_class,class_input[!is.na(train_class)]$glm_per_read_prob)
 
-# compute aggregated score for each junction
-class_input[,p_predicted_glm:= 1/( exp(sum(log( (1 - glm_per_read_prob)/glm_per_read_prob ))) + 1) ,by = refName_newR1]
+# compute the junc_cdf scores
+class_input[p_predicted_glm==1,p_predicted_glm:=0.999999999999]
+class_input[p_predicted_glm==0,p_predicted_glm:=10^-30]
+class_input[glm_per_read_prob==1,glm_per_read_prob:=0.999999999999]
+class_input[glm_per_read_prob==0,glm_per_read_prob:=10^-30]
+class_input[,log_per_read_prob:=log((1-glm_per_read_prob) / glm_per_read_prob), by = glm_per_read_prob]
+class_input[,sum_log_per_read_prob:= sum(log_per_read_prob) ,by = refName_newR1]
+mu_i = mean(log( (1-class_input[fileTypeR1=="Aligned"]$glm_per_read_prob)/ class_input[fileTypeR1=="Aligned"]$glm_per_read_prob) )
+var_i = var(log( (1-class_input[fileTypeR1=="Aligned"]$glm_per_read_prob)/ class_input[fileTypeR1=="Aligned"]$glm_per_read_prob) )
+
+iter=5000
+all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glm_per_read_prob
+num_per_read_probs = length(all_per_read_probs)
+for (num_reads in 1:15){
+  null_dist = c()
+  null_dist1 = c() 
+  for (counter in 1:iter){
+    rnd_per_read_probs = all_per_read_probs[sample(num_per_read_probs,num_reads)]
+    null_dist[counter] = 1/( exp(sum(log( (1 - rnd_per_read_probs)/rnd_per_read_probs ))) + 1)
+    null_dist[which(null_dist==1)]=0.999999999999
+    null_dist[which(null_dist==0)]=10^-30
+  }
+  class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glm:=length(which(null_dist <= p_predicted_glm))/iter,by=p_predicted_glm]
+}
+
+class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glm:=pnorm(sum_log_per_read_prob, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1] 
 print("done with glm")
 
 #for PE data we have the option of correcting per-read scores for anomalous reads
+
 if (is.SE==0){
   class_input[,glm_per_read_prob_corrected := glm_per_read_prob]
   class_input[(location_compatible==0 | read_strand_compatible==0),glm_per_read_prob_corrected:=glm_per_read_prob/(1 + glm_per_read_prob)]
   class_input[,p_predicted_glm_corrected := 1/( exp(sum(log( (1 - glm_per_read_prob_corrected)/glm_per_read_prob_corrected ))) + 1) ,by = refName_newR1]
+  
+  class_input[,glm_per_read_prob_corrected_genomic:=glm_per_read_prob_corrected]
+  class_input[genomicAlignmentR1==1,glm_per_read_prob_corrected_genomic:=glm_per_read_prob_corrected/(1 + glm_per_read_prob_corrected)]
+  class_input[,p_predicted_glm_corrected_genomic := 1/( exp(sum(log( (1 - glm_per_read_prob_corrected_genomic)/glm_per_read_prob_corrected_genomic ))) + 1) ,by = refName_newR1]
+  
+  
+  # compute the junc_cdf scores
+  class_input[p_predicted_glm_corrected==1,p_predicted_glm_corrected:=0.999999999999]
+  class_input[p_predicted_glm_corrected==0,p_predicted_glm_corrected:=10^-30]
+  class_input[glm_per_read_prob_corrected==1,glm_per_read_prob_corrected:=0.999999999999]
+  class_input[glm_per_read_prob_corrected==0,glm_per_read_prob_corrected:=10^-30]
+  class_input[,log_yn:=log((1-p_predicted_glm_corrected) / p_predicted_glm_corrected), by = refName_newR1]
+  class_input[,log_per_read_prob:=log((1-glm_per_read_prob_corrected) / (glm_per_read_prob_corrected)), by = glm_per_read_prob_corrected]
+  mu_i = mean(log( (1-class_input[fileTypeR1=="Aligned"]$glm_per_read_prob_corrected)/class_input[fileTypeR1=="Aligned"]$glm_per_read_prob_corrected) )
+  var_i = var(log( (1-class_input[fileTypeR1=="Aligned"]$glm_per_read_prob_corrected)/class_input[fileTypeR1=="Aligned"]$glm_per_read_prob_corrected) )
+  
+  
+  all_log_per_read_probs = class_input[fileTypeR1=="Aligned"]$log_per_read_prob_corrected
+  all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glm_per_read_prob_corrected
+  num_per_read_probs = length(all_log_per_read_probs)
+  for (num_reads in 1:15){
+    null_dist = c()
+    null_dist1 = c() 
+    for (counter in 1:iter){
+      null_dist[counter] = sum(all_log_per_read_probs[sample(num_per_read_probs,num_reads)])
+      rnd_per_read_probs = all_per_read_probs[sample(num_per_read_probs,num_reads)]
+      null_dist1[counter] = 1/( exp(sum(log( (1 - rnd_per_read_probs)/rnd_per_read_probs ))) + 1)
+    }
+    class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glm_corrected:=length(which(null_dist >= log_yn))/iter,by=log_yn]
+    class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf1_glm_corrected:=length(which(null_dist1 <= p_predicted_glm_corrected))/iter,by=p_predicted_glm_corrected]
+  }
+  
+  class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glm_corrected:=pnorm(log_yn, mean = numReads*mu_i, sd = sqrt(num_reads*var_i), lower.tail = FALSE),by = refName_newR1] 
+  print("done with glm")  
+  
 }
+
+class_input[,glm_per_read_prob_corrected_genomic:=glm_per_read_prob]
+class_input[genomicAlignmentR1==1,glm_per_read_prob_corrected_genomic:=glm_per_read_prob/(1 + glm_per_read_prob)]
+class_input[,p_predicted_glm_corrected_genomic := 1/( exp(sum(log( (1 - glm_per_read_prob_corrected_genomic)/glm_per_read_prob_corrected_genomic ))) + 1) ,by = refName_newR1]
+
 ######################################
 ######################################
 ######################################
@@ -217,11 +284,82 @@ compute_class_error(class_input[!is.na(train_class)]$train_class,class_input[!is
 class_input[,p_predicted_glmnet:= 1/( exp(sum(log( (1 - glmnet_per_read_prob)/glmnet_per_read_prob ))) + 1) ,by = refName_newR1]
 
 
+# compute the junc_cdf scores
+class_input[p_predicted_glmnet==1,p_predicted_glmnet:=0.999999999999]
+class_input[p_predicted_glmnet==0,p_predicted_glmnet:=10^-30]
+class_input[glmnet_per_read_prob==1,glmnet_per_read_prob:=0.999999999999]
+class_input[glmnet_per_read_prob==0,glmnet_per_read_prob:=10^-30]
+class_input[,log_yn:=log((1-p_predicted_glmnet) / (p_predicted_glmnet)), by = refName_newR1]
+class_input[,log_per_read_prob:=log((1-glmnet_per_read_prob) / (glmnet_per_read_prob)), by = glmnet_per_read_prob]
+mu_i = mean(log( (1-class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob)/(class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob)) )
+var_i = var(log( (1-class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob)/(class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob)) )
+
+iter=25000
+all_log_per_read_probs = class_input[fileTypeR1=="Aligned"]$log_per_read_prob
+all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob
+num_per_read_probs = length(all_log_per_read_probs)
+for (num_reads in 1:15){
+  null_dist = c()
+  null_dist1 = c() 
+  for (counter in 1:iter){
+    null_dist[counter] = sum(all_log_per_read_probs[sample(num_per_read_probs,num_reads)])
+    rnd_per_read_probs = all_per_read_probs[sample(num_per_read_probs,num_reads)]
+    null_dist1[counter] = 1/( exp(sum(log( (1 - rnd_per_read_probs)/rnd_per_read_probs ))) + 1)
+  }
+  class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glmnet:=length(which(null_dist >= log_yn))/iter,by=log_yn]
+  class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf1_glmnet:=length(which(null_dist1 <= p_predicted_glmnet))/iter,by=p_predicted_glmnet]
+}
+
+class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glmnet:=pnorm(log_yn, mean = numReads*mu_i, sd = sqrt(num_reads*var_i), lower.tail = FALSE),by = refName_newR1] 
+print("done with glmnet")
+
+
 if (is.SE==0){
   class_input[,glmnet_per_read_prob_corrected := glmnet_per_read_prob]
   class_input[(location_compatible==0 | read_strand_compatible==0),glmnet_per_read_prob_corrected:=glmnet_per_read_prob/(1 + glmnet_per_read_prob)]
   class_input[,p_predicted_glmnet_corrected := 1/( exp(sum(log( (1 - glmnet_per_read_prob_corrected)/glmnet_per_read_prob_corrected ))) + 1) ,by = refName_newR1]
+  
+  class_input[,glmnet_per_read_prob_corrected_genomic:=glmnet_per_read_prob_corrected]
+  class_input[genomicAlignmentR1==1,glmnet_per_read_prob_corrected_genomic:=glmnet_per_read_prob_corrected/(1 + glmnet_per_read_prob_corrected)]
+  class_input[,p_predicted_glmnet_corrected_genomic := 1/( exp(sum(log( (1 - glmnet_per_read_prob_corrected_genomic)/glmnet_per_read_prob_corrected_genomic ))) + 1) ,by = refName_newR1]
+  
+  
+  # compute the junc_cdf scores
+  class_input[p_predicted_glmnet_corrected==1,p_predicted_glmnet_corrected:=0.999999999999]
+  class_input[p_predicted_glmnet_corrected==0,p_predicted_glmnet_corrected:=10^-30]
+  class_input[glmnet_per_read_prob_corrected==1,glmnet_per_read_prob_corrected:=0.999999999999]
+  class_input[glmnet_per_read_prob_corrected==0,glmnet_per_read_prob_corrected:=10^-30]
+  class_input[,log_yn:=log((1-p_predicted_glmnet_corrected) / (p_predicted_glmnet_corrected)), by = refName_newR1]
+  class_input[,log_per_read_prob:=log((1-glmnet_per_read_prob_corrected) / (glmnet_per_read_prob_corrected)), by = glmnet_per_read_prob_corrected]
+  mu_i = mean(log( (1-class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected)/(class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected)) )
+  var_i = var(log( (1-class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected)/(class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected)) )
+  
+  iter=25000
+  all_log_per_read_probs = class_input[fileTypeR1=="Aligned"]$log_per_read_prob
+  all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected
+  num_per_read_probs = length(all_log_per_read_probs)
+  for (num_reads in 1:15){
+    null_dist = c()
+    null_dist1 = c() 
+    for (counter in 1:iter){
+      null_dist[counter] = sum(all_log_per_read_probs[sample(num_per_read_probs,num_reads)])
+      rnd_per_read_probs =  all_per_read_probs[sample(num_per_read_probs,num_reads)]
+      null_dist1[counter] = 1/( exp(sum(log( (1 - rnd_per_read_probs)/rnd_per_read_probs ))) + 1)
+    }
+    class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glmnet_corrected:=length(which(null_dist >= log_yn))/iter,by=log_yn]
+    class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf1_glmnet_corrected:=length(which(null_dist1 <= p_predicted_glmnet_corrected))/iter,by=p_predicted_glmnet_corrected]
+  }
+  
+  class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glmnet_corrected:=pnorm(log_yn, mean = numReads*mu_i, sd = sqrt(num_reads*var_i), lower.tail = FALSE),by = refName_newR1] 
+  print("done with glmnet")
+  
 }
+
+class_input[,glmnet_per_read_prob_corrected_genomic:=glmnet_per_read_prob]
+class_input[genomicAlignmentR1==1,glmnet_per_read_prob_corrected_genomic:=glmnet_per_read_prob/(1 + glmnet_per_read_prob)]
+class_input[,p_predicted_glmnet_corrected_genomic := 1/( exp(sum(log( (1 - glmnet_per_read_prob_corrected_genomic)/glmnet_per_read_prob_corrected_genomic ))) + 1) ,by = refName_newR1]
+
+
 
 ######################################################
 ######################################################
@@ -285,10 +423,38 @@ compute_class_error(class_input[!is.na(train_class)]$train_class,class_input[!is
 class_input[fileTypeR1=="Chimeric",p_predicted_glmnet_twostep:= 1/( exp(sum(log( (1 - glmnet_twostep_per_read_prob)/glmnet_twostep_per_read_prob ))) + 1) ,by = refName_newR1]
 
 
-######################################
-######################################
+# compute the junc_cdf scores
+class_input[p_predicted_glmnet_twostep==1,p_predicted_glmnet_twostep:=0.999999999999]
+class_input[p_predicted_glmnet_twostep==0,p_predicted_glmnet_twostep:=10^-30]
+class_input[glmnet_twostep_per_read_prob==1,glmnet_twostep_per_read_prob:=0.999999999999]
+class_input[glmnet_twostep_per_read_prob==0,glmnet_twostep_per_read_prob:=10^-30]
+class_input[,log_yn:=log((1-p_predicted_glmnet_twostep) / (p_predicted_glmnet_twostep)), by = refName_newR1]
+class_input[,log_per_read_prob:=log((1-glmnet_twostep_per_read_prob) / (glmnet_twostep_per_read_prob)), by = glmnet_twostep_per_read_prob]
+mu_i = mean(log( (1-class_input[fileTypeR1=="Chimeric"]$glmnet_twostep_per_read_prob)/(class_input[fileTypeR1=="Chimeric"]$glmnet_twostep_per_read_prob)) )
+var_i = var(log( (1-class_input[fileTypeR1=="Chimeric"]$glmnet_twostep_per_read_prob)/(class_input[fileTypeR1=="Chimeric"]$glmnet_twostep_per_read_prob)) )
 
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","numReads","readClassR1","p_predicted_glm","p_predicted_glmnet","p_predicted_glm_corrected","njunc_binR1B","njunc_binR1A","median_overlap_R1","p_predicted_glmnet_corrected","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glmnet_twostep")
+iter=25000
+all_log_per_read_probs = class_input[fileTypeR1=="Chimeric"]$log_per_read_prob
+all_per_read_probs = class_input[fileTypeR1=="Chimeric"]$glmnet_twostep_per_read_prob
+num_per_read_probs = length(all_log_per_read_probs)
+for (num_reads in 1:15){
+  null_dist = c()
+  null_dist1 = c() 
+  for (counter in 1:iter){
+    null_dist[counter] = sum(all_log_per_read_probs[sample(num_per_read_probs,num_reads)])
+    rnd_per_read_probs = all_per_read_probs[sample(num_per_read_probs,num_reads)]
+    null_dist1[counter] = 1/( exp(sum(log( (1 - rnd_per_read_probs)/rnd_per_read_probs ))) + 1)
+  }
+  class_input[fileTypeR1=="Chimeric" & numReads == num_reads, junc_cdf_glmnet_twostep:=length(which(null_dist >= log_yn))/iter,by=log_yn]
+  class_input[fileTypeR1=="Chimeric" & numReads == num_reads, junc_cdf1_glmnet_twostep:=length(which(null_dist1 <= p_predicted_glmnet_twostep))/iter,by=p_predicted_glmnet_twostep]
+}
+
+class_input[fileTypeR1=="Chimeric" & numReads > 15, junc_cdf_glmnet_twostep:=pnorm(log_yn, mean = numReads*mu_i, sd = sqrt(num_reads*var_i), lower.tail = FALSE),by = refName_newR1]
+
+######################################
+######################################
+class_input[,frac_genomic_reads:=mean(genomicAlignmentR1),by=refName_newR1]
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glm_corrected_genomic","p_predicted_glmnet","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_genomic","p_predicted_glmnet_twostep","junc_cdf_glm","junc_cdf1_glm","junc_cdf_glmnet","junc_cdf1_glmnet","junc_cdf_glmnet_corrected","junc_cdf1_glmnet_corrected","junc_cdf_glm_corrected","junc_cdf1_glm_corrected","junc_cdf_glmnet_twostep","junc_cdf1_glmnet_twostep")
 
 junction_prediction = unique(class_input[,colnames(class_input)%in%col_names_to_keep_in_junc_pred_file,with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]
