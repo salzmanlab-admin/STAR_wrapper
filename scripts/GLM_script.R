@@ -18,22 +18,22 @@ compute_class_error <- function(train_class,glm_predicted_prob){
 }
 
 ###### Input arguments ##############
-#args = commandArgs(trailingOnly = TRUE)
-#directory = args[1]
-#is.SE = as.numeric(args[2])
+args = commandArgs(trailingOnly = TRUE)
+directory = args[1]
+is.SE = as.numeric(args[2])
 #####################################
 
 ### arguments for debugging ######
-is.SE = 1
-directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/test.txt"
-class_input =  fread("G:\\Shared drives\\Salzman Lab Team Drive\\Members\\Roozbeh\\Projects\\Tabula-Sapiens\\class_input_files\\HISAT\\HISAT_mismatch\\class_input_WithinBAM_benchmark_OL1.tsv",nrows = 1500000, sep = "\t",header = TRUE)
+#is.SE = 1
+#directory ="/scratch/PI/horence/Roozbeh/single_cell_project/output/Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/test.txt"
+#class_input =  fread("G:\\Shared drives\\Salzman Lab Team Drive\\Members\\Roozbeh\\Projects\\Tabula-Sapiens\\class_input_files\\HISAT\\HISAT_mismatch\\class_input_WithinBAM_benchmark_OL1.tsv",nrows = 1500000, sep = "\t",header = TRUE)
 #class_input =  fread("G:\\Shared drives\\Salzman Lab Team Drive\\Members\\Roozbeh\\Projects\\Tabula-Sapiens\\class_input_files\\DNA_seq\\1000genome\\SRR9134109\\class_input_WithinBAM.tsv", sep = "\t",header = TRUE)
 
 ##################################
 
 ###### read in class input file #####################
-#class_input_file = list.files(directory,pattern = "class_input_WithinBAM.tsv")
-#class_input =  fread(paste(directory,class_input_file,sep = ""),sep = "\t",header = TRUE)
+class_input_file = list.files(directory,pattern = "class_input_WithinBAM.tsv")
+class_input =  fread(paste(directory,class_input_file,sep = ""),sep = "\t",header = TRUE)
 ###############################################
 
 
@@ -190,7 +190,7 @@ class_input[,sum_log_per_read_prob:= sum(log_per_read_prob) ,by = refName_newR1]
 mu_i = mean(log( (1-class_input[fileTypeR1=="Aligned"]$glm_per_read_prob)/ class_input[fileTypeR1=="Aligned"]$glm_per_read_prob) )
 var_i = var(log( (1-class_input[fileTypeR1=="Aligned"]$glm_per_read_prob)/ class_input[fileTypeR1=="Aligned"]$glm_per_read_prob) )
 
-iter=5000
+iter=15000
 all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glm_per_read_prob
 num_per_read_probs = length(all_per_read_probs)
 for (num_reads in 1:15){
@@ -294,7 +294,7 @@ class_input[,log_per_read_prob:=log((1-glmnet_per_read_prob) / (glmnet_per_read_
 mu_i = mean(log( (1-class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob)/(class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob)) )
 var_i = var(log( (1-class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob)/(class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob)) )
 
-iter=25000
+iter=15000
 all_log_per_read_probs = class_input[fileTypeR1=="Aligned"]$log_per_read_prob
 all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob
 num_per_read_probs = length(all_log_per_read_probs)
@@ -334,7 +334,7 @@ if (is.SE==0){
   mu_i = mean(log( (1-class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected)/(class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected)) )
   var_i = var(log( (1-class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected)/(class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected)) )
   
-  iter=25000
+  iter=15000
   all_log_per_read_probs = class_input[fileTypeR1=="Aligned"]$log_per_read_prob
   all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected
   num_per_read_probs = length(all_log_per_read_probs)
