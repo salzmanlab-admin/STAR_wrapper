@@ -231,7 +231,7 @@ if (is.SE==0){
   var_i = var(log( (1-class_input[fileTypeR1=="Aligned"]$glm_per_read_prob_corrected)/class_input[fileTypeR1=="Aligned"]$glm_per_read_prob_corrected) )
   
   
-  all_log_per_read_probs = class_input[fileTypeR1=="Aligned"]$log_per_read_prob_corrected
+  all_log_per_read_probs = class_input[fileTypeR1=="Aligned"]$log_per_read_prob
   all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glm_per_read_prob_corrected
   num_per_read_probs = length(all_log_per_read_probs)
   for (num_reads in 1:15){

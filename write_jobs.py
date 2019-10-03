@@ -332,10 +332,10 @@ def main():
   run_map = False
   run_star_fusion = False
   run_ann = False
-  run_class = True
-  run_modify_class = True
-  run_ensembl = True
-  run_compare = True
+  run_class = False
+  run_modify_class = False
+  run_ensembl = False
+  run_compare = False
   run_GLM = True
 
   if not single:

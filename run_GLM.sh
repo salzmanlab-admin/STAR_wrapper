@@ -7,8 +7,6 @@
 #SBATCH -p horence
 #SBATCH --nodes=1
 #SBATCH --mem=70Gb
-#SBATCH --dependency=afterok:51834220:51834221:51834222:51834223
-#SBATCH --kill-on-invalid-dep=yes
 date
 Rscript scripts/GLM_script.R /scratch/PI/horence/Roozbeh/single_cell_project/output/sim_101_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/sim2_reads/  0 
 date
