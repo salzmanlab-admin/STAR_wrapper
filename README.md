@@ -26,12 +26,16 @@ These parameters modify which combinations of STAR parameters are run. Be carefu
 
 ### Choosing which scripts to run
 These parameters let you decide which portion of the script you want to run (for example, if you're modifying the `create_class_input.py` script only, so the mapping shouldn't change):
+* `run_whitelist`: Set equal to True if you want to run UMI-tools whitelist script to extract cell barcodes and identify the most likely true cell barcodes (will be run only for 10X)
+* `run_extract`: Set equal to True if you want to run UMI-tools extract script which removes UMIs from fastq reads and append them to read name
 * `run_map`: Set equal to True if you want to run the mapping job, and False otherwise
+* `run_star_fusion`: Set equal to True if you want to run the STAR-Fusion, and False otherwise
 * `run_ann`: Set equal to True if you want to annotate and concatenate the STAR files, False otherwise
 * `run_class`: Set equal to True if you want to create the class input file, false otherwise
-* `run_star_fusion`: Set equal to True if you want to run the STAR-Fusion, and False otherwise
+* `run_modify_class`: Set equal to True if you want to make consistent junction IDs in which reverse strands and discrepancies between reporting alignments in chimeric and aligned sam files are taken care of.
 * `run_ensembl`: Set equal to True if you want to add gene names to the STAR gene count file and add gene ensembl ids and gene counts to the class input file, False otherwise
 * `run_compare`: Set equal to True if you want to comapre the junction in the class inpout file with those in the STAR and STAR-Fusion ouput files, false otherwise
+* `run_GLM`: Set equal to True if you want to run the GLM step and assign statistical scores to each junction in the class input file. The output of this step is a file named `GLM_output.txt`. 
 
 After assigning these variables, run `python3 write_jobs.py` to submit the jobs.
 
