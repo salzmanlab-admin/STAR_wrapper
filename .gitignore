@@ -3,3 +3,7 @@ annotators/
 job_output/
 *.pyc
 my_write_jobs.py
+Lemur_smart_seq_sample_list*
+slurm*
+test*
+smart_seq_sample_list*
