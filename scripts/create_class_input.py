@@ -26,6 +26,47 @@ import time
 import utils_os
 from utils_juncReads_minimal import *
 
+def get_kmer_seq_chim(cigar, seq, fileType, k, kmer_dict):
+  matches = re.findall(r'(\d+)([A-Z]{1})', cigar)
+  if fileType == "Aligned":
+    # find the largest N (the one to split on)
+    max_N_ind = None
+    max_N_val = 0
+    for i in range(len(matches)):
+        m = matches[i]
+        if m[1] == "N":
+            if int(m[0]) > max_N_val:
+                max_N_ind = i
+                max_N_val = int(m[0])    
+    # get the first base of the junction
+    readPos= 0
+    for i in range(max_N_ind):
+        m = matches[i]
+        if m[1] in ["M","N","D"]:
+            readPos += int(m[0])
+  elif fileType == "Chimeric":
+    readPos = int(matches[0][0])
+  kmer_seq = seq[max(readPos - k,0):min(readPos + k,len(seq))]
+  return kmer_seq
+
+def exon1(read, exon_bounds):
+  if read["chrR1A"] not in exon_bounds:
+    return False
+  return read["juncPosR1A"] in exon_bounds[read["chrR1A"]]
+
+def exon2(read, exon_bounds):
+  if read["chrR1B"] not in exon_bounds:
+    return False
+  return read["juncPosR1B"] in exon_bounds[read["chrR1B"]]
+
+def splice_ann(read, splices):
+  if read["chrR1A"] != read["chrR1B"]:
+    return False
+  if read["chrR1A"] not in splices:
+    return False
+  return tuple(sorted([read["juncPosR1A"], read["juncPosR1B"]])) in splices[read["chrR1A"]]
+
+
 def get_read_fragment(posR1A, posR1B, juncPosR1A, juncPosR1B, seqR1):
   
   f1 = seqR1[:1 + int(abs(posR1A - juncPosR1A))]
@@ -379,7 +420,9 @@ def get_SM(cigar):
 
 def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
   k = 14
+  splices = pickle.load(open("/oak/stanford/groups/horence/JuliaO/pickled/grch38_juncs.pkl","rb"))
   kmer_dict = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/kmer_dict_{}.pkl".format(k),"rb"))
+  exon_bounds = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/hg38_exon_bounds_all.pkl","rb"))
   fill_char = "NA"
   meta_df =  pd.read_csv("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/TS_Pilot_Plate_Info_051019_smartseq2.csv") 
   plate = out_file.split("/")[-2].split("_")[0]
@@ -399,7 +442,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2", "Organ", "Cell_Type(s)", "min_mapping_{}mer".format(k), "max_mapping_{}mer".format(k)]
+  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2", "Organ", "Cell_Type(s)", "min_junc_{}mer".format(k), "max_junc_{}mer".format(k), "splice_ann", "exon_annR1A", "exon_annR1B", "both_ann"]
   col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
               'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'read_strand']
   for c in col_base:
@@ -443,9 +486,6 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
 #        r2 = junc_read_dict[junc][read_name][1]
         split_ref = r1.refName.split("|")
 #        print("{},{},{}".format(r1.name,r1.refName, r2.refName))
-        max_val, min_val = most_unique_kmer(k, kmer_dict, r1.seqA)
-        out_dict["min_mapping_{}mer".format(k)] = min_val
-        out_dict["max_mapping_{}mer".format(k)] = max_val
         out_dict["refName_ABR1"] = r1.refName_AB
         out_dict["refName_readStrandR1"] = r1.refName_readStrand
         counts = count_stretch(r1.seqA)
@@ -479,6 +519,11 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
         out_dict["juncPosR1A"] = split_ref[0].split(":")[2]
         out_dict["juncPosR1B"] = split_ref[1].split(":")[2]
         out_dict["readClassR1"] = split_ref[2]
+        out_dict["splice_ann"] = splice_ann(out_dict, splices)
+        out_dict["exon_annR1A"] = exon1(out_dict, exon_bounds)
+        out_dict["exon_annR1B"] = exon2(out_dict, exon_bounds)
+        out_dict["both_ann"] = out_dict["exon_annR1A"] & out_dict["exon_annR1B"]
+
         if out_dict["readClassR1"] == "fus":
           out_dict["spliceDist"] = "NA"
         else:
@@ -513,6 +558,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
 
         if type(r1).__name__ == "chimReadObj":
           out_dict["fileTypeR1"] = "Chimeric"
+          
           if out_dict["read_strandR1A"] != out_dict["read_strandR1B"]:
             out_dict["strand_crossR1"] = 1
           else:
@@ -522,6 +568,12 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
         elif type(r1).__name__ == "readObj":
           out_dict["fileTypeR1"] = "Aligned"
           out_dict["strand_crossR1"] = 0
+
+        kmer_seq = get_kmer_seq_chim(r1.cigar, r1.seqA, out_dict["fileTypeR1"], k, kmer_dict)
+        max_val, min_val = most_unique_kmer(k, kmer_dict, kmer_seq)
+        out_dict["min_junc_{}mer".format(k)] = min_val
+        out_dict["max_junc_{}mer".format(k)] = max_val
+
 
         if single:
           out_dict["class"] = r1.refName.split("|")[-1]
