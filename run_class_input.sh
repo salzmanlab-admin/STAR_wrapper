@@ -1,14 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --job-name=class_input_B107821_K14_S240
-#SBATCH --output=/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107821_K14_S240/log_files/class_input_B107821_K14_S240.%j.out
-#SBATCH --error=/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107821_K14_S240/log_files/class_input_B107821_K14_S240.%j.err
+#SBATCH --job-name=class_input_sim2_reads
+#SBATCH --output=output/sim_101_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/sim2_reads/log_files/class_input_sim2_reads.%j.out
+#SBATCH --error=output/sim_101_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/sim2_reads/log_files/class_input_sim2_reads.%j.err
 #SBATCH --time=24:00:00
-#SBATCH -p owners
+#SBATCH -p horence
 #SBATCH --nodes=1
 #SBATCH --mem=60Gb
-#SBATCH --dependency=afterok:51903606:51903607:51903609
-#SBATCH --kill-on-invalid-dep=yes
 date
-python3 scripts/create_class_input.py -i /scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107821_K14_S240/ -a hg38 -g /oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf 
+python3 scripts/create_class_input.py -i output/sim_101_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/sim2_reads/ -a hg38 -g /oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf 
 date
