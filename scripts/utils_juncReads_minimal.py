@@ -300,9 +300,9 @@ class juncObj:
 
 
 #readObj = namedtuple('readObj', ['name', 'flag', 'refName', 'offset', 'aScore', 'nextBest', 'mapQual', 'baseName', 'readLen', 'numN', 'cigar'])
-readObj = namedtuple('readObj', ['name', 'flagA', 'flagB', 'refName', 'refName_AB', 'refName_readStrand', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB','NHA', 'NHB','HIA', 'HIB', 'nMA', 'nMB', 'NMA', 'NMB', 'jMA', 'jMB', 'jIA', 'jIB','seqA', 'seqB'])
+readObj = namedtuple('readObj', ['name', 'flagA', 'flagB', 'refName', 'refName_AB', 'refName_readStrand', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB','NHA', 'NHB','HIA', 'HIB', 'nMA', 'nMB', 'NMA', 'NMB', 'jMA', 'jMB', 'jIA', 'jIB','seqA', 'seqB', 'cigar'])
 
-chimReadObj = namedtuple('chimReadObj', ['name', 'flagA', 'flagB', 'refName', 'refName_AB', 'refName_readStrand', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB','NHA', 'NHB','HIA', 'HIB', 'nMA', 'nMB', 'NMA', 'NMB', 'jMA', 'jMB', 'jIA', 'jIB','seqA', 'seqB'])
+chimReadObj = namedtuple('chimReadObj', ['name', 'flagA', 'flagB', 'refName', 'refName_AB', 'refName_readStrand', 'offsetA', 'offsetB', 'aScoreA', 'aScoreB', 'nextBestA', 'nextBestB', 'mapQualA', 'mapQualB', 'baseName', 'readLen', 'numN', 'cigarA', 'cigarB', 'MDA', 'MDB', 'nmmA', 'nmmB','NHA', 'NHB','HIA', 'HIB', 'nMA', 'nMB', 'NMA', 'NMB', 'jMA', 'jMB', 'jIA', 'jIB','seqA', 'seqB', 'cigar'])
 
 def readObj_refname(flag, cigar, seqname, position, ann, fill_char):
   flag_dict = {0 : "+", 256 : "+", 16 : "-", 272 : "-"}
@@ -445,7 +445,7 @@ def newReadObj(vals, readIdStyle, ann, fill_char = "NA"):
 #    return readObj(name=vals[0], flag=int(vals[1]), refName="{}:{}:{}".format(vals[2],"", flag_dict[int(vals[1])]), offset=vals[3], aScore=myScore, nextBest=myNextBest, mapQual=vals[4], baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigar=vals[5])
     cigar_string = get_cigar_string(vals[5], int(vals[1]))
     cigar1, cigar2, refName_AB, refName_readStrand = readObj_refname(int(vals[1]), cigar_string, vals[2], int(vals[3]),  ann, fill_char)
-    return readObj(name=vals[0], flagA=int(vals[1]), flagB=fill_char, refName = refName_AB, refName_AB = refName_AB, refName_readStrand = refName_readStrand,offsetA=int(vals[3]), offsetB=fill_char, aScoreA=myScore, aScoreB=fill_char, nextBestA=myNextBest, nextBestB=fill_char, mapQualA=vals[4], mapQualB=fill_char, baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigarA=cigar1, cigarB=cigar2, MDA=mmStr, MDB=fill_char, nmmA = nmm(mmStr), nmmB=fill_char, NHA = NH, NHB = fill_char, HIA = HI, HIB = fill_char, nMA = nM, nMB = fill_char, NMA = NM, NMB = fill_char, jMA = jM, jMB = fill_char, jIA = jI, jIB = fill_char, seqA = vals[9], seqB = fill_char)
+    return readObj(name=vals[0], flagA=int(vals[1]), flagB=fill_char, refName = refName_AB, refName_AB = refName_AB, refName_readStrand = refName_readStrand,offsetA=int(vals[3]), offsetB=fill_char, aScoreA=myScore, aScoreB=fill_char, nextBestA=myNextBest, nextBestB=fill_char, mapQualA=vals[4], mapQualB=fill_char, baseName=myBaseName, readLen=len(vals[9]), numN=numN, cigarA=cigar1, cigarB=cigar2, MDA=mmStr, MDB=fill_char, nmmA = nmm(mmStr), nmmB=fill_char, NHA = NH, NHB = fill_char, HIA = HI, HIB = fill_char, nMA = nM, nMB = fill_char, NMA = NM, NMB = fill_char, jMA = jM, jMB = fill_char, jIA = jI, jIB = fill_char, seqA = vals[9], seqB = fill_char, cigar=cigar_string)
 
 def nmm(MD): 
   return len(''.join(filter(["A","C","G","T"].__contains__, MD)))
@@ -570,6 +570,19 @@ def split_cigar(cigar):
         cigar1 = "".join(["".join(m) for m in matches[:-1]])
     return cigar1
 
+def most_S_cigar(cigar1, cigar2):
+  matches1 = re.findall(r'(\d+)([A-Z]{1})', cigar1)
+  matches2 = re.findall(r'(\d+)([A-Z]{1})', cigar2)
+  if matches1[0][1] != "S":
+    return cigar2
+  elif matches2[0][1] != "S":
+    return cigar1
+  elif int(matches1[0][0]) > int(matches2[0][0]):
+    return cigar1
+  else:
+    return cigar2
+  
+
 # param vals: result of calling line.strip().split() on a non-header line from sam file.
 # param readIdStyle: for now, options are just "appended" or "complete".
 #                    "appended" means /1 or /2 added to read 1 or read 2 respectively
@@ -657,4 +670,4 @@ def chim_newReadObj(vals1, vals2, readIdStyle, ann, fill_char = "NA"):
     
 #    return readObj(name=vals1[0], flag=int(vals1[1]), refName=chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]]), offset=vals1[3], aScore=myScore, nextBest=myNextBest, mapQual=min(vals1[4],vals2[4]), baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigar=vals1[5])
     refName_AB, refName_readStrand = chim_refName([int(vals1[1]),int(vals2[1])], [vals1[5],vals2[5]], [vals1[3],vals2[3]], [vals1[2],vals2[2]], ann)
-    return chimReadObj(name=vals1[0], flagA=int(vals1[1]),flagB=int(vals2[1]), refName = refName_AB, refName_AB = refName_AB, refName_readStrand = refName_readStrand, offsetA=int(vals1[3]), offsetB=int(vals2[3]), aScoreA=myScoreA, aScoreB=myScoreB, nextBestA=myNextBestA, nextBestB=myNextBestB, mapQualA=vals1[4],mapQualB=vals2[4], baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigarA=split_cigar(vals1[5]), cigarB=split_cigar(vals2[5]), MDA=mmStr, MDB=mmStrB, nmmA = nmm(mmStr), nmmB = nmm(mmStrB), NHA = NH, NHB = NHB, HIA = HI, HIB = HIB, nMA = nM, nMB = nMB, NMA = NM, NMB = NMB, jMA = jM, jMB = jMB, jIA = jI, jIB = jIB, seqA = vals1[9], seqB = vals2[9])
+    return chimReadObj(name=vals1[0], flagA=int(vals1[1]),flagB=int(vals2[1]), refName = refName_AB, refName_AB = refName_AB, refName_readStrand = refName_readStrand, offsetA=int(vals1[3]), offsetB=int(vals2[3]), aScoreA=myScoreA, aScoreB=myScoreB, nextBestA=myNextBestA, nextBestB=myNextBestB, mapQualA=vals1[4],mapQualB=vals2[4], baseName=myBaseName, readLen=len(vals1[9]), numN=numN, cigarA=split_cigar(vals1[5]), cigarB=split_cigar(vals2[5]), MDA=mmStr, MDB=mmStrB, nmmA = nmm(mmStr), nmmB = nmm(mmStrB), NHA = NH, NHB = NHB, HIA = HI, HIB = HIB, nMA = nM, nMB = nMB, NMA = NM, NMB = NMB, jMA = jM, jMB = jMB, jIA = jI, jIB = jIB, seqA = vals1[9], seqB = vals2[9], cigar=most_S_cigar(vals2[5], vals2[5]))

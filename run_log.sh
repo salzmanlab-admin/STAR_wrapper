@@ -1,8 +1,13 @@
 #!/bin/bash
 #
 #SBATCH --job-name=log_
+<<<<<<< HEAD
 #SBATCH --output=/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_withinbam_cSM_10_cJOM_10_aSJMN_0_cSRGM_0//log_files/log_.%j.out
 #SBATCH --error=/scratch/PI/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_withinbam_cSM_10_cJOM_10_aSJMN_0_cSRGM_0//log_files/log_.%j.err
+=======
+#SBATCH --output=output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0//log_files/log_.%j.out
+#SBATCH --error=output/GSE109774_colon_cSM_10_cJOM_10_aSJMN_0_cSRGM_0//log_files/log_.%j.err
+>>>>>>> 138a99cec7ee7d8422aa200573af7e3fa40e4867
 #SBATCH --time=5:00
 #SBATCH -p owners
 #SBATCH --nodes=1
