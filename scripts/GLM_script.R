@@ -194,13 +194,15 @@ iter=10000
 all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glm_per_read_prob
 num_per_read_probs = length(all_per_read_probs)
 for (num_reads in 1:15){
-  null_dist = c()
-  for (counter in 1:iter){
-    rnd_per_read_probs = all_per_read_probs[sample(num_per_read_probs,num_reads)]
-    null_dist[counter] = 1/( exp(sum(log( (1 - rnd_per_read_probs)/rnd_per_read_probs ))) + 1)
-    null_dist[which(null_dist==1)]=0.999999999999
-    null_dist[which(null_dist==0)]=10^-30
+  rnd_per_read_probs = matrix(0,iter,num_reads)
+  rnd_per_read_probs = apply(rnd_per_read_probs,1,function(x) all_per_read_probs[sample(num_per_read_probs,num_reads)])
+  rnd_per_read_probs = t(rnd_per_read_probs)
+  if(num_reads == 1){
+    rnd_per_read_probs = t(rnd_per_read_probs)  # for num_reads =1 I need to transepose twice since first I have a vector
   }
+  null_dist = apply(rnd_per_read_probs,1,function(x) 1/( exp(sum(log( (1 - x)/x ))) + 1))
+  null_dist[which(null_dist==1)]=0.999999999999
+  null_dist[which(null_dist==0)]=10^-30
   class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glm:=length(which(null_dist <= p_predicted_glm))/iter,by=p_predicted_glm]
 }
 
@@ -234,12 +236,16 @@ if (is.SE==0){
   all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glm_per_read_prob_corrected
   num_per_read_probs = length(all_log_per_read_probs)
   for (num_reads in 1:15){
-    null_dist = c()
-    for (counter in 1:iter){
-      null_dist[counter] = sum(all_log_per_read_probs[sample(num_per_read_probs,num_reads)])
-      rnd_per_read_probs = all_per_read_probs[sample(num_per_read_probs,num_reads)]
+    rnd_per_read_probs = matrix(0,iter,num_reads)
+    rnd_per_read_probs = apply(rnd_per_read_probs,1,function(x) all_per_read_probs[sample(num_per_read_probs,num_reads)])
+    rnd_per_read_probs = t(rnd_per_read_probs)
+    if(num_reads == 1){
+      rnd_per_read_probs = t(rnd_per_read_probs)  # for num_reads =1 I need to transepose twice since first I have a vector
     }
-    class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glm_corrected:=length(which(null_dist >= log_yn))/iter,by=log_yn]
+    null_dist = apply(rnd_per_read_probs,1,function(x) 1/( exp(sum(log( (1 - x)/x ))) + 1))
+    null_dist[which(null_dist==1)]=0.999999999999
+    null_dist[which(null_dist==0)]=10^-30
+    class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glm_corrected:=length(which(null_dist <= p_predicted_glm_corrected))/iter,by=p_predicted_glm_corrected]
   }
   
   class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glm_corrected:=pnorm(log_yn, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1] 
@@ -295,12 +301,16 @@ all_log_per_read_probs = class_input[fileTypeR1=="Aligned"]$log_per_read_prob
 all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob
 num_per_read_probs = length(all_log_per_read_probs)
 for (num_reads in 1:15){
-  null_dist = c()
-  for (counter in 1:iter){
-    null_dist[counter] = sum(all_log_per_read_probs[sample(num_per_read_probs,num_reads)])
-    rnd_per_read_probs = all_per_read_probs[sample(num_per_read_probs,num_reads)]
+  rnd_per_read_probs = matrix(0,iter,num_reads)
+  rnd_per_read_probs = apply(rnd_per_read_probs,1,function(x) all_per_read_probs[sample(num_per_read_probs,num_reads)])
+  rnd_per_read_probs = t(rnd_per_read_probs)
+  if(num_reads == 1){
+    rnd_per_read_probs = t(rnd_per_read_probs)  # for num_reads =1 I need to transepose twice since first I have a vector
   }
-  class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glmnet:=length(which(null_dist >= log_yn))/iter,by=log_yn]
+  null_dist = apply(rnd_per_read_probs,1,function(x) 1/( exp(sum(log( (1 - x)/x ))) + 1))
+  null_dist[which(null_dist==1)]=0.999999999999
+  null_dist[which(null_dist==0)]=10^-30
+  class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glmnet:=length(which(null_dist <= p_predicted_glmnet))/iter,by=p_predicted_glmnet]
 }
 
 class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glmnet:=pnorm(log_yn, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1] 
@@ -332,12 +342,16 @@ if (is.SE==0){
   all_per_read_probs = class_input[fileTypeR1=="Aligned"]$glmnet_per_read_prob_corrected
   num_per_read_probs = length(all_log_per_read_probs)
   for (num_reads in 1:15){
-    null_dist = c()
-    for (counter in 1:iter){
-      null_dist[counter] = sum(all_log_per_read_probs[sample(num_per_read_probs,num_reads)])
-      rnd_per_read_probs =  all_per_read_probs[sample(num_per_read_probs,num_reads)]
+    rnd_per_read_probs = matrix(0,iter,num_reads)
+    rnd_per_read_probs = apply(rnd_per_read_probs,1,function(x) all_per_read_probs[sample(num_per_read_probs,num_reads)])
+    rnd_per_read_probs = t(rnd_per_read_probs)
+    if(num_reads == 1){
+      rnd_per_read_probs = t(rnd_per_read_probs)  # for num_reads =1 I need to transepose twice since first I have a vector
     }
-    class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glmnet_corrected:=length(which(null_dist >= log_yn))/iter,by=log_yn]
+    null_dist = apply(rnd_per_read_probs,1,function(x) 1/( exp(sum(log( (1 - x)/x ))) + 1))
+    null_dist[which(null_dist==1)]=0.999999999999
+    null_dist[which(null_dist==0)]=10^-30
+    class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glmnet_corrected:=length(which(null_dist <= p_predicted_glmnet_corrected))/iter,by=p_predicted_glmnet_corrected  ]
   }
   
   class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glmnet_corrected:=pnorm(log_yn, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1] 
@@ -428,12 +442,16 @@ all_log_per_read_probs = class_input[fileTypeR1=="Chimeric"]$log_per_read_prob
 all_per_read_probs = class_input[fileTypeR1=="Chimeric"]$glmnet_twostep_per_read_prob
 num_per_read_probs = length(all_log_per_read_probs)
 for (num_reads in 1:15){
-  null_dist = c()
-  for (counter in 1:iter){
-    null_dist[counter] = sum(all_log_per_read_probs[sample(num_per_read_probs,num_reads)])
-    rnd_per_read_probs = all_per_read_probs[sample(num_per_read_probs,num_reads)]
+  rnd_per_read_probs = matrix(0,iter,num_reads)
+  rnd_per_read_probs = apply(rnd_per_read_probs,1,function(x) all_per_read_probs[sample(num_per_read_probs,num_reads)])
+  rnd_per_read_probs = t(rnd_per_read_probs)
+  if(num_reads == 1){
+    rnd_per_read_probs = t(rnd_per_read_probs)  # for num_reads =1 I need to transepose twice since first I have a vector
   }
-  class_input[fileTypeR1=="Chimeric" & numReads == num_reads, junc_cdf_glmnet_twostep:=length(which(null_dist >= log_yn))/iter,by=log_yn]
+  null_dist = apply(rnd_per_read_probs,1,function(x) 1/( exp(sum(log( (1 - x)/x ))) + 1))
+  null_dist[which(null_dist==1)]=0.999999999999
+  null_dist[which(null_dist==0)]=10^-30
+  class_input[fileTypeR1=="Chimeric" & numReads == num_reads, junc_cdf_glmnet_twostep:=length(which(null_dist <= p_predicted_glmnet_twostep))/iter,by=p_predicted_glmnet_twostep]
 }
 
 class_input[fileTypeR1=="Chimeric" & numReads > 15, junc_cdf_glmnet_twostep:=pnorm(log_yn, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1]
@@ -441,7 +459,9 @@ class_input[fileTypeR1=="Chimeric" & numReads > 15, junc_cdf_glmnet_twostep:=pno
 ######################################
 ######################################
 class_input[,frac_genomic_reads:=mean(genomicAlignmentR1),by=refName_newR1]
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glm_corrected_genomic","p_predicted_glmnet","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_genomic","p_predicted_glmnet_twostep","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_corrected","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","max_mapping_14mer","min_mapping_14mer")
+class_input[,frac_anomaly:=0]
+class_input[(location_compatible==0 | read_strand_compatible==0),frac_anomaly:=.N/numReads,by=refName_newR1] # the fraction of anomalous reads for each junction 
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glm_corrected_genomic","p_predicted_glmnet","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_genomic","p_predicted_glmnet_twostep","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_corrected","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","max_mapping_14mer","min_mapping_14mer","frac_anomaly")
 
 junction_prediction = unique(class_input[,colnames(class_input)%in%col_names_to_keep_in_junc_pred_file,with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]
@@ -451,6 +471,11 @@ class_input[,train_class:=NULL]
 class_input[,log_yn:=NULL]
 class_input[,sum_log_per_read_prob:=NULL]
 class_input[,log_per_read_prob:=NULL]
+class_input[,junc_cdf1_glm:=NULL] 
+class_input[,junc_cdf1_glm_corrected:=NULL]
+class_input[,junc_cdf1_glmnet:=NULL]
+class_input[,junc_cdf1_glmnet_corrected:=NULL]
+class_input[,junc_cdf1_glmnet_twostep:=NULL]
 
 write.table(junction_prediction,paste(directory,"GLM_output.txt",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
 write.table(class_input,paste(directory,"class_input_WithinBAM.tsv",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
