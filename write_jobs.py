@@ -19,7 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
  # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p horence\n")
+  job_file.write("#SBATCH -p owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -120,7 +120,7 @@ def class_input(out_path, name, assembly, gtf_file, tenX, single,dep=""):
     command += "--single "
   if tenX:
     command += "--tenX"
-  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "24:00:00", "60Gb", command, dep=dep)
+  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "24:00:00", "70Gb", command, dep=dep)
   return submit_job("run_class_input.sh")
 
 def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN, cSRGM, sIO, sIB, single, gtf_file, tenX, dep = ""):
@@ -244,35 +244,35 @@ def main():
 #  tenX = False
 
 # CML sample
-#  data_path = "/scratch/PI/horence/jorda/data/CML_fastq_files/"
-#  assembly = "hg38"
-#  run_name = "CML_2410"
-#  r_ends = ["_R1.fq", "_R2.fq"]
-#  names = ["CMLUConn_SRR3192410_trimmed"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-
-
-#circRNA thirdparty benchmarking
-  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
+  data_path = "/scratch/PI/horence/jorda/data/CML_fastq_files/"
   assembly = "hg38"
-  run_name = "circRNA_thirdparty_benchmarking"
-  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
-  names = ["TxDx2016-001-001_S1_L001", "TxDx2016-001-001_S1_L002"]
+  run_name = "CML_2410"
+  r_ends = ["_R1.fq", "_R2.fq"]
+  names = ["CMLUConn_SRR3192410_trimmed"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = False
   tenX = False
 
 
+#circRNA thirdparty benchmarking
+#  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
+#  assembly = "hg38"
+#  run_name = "circRNA_thirdparty_benchmarking"
+#  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
+#  names = ["TxDx2016-001-001_S1_L001","TxDx2016-001-001_S1_L002"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
+#  tenX = False
+
+
 # STAR_sim
-  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
-  assembly = "hg38"
-  run_name = "sim_101"
-  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
-  names = ["sim1_reads","sim2_reads"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
+#  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
+#  assembly = "hg38"
+#  run_name = "sim_101"
+#  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
+#  names = ["sim1_reads","sim2_reads"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
 
 
 # DNA_Seq
@@ -298,32 +298,32 @@ def main():
 #HISAT sim data
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
 #  assembly = "hg38"
-#  run_name = "HISAT_sim_data_SE"
+#  run_name = "HISAT_sim_data"
 #  r_ends = ["_1.fq", "_2.fq"]
 #  names = ["reads_mismatch_20M"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
+#  single = False
 #  tenX = False
 
 #HISAT sim data
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_perfect/"
 #  assembly = "hg38"
-#  run_name = "HISAT_sim_data_SE"
+#  run_name = "HISAT_sim_data"
 #  r_ends = ["_1.fq", "_2.fq"]
 #  names = ["reads_mismatch_20M"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
+#  single = False
 #  tenX = False
 
 
 #Engstrom
 #  data_path = "/scratch/PI/horence/Roozbeh/Engstrom/data/"
 #  assembly = "hg38"
-#  run_name = "Engstrom"
+#  run_name = "Engstrom_SE"
 #  r_ends = ["_R1.fq.gz", "_R2.fq.gz"]
 #  names = ["Engstrom_sim1_trimmed","Engstrom_sim2_trimmed"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
+#  single = True
 #  tenX = False
 
 
@@ -343,8 +343,8 @@ def main():
   run_map = False
   run_star_fusion = False
   run_ann = False
-  run_class = True
-  run_modify_class = True
+  run_class = False
+  run_modify_class = False
   run_ensembl = True
   run_compare = True
   run_GLM = True
@@ -369,9 +369,9 @@ def main():
                 for sDB in scoreDelBase:
               #cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
                   cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
-#           out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
 #                  out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
-                  out_path = "output/{}/".format(cond_run_name)
+                  out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
+                  #out_path = "output/{}/".format(cond_run_name)
 
         #   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 #           gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
