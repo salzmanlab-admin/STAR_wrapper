@@ -47,6 +47,13 @@ class_input[,numReads:=length(unique(id)),by = refName_newR1]
 
 
 
+class_input[,chrR1A:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][1],by=refName_newR1]
+class_input[,chrR1B:=strsplit(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][4],split="|",fixed=TRUE)[[1]][2],by=refName_newR1]
+class_input[,juncPosR1A:=as.integer(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][3]),by=refName_newR1]
+class_input[,juncPosR1B:=as.integer(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][6]),by=refName_newR1]
+class_input[,gene_strandR1A:=strsplit(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][4],split="|",fixed=TRUE)[[1]][1],by=refName_newR1]
+class_input[,gene_strandR1B:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][7],by=refName_newR1]
+
 ### obtain fragment lengths for chimeric reads for computing length adjusted AS ##########
 class_input[fileTypeR1 == "Aligned",length_adj_AS_R1:= aScoreR1A/readLenR1]
 class_input[fileTypeR1 == "Chimeric",length_adj_AS_R1 := (aScoreR1A + aScoreR1B)/ (MR1A + MR1B + SR1A + SR1B)]
@@ -479,6 +486,20 @@ col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","nu
 junction_prediction = unique(class_input[,colnames(class_input)%in%col_names_to_keep_in_junc_pred_file,with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]
 
+
+### compute emp.p values based upon different junc_cdfs
+null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glm
+junction_prediction[,emp.p_glm:=length(which(null_dist>junc_cdf_glm))/length(null_dist),by=junc_cdf_glm]
+null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glmnet
+junction_prediction[,emp.p_glmnet:=length(which(null_dist>junc_cdf_glmnet))/length(null_dist),by=junc_cdf_glmnet]
+
+if (is.SE == 0){
+  null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glm_corrected
+  junction_prediction[,emp.p_glm_corrected:=length(which(null_dist>junc_cdf_glm_corrected))/length(null_dist),by=junc_cdf_glm_corrected]
+  null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glmnet_corrected
+  junction_prediction[,emp.p_glmnet_corrected:=length(which(null_dist>junc_cdf_glmnet_corrected))/length(null_dist),by=junc_cdf_glmnet_corrected]
+}
+
 class_input[,cur_weight:=NULL]
 class_input[,train_class:=NULL]
 class_input[,sum_log_per_read_prob:=NULL]
@@ -488,6 +509,12 @@ class_input[,junc_cdf1_glm_corrected:=NULL]
 class_input[,junc_cdf1_glmnet:=NULL]
 class_input[,junc_cdf1_glmnet_corrected:=NULL]
 class_input[,junc_cdf1_glmnet_twostep:=NULL]
+class_input[,refName_readStrandR1:=NULL]
+class_input[,refName_readStrandR2:=NULL]
+class_input[,geneR1A:=NULL]
+class_input[,geneR1B:=NULL]
+class_input[,gene_strandR1A_new:=NULL]
+class_input[,gene_strandR1B_new:=NULL]
 
 
 write.table(junction_prediction,paste(directory,"GLM_output.txt",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")
