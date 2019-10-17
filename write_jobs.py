@@ -19,7 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
  # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p horence\n")
+  job_file.write("#SBATCH -p owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -56,7 +56,7 @@ def compare(out_path, name, single, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_compare.sh",out_path, name, "compare_{}".format(name), "12:00:00", "50Gb", command, dep=dep)
+  sbatch_file("run_compare.sh",out_path, name, "compare_{}".format(name), "12:00:00", "150Gb", command, dep=dep)
   return submit_job("run_compare.sh")
 
 def GLM(out_path, name, single, dep = ""):
@@ -66,7 +66,7 @@ def GLM(out_path, name, single, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "12:00:00", "70Gb", command, dep=dep)
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "12:00:00", "170Gb", command, dep=dep)
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -101,7 +101,7 @@ def ensembl(out_path, name, single, dep = ""):
     command += " 1 "
   else:
     command += " 0 " 
-  sbatch_file("run_ensembl.sh", out_path, name,"ensembl_{}".format(name), "12:00:00", "50Gb", command, dep=dep)
+  sbatch_file("run_ensembl.sh", out_path, name,"ensembl_{}".format(name), "12:00:00", "150Gb", command, dep=dep)
   return submit_job("run_ensembl.sh")
 
 
@@ -266,13 +266,13 @@ def main():
 
 
 # STAR_sim
-  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
-  assembly = "hg38"
-  run_name = "sim_101"
-  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
-  names = ["sim1_reads","sim2_reads"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
+#  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
+#  assembly = "hg38"
+#  run_name = "sim_101"
+#  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
+#  names = ["sim1_reads","sim2_reads"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
 
 
 # DNA_Seq
@@ -343,8 +343,8 @@ def main():
   run_map = False
   run_star_fusion = False
   run_ann = False
-  run_class = True
-  run_modify_class = True
+  run_class = False
+  run_modify_class = False
   run_ensembl = True
   run_compare = True
   run_GLM = True
