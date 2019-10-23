@@ -16,7 +16,7 @@ class_input_file = list.files(directory,pattern = "class_input_WithinBAM.tsv")
 class_input = fread(paste(directory,class_input_file,sep = ""),sep = "\t",header = TRUE)
 ###############################################
 
-index = fread("/scratch/PI/horence/Roozbeh/single_cell_project/utility_files/grch38_gene_strand.txt",sep="\t",header = TRUE)
+index = fread("/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/grch38_gene_strand.txt",sep="\t",header = TRUE)
 
 class_input[fileTypeR1=="Aligned",read_strandR1B:=read_strandR1A]
 
@@ -86,6 +86,18 @@ class_input[,numgeneR1A:=NULL]
 class_input[,numgeneR1B:=NULL]
 class_input[,geneR1A_name:=NULL]
 class_input[,geneR1B_name:=NULL]
+
+
+# since some of the gene names might have been flipped in the junction id, we again extract the chr and gene names for each part of the junction based on refName_newR1 
+class_input[,chrR1A:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][1],by=refName_newR1]
+class_input[,chrR1B:=strsplit(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][4],split="|",fixed=TRUE)[[1]][2],by=refName_newR1]
+class_input[,juncPosR1A:=as.integer(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][3]),by=refName_newR1]
+class_input[,juncPosR1B:=as.integer(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][6]),by=refName_newR1]
+class_input[,gene_strandR1A:=strsplit(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][4],split="|",fixed=TRUE)[[1]][1],by=refName_newR1]
+class_input[,gene_strandR1B:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][7],by=refName_newR1]
+class_input[,geneR1A_uniq:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][2],by=refName_newR1]
+class_input[,geneR1B_uniq:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][5],by=refName_newR1]
+
 
 
 write.table(class_input,paste(directory,"class_input_WithinBAM.tsv",sep = ""),row.names = FALSE,quote = FALSE,sep = "\t")

@@ -17,6 +17,18 @@ compute_class_error <- function(train_class,glm_predicted_prob){
   print(paste("classification errors for glm", totalerr, "out of", length(train_class), totalerr/length(train_class) ))
 }
 
+uniformity_test <- function(dt, min_R1_offset,max_R1_offset) {
+  possible_values = data.frame(vals = min_R1_offset:max_R1_offset)
+  t=data.frame(table(dt))
+  possible_values = merge(possible_values,t,by.x = "vals",by.y = "dt",all.x = TRUE,all.y = FALSE)
+  possible_values = data.table(possible_values)
+  possible_values[is.na(Freq)]$Freq = 0
+ test = chisq.test(possible_values$Freq,simulate.p.value = TRUE,B = 200)
+#  test = chisq.test(possible_values$Freq)
+  return(test$p.value)
+}
+
+
 ###### Input arguments ##############
 args = commandArgs(trailingOnly = TRUE)
 directory = args[1]
@@ -53,6 +65,8 @@ class_input[,juncPosR1A:=as.integer(strsplit(refName_newR1,split=":",fixed=TRUE)
 class_input[,juncPosR1B:=as.integer(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][6]),by=refName_newR1]
 class_input[,gene_strandR1A:=strsplit(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][4],split="|",fixed=TRUE)[[1]][1],by=refName_newR1]
 class_input[,gene_strandR1B:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][7],by=refName_newR1]
+class_input[,geneR1A_uniq:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][2],by=refName_newR1]
+class_input[,geneR1B_uniq:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][5],by=refName_newR1]
 
 ### obtain fragment lengths for chimeric reads for computing length adjusted AS ##########
 class_input[fileTypeR1 == "Aligned",length_adj_AS_R1:= aScoreR1A/readLenR1]
@@ -75,6 +89,12 @@ class_input[fileTypeR1 == "Chimeric",qual_R1 := (qualR1A + qualR1B) / 2]
 class_input[,overlap_R1 := min(MR1A,MR1B),by=1:nrow(class_input)]
 class_input[,max_overlap_R1 := max(MR1A,MR1B),by=1:nrow(class_input)]
 class_input[,median_overlap_R1 := as.integer(round(median(overlap_R1))),by = refName_newR1]
+min_overlap_R1 = min(class_input$overlap_R1)
+max_overlap_R1 = max(class_input$overlap_R1)
+print(min_overlap_R1)
+print(max_overlap_R1)
+class_input[,uniformity_test_pval:=uniformity_test(overlap_R1,min_overlap_R1,max_overlap_R1),by = refName_newR1]
+class_input[,sd_overlap:=sqrt(var(overlap_R1)),by = refName_newR1]
 ######################################
 
 ### categorical variable for zero mismatches ###########
@@ -479,7 +499,7 @@ class_input[,ave_AT_run_R2:=mean(AT_run_R2),by = refName_newR1]
 class_input[,ave_GC_run_R2:=mean(GC_run_R2),by = refName_newR1]
 class_input[,ave_max_run_R2:=mean(max_run_R2),by = refName_newR1]
 
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glm_corrected_genomic","p_predicted_glmnet","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_genomic","p_predicted_glmnet_twostep","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_corrected","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_max_run_R2")
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glm_corrected_genomic","p_predicted_glmnet","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_genomic","p_predicted_glmnet_twostep","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_corrected","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_max_run_R2","uniformity_test_pval","sd_overlap")
 
 
 
@@ -499,6 +519,22 @@ if (is.SE == 0){
   null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glmnet_corrected
   junction_prediction[,emp.p_glmnet_corrected:=length(which(null_dist>junc_cdf_glmnet_corrected))/length(null_dist),by=junc_cdf_glmnet_corrected]
 }
+
+
+### compute p-value for how close is the median overlap to what we expect based on the read length
+iter=1000
+for (num_reads in 1:15){
+  rnd_overlaps = matrix(0,iter,num_reads)
+  rnd_overlaps = apply(rnd_overlaps,1,function(x) sample(min_overlap_R1:max_overlap_R1,num_reads))
+  rnd_overlaps = t(rnd_overlaps)
+  if(num_reads == 1){
+    rnd_overlaps = t(rnd_overlaps)  # for num_reads =1 I need to transepose twice since first I have a vector
+  }
+  null_dist_medians = apply(rnd_overlaps,1,function(x) median(x))
+  class_input[numReads == num_reads, p_val_median_overlap_R1:=length(which(null_dist_medians >= median_overlap_R1))/iter,by = median_overlap_R1]
+}
+
+class_input[numReads > 15, p_val_median_overlap_R1:=pnorm(median_overlap_R1, mean = (min_overlap_R1+max_overlap_R1)/2, sd = sqrt( ((max_overlap_R1-min_overlap_R1+1)^2-1) /12), lower.tail = TRUE),by = refName_newR1] 
 
 class_input[,cur_weight:=NULL]
 class_input[,train_class:=NULL]

@@ -80,7 +80,7 @@ args = parser.parse_args()
 
 t0 = time.time()
 
-wrapper_path = "/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/"
+wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
 #annotator_path = "{}annotators/pyensembl_{}.pkl".format(wrapper_path, args.assembly)
 annotator_path = "{}annotators/{}.pkl".format(wrapper_path, args.assembly)
 

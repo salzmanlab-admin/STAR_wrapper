@@ -421,10 +421,10 @@ def get_SM(cigar):
 def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
   k = 14
   splices = pickle.load(open("/oak/stanford/groups/horence/JuliaO/pickled/grch38_juncs.pkl","rb"))
-  kmer_dict = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/kmer_dict_{}.pkl".format(k),"rb"))
-  exon_bounds = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/hg38_exon_bounds_all.pkl","rb"))
+  kmer_dict = pickle.load(open("/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/kmer_dict_{}.pkl".format(k),"rb"))
+  exon_bounds = pickle.load(open("/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_exon_bounds_all.pkl","rb"))
   fill_char = "NA"
-  meta_df =  pd.read_csv("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/TS_Pilot_Plate_Info_051019_smartseq2.csv") 
+  meta_df =  pd.read_csv("/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/TS_Pilot_Smartseq_metadata.csv") 
   plate = out_file.split("/")[-2].split("_")[0]
   if plate in list(meta_df["Plate ID"]): 
     organ = meta_df[meta_df["Plate ID"] == plate].iloc[0]["Organ"]
@@ -720,7 +720,7 @@ def main():
 #  gtf_data = pyensembl.Genome(reference_name='hg38', annotation_name='my_genome_features', gtf_path_or_url='/scratch/PI/horence/JuliaO/single_cell/STAR_output/mm10_files/mm10.gtf')
 #  gtf_data.index()
 
-  wrapper_path = "/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/"
+  wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
 #  annotator_path = "{}annotators/pyensembl_{}.pkl".format(wrapper_path, args.assembly)
   annotator_path = "{}annotators/{}.pkl".format(wrapper_path, args.assembly)
 

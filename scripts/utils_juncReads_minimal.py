@@ -6,7 +6,7 @@ from collections import deque
 from numpy import mean
 #import pyensembl
 import sys
-sys.path.insert(0, '/scratch/PI/horence/JuliaO/single_cell/scripts/')
+sys.path.insert(0, '/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/')
 import annotator
 
 POS_MATCH_FLAG = 0  # value used in sam file to indicate alignment to forward strand

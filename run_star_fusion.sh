@@ -1,14 +1,15 @@
 #!/bin/bash
 #
-#SBATCH --job-name=fusion_TxDx2016-001-001_S1_L002
-#SBATCH --output=/scratch/PI/horence/Roozbeh/single_cell_project/output/circRNA_thirdparty_benchmarking_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TxDx2016-001-001_S1_L002/log_files/fusion_TxDx2016-001-001_S1_L002.%j.out
-#SBATCH --error=/scratch/PI/horence/Roozbeh/single_cell_project/output/circRNA_thirdparty_benchmarking_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TxDx2016-001-001_S1_L002/log_files/fusion_TxDx2016-001-001_S1_L002.%j.err
+#SBATCH --job-name=fusion_B107819_B19_S42
+#SBATCH --output=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107819_B19_S42/log_files/fusion_B107819_B19_S42.%j.out
+#SBATCH --error=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107819_B19_S42/log_files/fusion_B107819_B19_S42.%j.err
 #SBATCH --time=12:00:00
-#SBATCH -p horence
+#SBATCH --account=horence
+#SBATCH --partition=nih_s10
 #SBATCH --nodes=1
 #SBATCH --mem=20Gb
-#SBATCH --dependency=afterok:52137032
+#SBATCH --dependency=afterok:12149869
 #SBATCH --kill-on-invalid-dep=yes
 date
-/scratch/PI/horence/Roozbeh/STAR-Fusion/STAR-Fusion --genome_lib_dir /scratch/PI/horence/Roozbeh/STAR-Fusion/GRCh38_gencode_v29_CTAT_lib_Mar272019.plug-n-play/ctat_genome_lib_build_dir/ -J  /scratch/PI/horence/Roozbeh/single_cell_project/output/circRNA_thirdparty_benchmarking_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TxDx2016-001-001_S1_L002/1Chimeric.out.junction --output_dir /scratch/PI/horence/Roozbeh/single_cell_project/output/circRNA_thirdparty_benchmarking_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TxDx2016-001-001_S1_L002/star_fusion 
+/scg/apps/software/star-fusion/1.8.1/STAR-Fusion --genome_lib_dir /oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-Fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/ctat_genome_lib_build_dir/ -J  /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107819_B19_S42/1Chimeric.out.junction --output_dir /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107819_B19_S42/star_fusion 
 date
