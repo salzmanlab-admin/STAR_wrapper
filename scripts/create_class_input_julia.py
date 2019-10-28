@@ -148,102 +148,101 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
 #    for line in handle:
     for bam_read in pysam.AlignmentFile(bamFile).fetch(until_eof=True):
       line = bam_read.to_string()
-      if int(line.split()[1]) != 4:
-        count += 1
-  #      if count % 1000 == 0:
-  #        print("{}: {}".format(count, time.time() - t0))
-  #      if not line.startswith("@"): # ignore header lines
-  #          try:
-        if bam_read.has_tag("ch") and not first:
-          prev_line = line
-          first = True
+      count += 1
+#      if count % 1000 == 0:
+#        print("{}: {}".format(count, time.time() - t0))
+#      if not line.startswith("@"): # ignore header lines
+#          try:
+      if bam_read.has_tag("ch") and not first:
+        prev_line = line
+        first = True
+      else:
+
+        if bam_read.has_tag("ch"):
+        
+#           print("prev_line",prev_line.strip().split())
+#           print("line",line.strip().split())
+#           print
+          read = chim_newReadObj(prev_line.strip().split(), line.strip().split(), fastqIdStyle, ann)
+#           print("chim read",read)
+          first = False
         else:
-  
-          if bam_read.has_tag("ch"):
-          
-  #           print("prev_line",prev_line.strip().split())
-  #           print("line",line.strip().split())
-  #           print
-            read = chim_newReadObj(prev_line.strip().split(), line.strip().split(), fastqIdStyle, ann)
-  #           print("chim read",read)
-            first = False
-          else:
-            read = newReadObj(line.strip().split(), fastqIdStyle, ann)
-          test_name = "A00111:335:HLMG5DSXX:3:1348:13395:25222"
+          read = newReadObj(line.strip().split(), fastqIdStyle, ann)
+        test_name = "A00111:335:HLMG5DSXX:3:1348:13395:25222"
+        if read.name == test_name:
+          print("\nread", read)
+#        print("refname", read.refName)
+        if readType == "r1":
           if read.name == test_name:
-            print("\nread", read)
-  #        print("refname", read.refName)
-          if readType == "r1":
+            print("\nread r1", read)
+
+          if bam_read.has_tag("ch"):
             if read.name == test_name:
-              print("\nread r1", read)
-  
-            if bam_read.has_tag("ch"):
+              print("\nread ch", read)
+
+           
+            if read.name not in read_junc_dict:
               if read.name == test_name:
-                print("\nread ch", read)
-  
-             
-              if read.name not in read_junc_dict:
+                print("\nread read_junc_dict", read)
+
+              if read.refName not in junc_read_dict:
                 if read.name == test_name:
-                  print("\nread read_junc_dict", read)
+                  print("\nread junc_read_dict", read)
+
+                junc_read_dict[read.refName] = {}
+              junc_read_dict[read.refName][read.name] = [read]
+              read_junc_dict[read.name] = read.refName
   
-                if read.refName not in junc_read_dict:
-                  if read.name == test_name:
-                    print("\nread junc_read_dict", read)
-  
-                  junc_read_dict[read.refName] = {}
-                junc_read_dict[read.refName][read.name] = [read]
-                read_junc_dict[read.name] = read.refName
-    
-            elif "|lin" in read.refName:
+          elif "|lin" in read.refName:
+            if read.name == test_name:
+              print("\nread lin", read)
+
+#            if "|lin" in read.refName:
+            if read.name not in read_junc_dict:
               if read.name == test_name:
-                print("\nread lin", read)
-  
-  #            if "|lin" in read.refName:
-              if read.name not in read_junc_dict:
+                print("\nread lin read_junc_dict", read)
+
+              if read.refName not in junc_read_dict:
                 if read.name == test_name:
-                  print("\nread lin read_junc_dict", read)
-  
-                if read.refName not in junc_read_dict:
-                  if read.name == test_name:
-                    print("\nread lin junc_read_dict", read)
-  
-                  junc_read_dict[read.refName] = {}
-                junc_read_dict[read.refName][read.name] = [read]
-                read_junc_dict[read.name] = read.refName
-            else:
-              genomic_alignments.add(read.name)
-  
-  #        if readType == "r1chim":
-  #          if read.refName not in junc_read_dict.keys():
-  #            junc_read_dict[read.refName] = {}
-  #          junc_read_dict[read.refName][read.name] = [read]
-  #          read_junc_dict[read.name] = read.refName
-  ##        elif readType == "r1align":
-  ##          if read.name not in read_junc_dict.keys():
-  #        elif readType == "r1align":
-  #          if read.refName not in junc_read_dict.keys():
-  #            junc_read_dict[read.refName] = {}
-  #          junc_read_dict[read.refName][read.name] = [read]
-  #          read_junc_dict[read
-              
-          # add mates 
-          elif readType == "r2":
-            if read.name in read_junc_dict:
-              if read.name == test_name:
-                print("\nread r2", read)
-  
-              junc_read_dict[read_junc_dict[read.name]][read.name].append(read)
-              
-              assert len(junc_read_dict[read_junc_dict[read.name]][read.name]) == 2
-              del read_junc_dict[read.name]
-  
-  #       xcept Exception as e:
-  #          print("Exception")
-  #          print(e)
-  #          print("error:", sys.exc_info()[0])
-  #          print("parsing sam output for", line)
-  #          
-  #    handle.close()
+                  print("\nread lin junc_read_dict", read)
+
+                junc_read_dict[read.refName] = {}
+              junc_read_dict[read.refName][read.name] = [read]
+              read_junc_dict[read.name] = read.refName
+          else:
+            genomic_alignments.add(read.name)
+
+#        if readType == "r1chim":
+#          if read.refName not in junc_read_dict.keys():
+#            junc_read_dict[read.refName] = {}
+#          junc_read_dict[read.refName][read.name] = [read]
+#          read_junc_dict[read.name] = read.refName
+##        elif readType == "r1align":
+##          if read.name not in read_junc_dict.keys():
+#        elif readType == "r1align":
+#          if read.refName not in junc_read_dict.keys():
+#            junc_read_dict[read.refName] = {}
+#          junc_read_dict[read.refName][read.name] = [read]
+#          read_junc_dict[read
+            
+        # add mates 
+        elif readType == "r2":
+          if read.name in read_junc_dict:
+            if read.name == test_name:
+              print("\nread r2", read)
+
+            junc_read_dict[read_junc_dict[read.name]][read.name].append(read)
+            
+            assert len(junc_read_dict[read_junc_dict[read.name]][read.name]) == 2
+            del read_junc_dict[read.name]
+
+#       xcept Exception as e:
+#          print("Exception")
+#          print(e)
+#          print("error:", sys.exc_info()[0])
+#          print("parsing sam output for", line)
+#          
+#    handle.close()
     return read_junc_dict, junc_read_dict, genomic_alignments
 
 
@@ -267,8 +266,6 @@ def STAR_parseSam(samFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
 #        if count % 1000 == 0:
 #          print("{}: {}".format(count, time.time() - t0))
         if not line.startswith("@"): # ignore header lines
-          # don't want to include unmapped reads
-          if int(line.split()[1]) != 4:
 #            try:
                 if "chim" in readType and not first:
                   prev_line = line
@@ -717,7 +714,6 @@ def main():
   parser.add_argument("-g", "--gtf_path", help="the path to the gtf file to use for annotation")
   parser.add_argument("-a", "--assembly", help="The name of the assembly to pre-load annotation (so, mm10 for the 10th mouse assembly)")
   parser.add_argument("-i", "--input_path", help="the prefix to the STAR Aligned.out.sam and Chimeric.out.sam directory")
-  parser.add_argument("-I", "--input_file",help="specify file name of different format",default="")
   parser.add_argument("-s", "--single", action="store_true", help="use this flag if the reads you are running on are single-ended")
   parser.add_argument("-t", "--tenX", action="store_true", help="indicate whether this is 10X data (with UMIs and barcodes)")
   args = parser.parse_args()
@@ -767,9 +763,7 @@ def main():
 #    samFile3 = "{}2Chimeric.out.sam".format(args.input_path)
 #    samFile4 = "{}2Aligned.out.sam".format(args.input_path)
   
-  if args.input_file != "":
-    bamFile1 = args.input_file
-  elif args.single:
+  if args.single:
     bamFile1 = "{}2Aligned.out.bam".format(args.input_path)
   else:
     bamFile1 = "{}1Aligned.out.bam".format(args.input_path)

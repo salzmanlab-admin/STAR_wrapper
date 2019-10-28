@@ -397,8 +397,6 @@ def newReadObj(vals, readIdStyle, ann, fill_char = "NA"):
     optFields = vals[11:]  
     jM = fill_char
     jI = fill_char
-    HI = fill_char
-    nM = fill_char
     
     for x in optFields:
         curOpt = x.split(":")
@@ -602,10 +600,6 @@ def chim_newReadObj(vals1, vals2, readIdStyle, ann, fill_char = "NA"):
     jI = fill_char
     jMB = fill_char
     jIB = fill_char
-    HI = fill_char
-    HIB = fill_char
-    nM = fill_char
-    nMB = fill_char
 
     optFields1 = vals1[11:]  
     optFields2 = vals2[11:]
