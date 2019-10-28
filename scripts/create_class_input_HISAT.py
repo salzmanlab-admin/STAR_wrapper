@@ -24,7 +24,7 @@ import sys
 import time
 #sys.path.insert(0, '/scratch/PI/horence/JuliaO/KNIFE/circularRNApipeline_Cluster/analysis/')
 import utils_os
-from utils_juncReads_minimal import *
+from utils_juncReads_minimal_HISAT import *
 
 def get_kmer_seq_chim(cigar, seq, fileType, k, kmer_dict):
   matches = re.findall(r'(\d+)([A-Z]{1})', cigar)
@@ -148,102 +148,101 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
 #    for line in handle:
     for bam_read in pysam.AlignmentFile(bamFile).fetch(until_eof=True):
       line = bam_read.to_string()
-      if int(line.split()[1]) != 4:
-        count += 1
-  #      if count % 1000 == 0:
-  #        print("{}: {}".format(count, time.time() - t0))
-  #      if not line.startswith("@"): # ignore header lines
-  #          try:
-        if bam_read.has_tag("ch") and not first:
-          prev_line = line
-          first = True
+      count += 1
+#      if count % 1000 == 0:
+#        print("{}: {}".format(count, time.time() - t0))
+#      if not line.startswith("@"): # ignore header lines
+#          try:
+      if bam_read.has_tag("ch") and not first:
+        prev_line = line
+        first = True
+      else:
+
+        if bam_read.has_tag("ch"):
+        
+#           print("prev_line",prev_line.strip().split())
+#           print("line",line.strip().split())
+#           print
+          read = chim_newReadObj(prev_line.strip().split(), line.strip().split(), fastqIdStyle, ann)
+#           print("chim read",read)
+          first = False
         else:
-  
-          if bam_read.has_tag("ch"):
-          
-  #           print("prev_line",prev_line.strip().split())
-  #           print("line",line.strip().split())
-  #           print
-            read = chim_newReadObj(prev_line.strip().split(), line.strip().split(), fastqIdStyle, ann)
-  #           print("chim read",read)
-            first = False
-          else:
-            read = newReadObj(line.strip().split(), fastqIdStyle, ann)
-          test_name = "A00111:335:HLMG5DSXX:3:1348:13395:25222"
+          read = newReadObj(line.strip().split(), fastqIdStyle, ann)
+        test_name = "A00111:335:HLMG5DSXX:3:1348:13395:25222"
+        if read.name == test_name:
+          print("\nread", read)
+#        print("refname", read.refName)
+        if readType == "r1":
           if read.name == test_name:
-            print("\nread", read)
-  #        print("refname", read.refName)
-          if readType == "r1":
+            print("\nread r1", read)
+
+          if bam_read.has_tag("ch"):
             if read.name == test_name:
-              print("\nread r1", read)
-  
-            if bam_read.has_tag("ch"):
+              print("\nread ch", read)
+
+           
+            if read.name not in read_junc_dict:
               if read.name == test_name:
-                print("\nread ch", read)
-  
-             
-              if read.name not in read_junc_dict:
+                print("\nread read_junc_dict", read)
+
+              if read.refName not in junc_read_dict:
                 if read.name == test_name:
-                  print("\nread read_junc_dict", read)
+                  print("\nread junc_read_dict", read)
+
+                junc_read_dict[read.refName] = {}
+              junc_read_dict[read.refName][read.name] = [read]
+              read_junc_dict[read.name] = read.refName
   
-                if read.refName not in junc_read_dict:
-                  if read.name == test_name:
-                    print("\nread junc_read_dict", read)
-  
-                  junc_read_dict[read.refName] = {}
-                junc_read_dict[read.refName][read.name] = [read]
-                read_junc_dict[read.name] = read.refName
-    
-            elif "|lin" in read.refName:
+          elif "|lin" in read.refName:
+            if read.name == test_name:
+              print("\nread lin", read)
+
+#            if "|lin" in read.refName:
+            if read.name not in read_junc_dict:
               if read.name == test_name:
-                print("\nread lin", read)
-  
-  #            if "|lin" in read.refName:
-              if read.name not in read_junc_dict:
+                print("\nread lin read_junc_dict", read)
+
+              if read.refName not in junc_read_dict:
                 if read.name == test_name:
-                  print("\nread lin read_junc_dict", read)
-  
-                if read.refName not in junc_read_dict:
-                  if read.name == test_name:
-                    print("\nread lin junc_read_dict", read)
-  
-                  junc_read_dict[read.refName] = {}
-                junc_read_dict[read.refName][read.name] = [read]
-                read_junc_dict[read.name] = read.refName
-            else:
-              genomic_alignments.add(read.name)
-  
-  #        if readType == "r1chim":
-  #          if read.refName not in junc_read_dict.keys():
-  #            junc_read_dict[read.refName] = {}
-  #          junc_read_dict[read.refName][read.name] = [read]
-  #          read_junc_dict[read.name] = read.refName
-  ##        elif readType == "r1align":
-  ##          if read.name not in read_junc_dict.keys():
-  #        elif readType == "r1align":
-  #          if read.refName not in junc_read_dict.keys():
-  #            junc_read_dict[read.refName] = {}
-  #          junc_read_dict[read.refName][read.name] = [read]
-  #          read_junc_dict[read
-              
-          # add mates 
-          elif readType == "r2":
-            if read.name in read_junc_dict:
-              if read.name == test_name:
-                print("\nread r2", read)
-  
-              junc_read_dict[read_junc_dict[read.name]][read.name].append(read)
-              
-              assert len(junc_read_dict[read_junc_dict[read.name]][read.name]) == 2
-              del read_junc_dict[read.name]
-  
-  #       xcept Exception as e:
-  #          print("Exception")
-  #          print(e)
-  #          print("error:", sys.exc_info()[0])
-  #          print("parsing sam output for", line)
-  #          
-  #    handle.close()
+                  print("\nread lin junc_read_dict", read)
+
+                junc_read_dict[read.refName] = {}
+              junc_read_dict[read.refName][read.name] = [read]
+              read_junc_dict[read.name] = read.refName
+          else:
+            genomic_alignments.add(read.name)
+
+#        if readType == "r1chim":
+#          if read.refName not in junc_read_dict.keys():
+#            junc_read_dict[read.refName] = {}
+#          junc_read_dict[read.refName][read.name] = [read]
+#          read_junc_dict[read.name] = read.refName
+##        elif readType == "r1align":
+##          if read.name not in read_junc_dict.keys():
+#        elif readType == "r1align":
+#          if read.refName not in junc_read_dict.keys():
+#            junc_read_dict[read.refName] = {}
+#          junc_read_dict[read.refName][read.name] = [read]
+#          read_junc_dict[read
+            
+        # add mates 
+        elif readType == "r2":
+          if read.name in read_junc_dict:
+            if read.name == test_name:
+              print("\nread r2", read)
+
+            junc_read_dict[read_junc_dict[read.name]][read.name].append(read)
+            
+            assert len(junc_read_dict[read_junc_dict[read.name]][read.name]) == 2
+            del read_junc_dict[read.name]
+
+#       xcept Exception as e:
+#          print("Exception")
+#          print(e)
+#          print("error:", sys.exc_info()[0])
+#          print("parsing sam output for", line)
+#          
+#    handle.close()
     return read_junc_dict, junc_read_dict, genomic_alignments
 
 
@@ -267,8 +266,6 @@ def STAR_parseSam(samFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
 #        if count % 1000 == 0:
 #          print("{}: {}".format(count, time.time() - t0))
         if not line.startswith("@"): # ignore header lines
-          # don't want to include unmapped reads
-          if int(line.split()[1]) != 4:
 #            try:
                 if "chim" in readType and not first:
                   prev_line = line
@@ -424,10 +421,10 @@ def get_SM(cigar):
 def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
   k = 14
   splices = pickle.load(open("/oak/stanford/groups/horence/JuliaO/pickled/grch38_juncs.pkl","rb"))
-  kmer_dict = pickle.load(open("/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/kmer_dict_{}.pkl".format(k),"rb"))
-  exon_bounds = pickle.load(open("/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_exon_bounds_all.pkl","rb"))
+  kmer_dict = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/kmer_dict_{}.pkl".format(k),"rb"))
+  exon_bounds = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/annotators/hg38_exon_bounds_all.pkl","rb"))
   fill_char = "NA"
-  meta_df =  pd.read_csv("/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/TS_Pilot_Smartseq_metadata.csv") 
+  meta_df =  pd.read_csv("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/TS_Pilot_Plate_Info_051019_smartseq2.csv") 
   plate = out_file.split("/")[-2].split("_")[0]
   if plate in list(meta_df["Plate ID"]): 
     organ = meta_df[meta_df["Plate ID"] == plate].iloc[0]["Organ"]
@@ -447,7 +444,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
   columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2", "Organ", "Cell_Type(s)", "min_junc_{}mer".format(k), "max_junc_{}mer".format(k), "splice_ann", "exon_annR1A", "exon_annR1B", "both_ann"]
   col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
-              'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'read_strand']
+              'NH', 'NM', 'jM', 'jI', 'read_strand']
   for c in col_base:
     for r in ["R1","R2"]:
       for l in ["A","B"]:
@@ -545,10 +542,8 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
         out_dict["SR1B"] = S
         out_dict["NHR1A"] = r1.NHA
         out_dict["NHR1B"] = r1.NHB
-        out_dict["HIR1A"] = r1.HIA
-        out_dict["HIR1B"] = r1.HIB
-        out_dict["nMR1A"] = r1.nMA
-        out_dict["nMR1B"] = r1.nMB
+#        out_dict["nMR1A"] = r1.nMA
+#        out_dict["nMR1B"] = r1.nMB
         out_dict["NMR1A"] = r1.NMA
         out_dict["NMR1B"] = r1.NMB
         out_dict["jMR1A"] = r1.jMA
@@ -643,10 +638,8 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
           out_dict["SR2A"] = S
           out_dict["NHR2A"] = r2.NHA
           out_dict["NHR2B"] = r2.NHB
-          out_dict["HIR2A"] = r2.HIA
-          out_dict["HIR2B"] = r2.HIB
-          out_dict["nMR2A"] = r2.nMA
-          out_dict["nMR2B"] = r2.nMB
+#          out_dict["nMR2A"] = r2.nMA
+#          out_dict["nMR2B"] = r2.nMB
           out_dict["NMR2A"] = r2.NMA
           out_dict["NMR2B"] = r2.NMB
           out_dict["jMR2A"] = r2.jMA
@@ -717,14 +710,13 @@ def main():
   parser.add_argument("-g", "--gtf_path", help="the path to the gtf file to use for annotation")
   parser.add_argument("-a", "--assembly", help="The name of the assembly to pre-load annotation (so, mm10 for the 10th mouse assembly)")
   parser.add_argument("-i", "--input_path", help="the prefix to the STAR Aligned.out.sam and Chimeric.out.sam directory")
-  parser.add_argument("-I", "--input_file",help="specify file name of different format",default="")
   parser.add_argument("-s", "--single", action="store_true", help="use this flag if the reads you are running on are single-ended")
   parser.add_argument("-t", "--tenX", action="store_true", help="indicate whether this is 10X data (with UMIs and barcodes)")
   args = parser.parse_args()
 #  gtf_data = pyensembl.Genome(reference_name='hg38', annotation_name='my_genome_features', gtf_path_or_url='/scratch/PI/horence/JuliaO/single_cell/STAR_output/mm10_files/mm10.gtf')
 #  gtf_data.index()
 
-  wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
+  wrapper_path = "/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/"
 #  annotator_path = "{}annotators/pyensembl_{}.pkl".format(wrapper_path, args.assembly)
   annotator_path = "{}annotators/{}.pkl".format(wrapper_path, args.assembly)
 
@@ -767,10 +759,8 @@ def main():
 #    samFile3 = "{}2Chimeric.out.sam".format(args.input_path)
 #    samFile4 = "{}2Aligned.out.sam".format(args.input_path)
   
-  if args.input_file != "":
-    bamFile1 = args.input_file
-  elif args.single:
-    bamFile1 = "{}2Aligned.out.bam".format(args.input_path)
+  if args.single:
+    bamFile1 = "{}_HISAT.bam".format(args.input_path)
   else:
     bamFile1 = "{}1Aligned.out.bam".format(args.input_path)
     bamFile2 = "{}2Aligned.out.bam".format(args.input_path)

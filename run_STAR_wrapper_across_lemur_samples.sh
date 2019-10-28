@@ -2,11 +2,11 @@
 #############################
 # File Name :run_STAR_wrapper_across_samples.sh
 #
-# Purpose : This wrapper calls the write.job.py script for many samples given by an input file
+# Purpose : This wrapper calls the write_jobs_lemur_smartseq.py script for many samples given by an input file
 #
 # Creation Date : 06-06-2019
 #
-# Last Modified : Wed 18 Sep 2019 11:56:35 AM PDT
+# Last Modified : Fri 04 Oct 2019 06:54:05 PM PDT
 #
 # Created By : Roozbeh Dehghannasiri
 #

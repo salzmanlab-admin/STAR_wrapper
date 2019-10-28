@@ -9,7 +9,7 @@ args = commandArgs(trailingOnly = TRUE)
 ##### input files #########
 directory = args[1]
 is.single = as.numeric(args[2])
-gtf_file = "/scratch/PI/horence/Roozbeh/single_cell_project/utility_files/gtf_hg38_gene_name_ids.txt"
+gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/gtf_hg38_gene_name_ids.txt"
 ######################
 
 
