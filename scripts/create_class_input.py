@@ -144,21 +144,27 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
 #    handle = open(samFile, "rU")
     first = False
     count = 0    
-    genomic_alignments = set()
+    genomic_alignments = {}
 #    for line in handle:
     for bam_read in pysam.AlignmentFile(bamFile).fetch(until_eof=True):
       line = bam_read.to_string()
+
+      # flag == 4 means the read was not mapped (not useful for us)
       if int(line.split()[1]) != 4:
         count += 1
   #      if count % 1000 == 0:
   #        print("{}: {}".format(count, time.time() - t0))
   #      if not line.startswith("@"): # ignore header lines
   #          try:
+
+        # it's a chimeric alignment and we need another line from it
         if bam_read.has_tag("ch") and not first:
           prev_line = line
           first = True
+
         else:
   
+          # chimeric alignment
           if bam_read.has_tag("ch"):
           
   #           print("prev_line",prev_line.strip().split())
@@ -167,6 +173,8 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
             read = chim_newReadObj(prev_line.strip().split(), line.strip().split(), fastqIdStyle, ann)
   #           print("chim read",read)
             first = False
+
+          # could be linear splicing or genomic
           else:
             read = newReadObj(line.strip().split(), fastqIdStyle, ann)
           test_name = "A00111:335:HLMG5DSXX:3:1348:13395:25222"
@@ -211,7 +219,11 @@ def STAR_parseBAM(bamFile, readType, read_junc_dict, junc_read_dict, fastqIdStyl
                 junc_read_dict[read.refName][read.name] = [read]
                 read_junc_dict[read.name] = read.refName
             else:
-              genomic_alignments.add(read.name)
+#              genomic_alignments.add(read.name)
+              if read.name not in genomic_alignments:
+                genomic_alignments[read.name] = float(read.aScoreA)
+              else:
+                genomic_alignments[read.name] = max(float(read.aScoreA),genomic_alignments[read.name])
   
   #        if readType == "r1chim":
   #          if read.refName not in junc_read_dict.keys():
@@ -445,7 +457,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
 #                       "posR1B", "qualR1B", "aScoreR1B", "readLenR1", "refNameR1", "flagR1A", "flagR1B", "strandR1A", "strandR1B", "posR2R1A", 
 #                       "qualR2A", "aScoreR2A", "numNR2", "readLenR2", "refNameR2", "strandR2A", "posR2B", "qualR2B",
 #                       "aScoreR2B", "strandR2B", "fileTypeR1", "fileTypeR2", "chrR1A", "chrR1B", "geneR1A", "geneR1B", "juncPosR1A", "juncPosR1B", "readClassR1", "flagR2A", "flagR2B","chrR2A", "chrR2B", "geneR2A", "geneR2B", "juncPosR2A", "juncPosR2B", "readClassR2"]
-  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2", "Organ", "Cell_Type(s)", "min_junc_{}mer".format(k), "max_junc_{}mer".format(k), "splice_ann", "exon_annR1A", "exon_annR1B", "both_ann"]
+  columns = ['id', 'class', 'refName_ABR1', 'refName_readStrandR1','refName_ABR2', 'refName_readStrandR2', 'fileTypeR1', 'fileTypeR2', 'readClassR1', 'readClassR2','numNR1', 'numNR2', 'readLenR1', 'readLenR2', 'barcode', 'UMI', 'entropyR1', 'entropyR2', 'seqR1', 'seqR2', "read_strand_compatible", "location_compatible", "strand_crossR1", "strand_crossR2", "genomicAlignmentR1", "spliceDist", "AT_run_R1", "GC_run_R1", "max_run_R1", "AT_run_R2", "GC_run_R2", "max_run_R2", "Organ", "Cell_Type(s)", "min_junc_{}mer".format(k), "max_junc_{}mer".format(k), "splice_ann", "exon_annR1A", "exon_annR1B", "both_ann", "genomic_aScoreR1"]
   col_base = ['chr','gene', 'juncPos', 'gene_strand', 'aScore', 'flag', 'pos', 'qual', "MD", 'nmm', 'cigar', 'M','S',
               'NH', 'HI', 'nM', 'NM', 'jM', 'jI', 'read_strand']
   for c in col_base:
@@ -471,8 +483,10 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
         out_dict["Cell_Type(s)"] = cell_type
         if read_name in genomic_alignments:
           out_dict["genomicAlignmentR1"] = 1
+          out_dict["genomic_aScoreR1"] = genomic_alignments[read_name]
         else:
           out_dict["genomicAlignmentR1"] = 0
+          out_dict["genomic_aScoreR1"] = fill_char
         if tenX:
           read_vals = read_name.split("_")
           out_dict["barcode"] = read_vals[-2]
@@ -809,6 +823,7 @@ def main():
 #  print("parsed all {}".format(regime), time.time() - t0)
 #  write_class_file(junc_read_dict,"/scratch/PI/horence/JuliaO/single_cell/scripts/output/create_class_input/{}.tsv".format(fastq_id))
   write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single, genomic_alignments, args.tenX)
+  print("genomic alignments",genomic_alignments)
 
 #time.time() - t0
 

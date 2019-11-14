@@ -244,6 +244,7 @@ jI:B:I,Start1,End1,Start2,End2,...
 165. `junc_cdf_glmnet`: cdf of `p_predicted_glmnet` relative to its null distribution by randomly assigning reads to junctions
 166. `junc_cdf_glmnet_corrected`: cdf of `p_predicted_glmnet_corrected` relative to its null distribution by randomly assigning reads to junctions
 167. `junc_cdf_glmnet_twostep`: cdf of `p_predicted_glmnet_twostep` relative to its null distribution by randomly assigning reads to junctions
+168. `genomic_aScoreR1`: the maximum alignment score of all genomic alignments of that read (NA if `genomicAlignmentR1` == 0)
 
 ### New columns in the class input file after run_ensembl step:
 * `geneR1B_ensembl`: the gene ensembl id for `geneR1B`
