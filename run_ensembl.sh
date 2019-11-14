@@ -1,15 +1,14 @@
 #!/bin/bash
 #
-#SBATCH --job-name=ensembl_B107819_B18_S41
-#SBATCH --output=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107819_B18_S41/log_files/ensembl_B107819_B18_S41.%j.out
-#SBATCH --error=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107819_B18_S41/log_files/ensembl_B107819_B18_S41.%j.err
+#SBATCH --job-name=ensembl_B107924_N14_S60
+#SBATCH --output=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107924_N14_S60/log_files/ensembl_B107924_N14_S60.%j.out
+#SBATCH --error=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107924_N14_S60/log_files/ensembl_B107924_N14_S60.%j.err
 #SBATCH --time=12:00:00
-#SBATCH --account=horence
-#SBATCH --partition=nih_s10
+#SBATCH -p owners
 #SBATCH --nodes=1
 #SBATCH --mem=50Gb
-#SBATCH --dependency=afterok:12149859:12149860:12149861:12149862:12149863
+#SBATCH --dependency=afterok:54676561:54676563:54676567:54676569:54676571
 #SBATCH --kill-on-invalid-dep=yes
 date
-Rscript scripts/add_ensembl_id.R /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107819_B18_S41/  0 
+Rscript scripts/add_ensembl_id.R /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/B107924_N14_S60/  0 
 date
