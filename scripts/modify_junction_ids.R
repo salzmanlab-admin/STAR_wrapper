@@ -23,13 +23,13 @@ class_input[fileTypeR1=="Aligned",read_strandR1B:=read_strandR1A]
 
 #need to get the gene information from the unmodified junction id "refName_ABR1" so that if I rerun this script for a dataset I can still use the raw infomration rather than the modified information 
 class_input[,chrR1A:=strsplit(refName_ABR1,split=":",fixed=TRUE)[[1]][1],by=refName_ABR1]
-class_input[,chrR1B:=strsplit(refName_ABR1,split="[:,|]")[[1]][5],by=refName_ABR1]
+class_input[,chrR1B:=strsplit(refName_ABR1,split="[:|]")[[1]][5],by=refName_ABR1]
 class_input[,juncPosR1A:=as.integer(strsplit(refName_ABR1,split=":",fixed=TRUE)[[1]][3]),by=refName_ABR1]
 class_input[,juncPosR1B:=as.integer(strsplit(refName_ABR1,split=":",fixed=TRUE)[[1]][6]),by=refName_ABR1]
-class_input[,gene_strandR1A:=strsplit(refName_ABR1,split="[:,|]")[[1]][4],by=refName_ABR1]
-class_input[,gene_strandR1B:=strsplit(refName_ABR1,split="[:,|]")[[1]][8],by=refName_ABR1]
-class_input[,geneR1A_uniq:=strsplit(refName_ABR1,split=":",fixed=TRUE)[[1]][2],by=refName_ABR1]
-class_input[,geneR1B_uniq:=strsplit(refName_ABR1,split=":",fixed=TRUE)[[1]][5],by=refName_ABR1]
+class_input[,gene_strandR1A:=strsplit(refName_ABR1,split="[:|]")[[1]][4],by=refName_ABR1]
+class_input[,gene_strandR1B:=strsplit(refName_ABR1,split="[:|]")[[1]][8],by=refName_ABR1]
+class_input[,geneR1A:=strsplit(refName_ABR1,split=":",fixed=TRUE)[[1]][2],by=refName_ABR1]
+class_input[,geneR1B:=strsplit(refName_ABR1,split=":",fixed=TRUE)[[1]][5],by=refName_ABR1]
 
 
 class_input[,numgeneR1A:=length(strsplit(geneR1A,split = ",")[[1]]),by = geneR1A] # the number of overlapping genes on the R1A side

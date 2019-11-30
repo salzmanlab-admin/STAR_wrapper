@@ -61,10 +61,10 @@ class_input[,numReads:=length(unique(id)),by = refName_newR1]
 
 
 class_input[,chrR1A:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][1],by=refName_newR1]
-class_input[,chrR1B:=strsplit(refName_newR1,split="[:,|]")[[1]][5],by=refName_newR1]
+class_input[,chrR1B:=strsplit(refName_newR1,split="[:|]")[[1]][5],by=refName_newR1]
 class_input[,juncPosR1A:=as.integer(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][3]),by=refName_newR1]
 class_input[,juncPosR1B:=as.integer(strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][6]),by=refName_newR1]
-class_input[,gene_strandR1A:=strsplit(refName_newR1,split="[:,|]")[[1]][4],by=refName_newR1]
+class_input[,gene_strandR1A:=strsplit(refName_newR1,split="[:|]")[[1]][4],by=refName_newR1]
 class_input[,gene_strandR1B:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][7],by=refName_newR1]
 class_input[,geneR1A_uniq:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][2],by=refName_newR1]
 class_input[,geneR1B_uniq:=strsplit(refName_newR1,split=":",fixed=TRUE)[[1]][5],by=refName_newR1]
@@ -92,8 +92,6 @@ class_input[,max_overlap_R1 := max(MR1A,MR1B),by=1:nrow(class_input)]
 class_input[,median_overlap_R1 := as.integer(round(median(overlap_R1))),by = refName_newR1]
 min_overlap_R1 = min(class_input$overlap_R1)
 max_overlap_R1 = max(class_input$overlap_R1)
-print(min_overlap_R1)
-print(max_overlap_R1)
 class_input[,sd_overlap:=sqrt(var(overlap_R1)),by = refName_newR1]
 ######################################
 
@@ -133,17 +131,17 @@ if (is.SE == 0){
   class_input[fileTypeR2 == "Aligned",length_adj_AS_R2:= aScoreR2A/readLenR2]
   class_input[fileTypeR2 == "Chimeric",length_adj_AS_R2 := (aScoreR2A + aScoreR2B)/ (MR2A + MR2B + SR2A + SR2B)]
   ###########################################################################################
-
+  
   ### obtain the number of mismatches per alignment ##########
   class_input[fileTypeR2 == "Aligned",nmmR2:= nmmR2A]
   class_input[fileTypeR2 == "Chimeric",nmmR2:=nmmR2A + nmmR2B]
   ##########################################################################
-
+  
   #### obtain mapping quality values for chimeric reads ###################
   class_input[fileTypeR2 == "Aligned",qual_R2 := qualR2A]
   class_input[fileTypeR2 == "Chimeric",qual_R2 := (qualR2A + qualR2B) / 2]
   #########################################################################
-
+  
   #### obtain junction overlap #########
   class_input[,overlap_R2 := min(MR2A,MR2B),by=1:nrow(class_input)]
   class_input[,max_overlap_R2 := max(MR2A,MR2B),by=1:nrow(class_input)]
@@ -190,7 +188,7 @@ if (is.SE == 0){
   regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A +  MR1B:SR1B + entropyR1 + length_adj_AS_R1")
 }
 
-tic("GLM_model")
+tic("GLM model")
 ###########################
 ##### GLM model  ##########
 ###########################
@@ -235,19 +233,17 @@ for (num_reads in 1:15){
 }
 
 class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glm:=pnorm(sum_log_per_read_prob, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1]
-print("done with glm")
-
+print("done with GLM")
 toc()
 
 #for PE data we have the option of correcting per-read scores for anomalous reads
-
-tic("GLM_corrected")
 if (is.SE==0){
+  tic("GLM corrected")
   class_input[,glm_per_read_prob_corrected := glm_per_read_prob]
   class_input[(location_compatible==0 | read_strand_compatible==0),glm_per_read_prob_corrected:=glm_per_read_prob/(1 + glm_per_read_prob)]
   class_input[,p_predicted_glm_corrected := 1/( exp(sum(log( (1 - glm_per_read_prob_corrected)/glm_per_read_prob_corrected ))) + 1) ,by = refName_newR1]
-
-
+  
+  
   # compute the junc_cdf scores
   class_input[p_predicted_glm_corrected==1,p_predicted_glm_corrected:=0.999999999999]
   class_input[p_predicted_glm_corrected==0,p_predicted_glm_corrected:=10^-30]
@@ -257,7 +253,7 @@ if (is.SE==0){
   class_input[,sum_log_per_read_prob:= sum(log_per_read_prob) ,by = refName_newR1]
   mu_i = mean(log( (1-class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glm_per_read_prob_corrected)/class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glm_per_read_prob_corrected) )
   var_i = var(log( (1-class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glm_per_read_prob_corrected)/class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glm_per_read_prob_corrected) )
-
+  
   all_per_read_probs = class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glm_per_read_prob_corrected
   num_per_read_probs = length(all_per_read_probs)
   for (num_reads in 1:15){
@@ -272,28 +268,26 @@ if (is.SE==0){
     null_dist[which(null_dist==0)]=10^-30
     class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glm_corrected:=length(which(null_dist <= p_predicted_glm_corrected))/iter,by=p_predicted_glm_corrected]
   }
-
+  
   class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glm_corrected:=pnorm(sum_log_per_read_prob, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1]
-  print("done with glm")
-
+  print("done with GLM corrected")
+  toc()  
 }
 
-toc()
-
 ######################################
 ######################################
 ######################################
 
-tic("GLMnet")
+
 ######################################
 ######### GLMnet model  ##############
 ######################################
-
-print("now glmnet model")
+tic("GLMnet")
+print("now GLMnet model")
 x_glmnet = model.matrix(regression_formula, class_input[!is.na(train_class)])
-glmnet_model = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50,nfolds = 5)
-print("done with fitting glmnet")
-
+glmnet_model = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50,nfolds = 5 )
+print("done with fitting GLMnet")
+toc()
 print(coef(glmnet_model, s = "lambda.1se"))
 print(glmnet_model)
 
@@ -335,17 +329,77 @@ for (num_reads in 1:15){
 }
 
 class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glmnet:=pnorm(sum_log_per_read_prob, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1]
-print("done with glmnet")
+print("done with GLMnet")
 
-toc()
 
-tic("GLMnet_corrected")
+
+
+
+####################################################
+######### GLMnet model (constrained)  ##############
+####################################################
+tic("GLMnet constrained")
+print("GLMnet constrained")
+x_glmnet = model.matrix(regression_formula, class_input[!is.na(train_class)])
 if (is.SE==0){
+  glmnet_model_constrained = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50,nfolds = 5, upper.limits=c(rep(Inf,3),0,0,rep(Inf,12)),lower.limits=c(-Inf,0,0,rep(-Inf,2),0,rep(-Inf,3),0,0,0,0,rep(-Inf,4)) )
+}else{
+  glmnet_model_constrained = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50,nfolds = 5, upper.limits=c(rep(Inf,3),0,0,rep(Inf,5)),lower.limits=c(-Inf,0,0,rep(-Inf,2),0,0,rep(-Inf,3)) )
+}
+print("done with fitting GLMnet constrained")
+toc()
+print(coef(glmnet_model_constrained, s = "lambda.1se"))
+print(glmnet_model_constrained)
+
+# predict for all read alignments in the class input file
+class_input_glmnet = model.matrix(update(regression_formula, refName_newR1 ~ .) , class_input)
+class_input$glmnet_per_read_prob_constrained = predict(glmnet_model_constrained,newx = class_input_glmnet, type = "response",s = "lambda.1se", se.fit = TRUE)
+
+# compute the fitted classification error based on training data
+compute_class_error(class_input[!is.na(train_class)]$train_class,class_input[!is.na(train_class)]$glmnet_per_read_prob_constrained)
+
+# compute aggregated score for each junction
+class_input[,p_predicted_glmnet_constrained:= 1/( exp(sum(log( (1 - glmnet_per_read_prob_constrained)/glmnet_per_read_prob_constrained ))) + 1) ,by = refName_newR1]
+
+
+# compute the junc_cdf scores
+class_input[p_predicted_glmnet_constrained==1,p_predicted_glmnet_constrained:=0.999999999999]
+class_input[p_predicted_glmnet_constrained==0,p_predicted_glmnet_constrained:=10^-30]
+class_input[glmnet_per_read_prob_constrained==1,glmnet_per_read_prob_constrained:=0.999999999999]
+class_input[glmnet_per_read_prob_constrained==0,glmnet_per_read_prob_constrained:=10^-30]
+class_input[,log_per_read_prob:=log((1-glmnet_per_read_prob_constrained) / (glmnet_per_read_prob_constrained)), by = glmnet_per_read_prob_constrained]
+class_input[,sum_log_per_read_prob:= sum(log_per_read_prob) ,by = refName_newR1]
+mu_i = mean(log( (1-class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_constrained)/(class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_constrained)) )
+var_i = var(log( (1-class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_constrained)/(class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_constrained)) )
+
+iter=10000
+all_per_read_probs = class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_constrained
+num_per_read_probs = length(all_per_read_probs)
+for (num_reads in 1:15){
+  rnd_per_read_probs = matrix(0,iter,num_reads)
+  rnd_per_read_probs = apply(rnd_per_read_probs,1,function(x) all_per_read_probs[sample(num_per_read_probs,num_reads)])
+  rnd_per_read_probs = t(rnd_per_read_probs)
+  if(num_reads == 1){
+    rnd_per_read_probs = t(rnd_per_read_probs)  # for num_reads =1 I need to transepose twice since first I have a vector
+  }
+  null_dist = apply(rnd_per_read_probs,1,function(x) 1/( exp(sum(log( (1 - x)/x ))) + 1))
+  null_dist[which(null_dist==1)]=0.999999999999
+  null_dist[which(null_dist==0)]=10^-30
+  class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glmnet_constrained:=length(which(null_dist <= p_predicted_glmnet_constrained))/iter,by=p_predicted_glmnet_constrained]
+}
+
+class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glmnet_constrained:=pnorm(sum_log_per_read_prob, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1]
+print("done with GLMnet constrained")
+
+
+
+if (is.SE==0){
+  tic("GLMnet corrected")
   class_input[,glmnet_per_read_prob_corrected := glmnet_per_read_prob]
   class_input[(location_compatible==0 | read_strand_compatible==0),glmnet_per_read_prob_corrected:=glmnet_per_read_prob/(1 + glmnet_per_read_prob)]
   class_input[,p_predicted_glmnet_corrected := 1/( exp(sum(log( (1 - glmnet_per_read_prob_corrected)/glmnet_per_read_prob_corrected ))) + 1) ,by = refName_newR1]
-
-
+  
+  
   # compute the junc_cdf scores
   class_input[p_predicted_glmnet_corrected==1,p_predicted_glmnet_corrected:=0.999999999999]
   class_input[p_predicted_glmnet_corrected==0,p_predicted_glmnet_corrected:=10^-30]
@@ -355,7 +409,7 @@ if (is.SE==0){
   class_input[,sum_log_per_read_prob:= sum(log_per_read_prob) ,by = refName_newR1]
   mu_i = mean(log( (1-class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected)/(class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected)) )
   var_i = var(log( (1-class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected)/(class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected)) )
-
+  
   iter=10000
   all_per_read_probs = class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected
   num_per_read_probs = length(all_per_read_probs)
@@ -371,13 +425,49 @@ if (is.SE==0){
     null_dist[which(null_dist==0)]=10^-30
     class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glmnet_corrected:=length(which(null_dist <= p_predicted_glmnet_corrected))/iter,by=p_predicted_glmnet_corrected  ]
   }
-
+  
   class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glmnet_corrected:=pnorm(sum_log_per_read_prob, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1]
-  print("done with glmnet")
-
+  print("done with GLMnet corrected")
+  toc()
+  
+  
+  tic("GLMnet corrected constrained")
+  class_input[,glmnet_per_read_prob_corrected_constrained := glmnet_per_read_prob_constrained]
+  class_input[(location_compatible==0 | read_strand_compatible==0),glmnet_per_read_prob_corrected_constrained:=glmnet_per_read_prob_constrained/(1 + glmnet_per_read_prob_constrained)]
+  class_input[,p_predicted_glmnet_corrected_constrained := 1/( exp(sum(log( (1 - glmnet_per_read_prob_corrected_constrained)/glmnet_per_read_prob_corrected_constrained ))) + 1) ,by = refName_newR1]
+  
+  
+  # compute the junc_cdf scores
+  class_input[p_predicted_glmnet_corrected_constrained==1,p_predicted_glmnet_corrected_constrained:=0.999999999999]
+  class_input[p_predicted_glmnet_corrected_constrained==0,p_predicted_glmnet_corrected_constrained:=10^-30]
+  class_input[glmnet_per_read_prob_corrected_constrained==1,glmnet_per_read_prob_corrected_constrained:=0.999999999999]
+  class_input[glmnet_per_read_prob_corrected_constrained==0,glmnet_per_read_prob_corrected_constrained:=10^-30]
+  class_input[,log_per_read_prob:=log((1-glmnet_per_read_prob_corrected_constrained) / (glmnet_per_read_prob_corrected_constrained)), by = glmnet_per_read_prob_corrected_constrained]
+  class_input[,sum_log_per_read_prob:= sum(log_per_read_prob) ,by = refName_newR1]
+  mu_i = mean(log( (1-class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected_constrained)/(class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected_constrained)) )
+  var_i = var(log( (1-class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected_constrained)/(class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected_constrained)) )
+  
+  iter=10000
+  all_per_read_probs = class_input[(fileTypeR1=="Aligned") | (fileTypeR1=="Chimeric" & readClassR1=="lin")]$glmnet_per_read_prob_corrected_constrained
+  num_per_read_probs = length(all_per_read_probs)
+  for (num_reads in 1:15){
+    rnd_per_read_probs = matrix(0,iter,num_reads)
+    rnd_per_read_probs = apply(rnd_per_read_probs,1,function(x) all_per_read_probs[sample(num_per_read_probs,num_reads)])
+    rnd_per_read_probs = t(rnd_per_read_probs)
+    if(num_reads == 1){
+      rnd_per_read_probs = t(rnd_per_read_probs)  # for num_reads =1 I need to transepose twice since first I have a vector
+    }
+    null_dist = apply(rnd_per_read_probs,1,function(x) 1/( exp(sum(log( (1 - x)/x ))) + 1))
+    null_dist[which(null_dist==1)]=0.999999999999
+    null_dist[which(null_dist==0)]=10^-30
+    class_input[fileTypeR1=="Aligned" & numReads == num_reads, junc_cdf_glmnet_corrected_constrained:=length(which(null_dist <= p_predicted_glmnet_corrected_constrained))/iter,by=p_predicted_glmnet_corrected_constrained  ]
+  }
+  
+  class_input[fileTypeR1=="Aligned" & numReads > 15, junc_cdf_glmnet_corrected_constrained:=pnorm(sum_log_per_read_prob, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1]
+  print("done with GLMnet corrected contrained")
+  toc()  
 }
 
-toc()
 
 ######################################################
 ######################################################
@@ -410,21 +500,22 @@ if (n.pos >= n.neg){
   class_input[train_class == 1,cur_weight := 1]
 }
 
+
+################################################################
+######## Building the GLMnet for chimeric junctions ############
+################################################################
 if (is.SE == 0){
   regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1  + nmmR1 + length_adj_AS_R1A + length_adj_AS_R1B + nmmR2 + entropyR1*entropyR2 + length_adj_AS_R2")
 } else{
   regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1  + nmmR1 + length_adj_AS_R1A + length_adj_AS_R1B + entropyR1")
 }
 
-################################################################
-######## Building the GLMnet for chimeric junctions ############
-################################################################
 tic("Two-step GLMnet")
-print("now glmnet model")
+print("Two-step GLMnet model for chimeric junctions")
 x_glmnet = model.matrix(regression_formula, class_input[!is.na(train_class)])
-glmnet_model = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50,nfolds = 5)
-print("done with fitting glmnet")
-
+glmnet_model = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50, nfolds = 5)
+print("done with fitting Two-step GLMnet")
+toc()
 print(coef(glmnet_model, s = "lambda.1se"))
 print(glmnet_model)
 
@@ -465,10 +556,32 @@ for (num_reads in 1:15){
   null_dist[which(null_dist==0)]=10^-30
   class_input[fileTypeR1=="Chimeric" & numReads == num_reads, junc_cdf_glmnet_twostep:=length(which(null_dist <= p_predicted_glmnet_twostep))/iter,by=p_predicted_glmnet_twostep]
 }
-
 class_input[fileTypeR1=="Chimeric" & numReads > 15, junc_cdf_glmnet_twostep:=pnorm(sum_log_per_read_prob, mean = numReads*mu_i, sd = sqrt(numReads*var_i), lower.tail = FALSE),by = refName_newR1]
 
+
+tic("Two-step GLMnet constrained")
+print("Two-step GLMnet constrained")
+x_glmnet = model.matrix(regression_formula, class_input[!is.na(train_class)])
+if (is.SE == 0){
+  glmnet_model_constrained = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50, nfolds = 5, upper.limits = c(rep(Inf,3),0,rep(Inf,8)),lower.limits = c(-Inf,0,0,-Inf,0,0,-Inf,0,0,-Inf,-Inf,-Inf))
+}else{
+  glmnet_model_constrained = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family=c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50, nfolds = 5, upper.limits = c(rep(Inf,3),0,rep(Inf,4)),lower.limits = c(-Inf,0,0,-Inf,0,0,0,-Inf))
+}
+print("done with fitting Two-step GLMnet constrained")
+print(coef(glmnet_model_constrained, s = "lambda.1se"))
+print(glmnet_model)
 toc()
+
+# predict for all read alignments in the class input file
+class_input_glmnet_constrained = model.matrix(update(regression_formula, refName_newR1 ~ .) , class_input[fileTypeR1=="Chimeric"])
+class_input[fileTypeR1=="Chimeric",glmnet_twostep_per_read_prob_constrained:=0]
+class_input[fileTypeR1=="Chimeric"]$glmnet_twostep_per_read_prob_constrained  = predict(glmnet_model_constrained,newx = class_input_glmnet_constrained, type = "response",s = "lambda.1se", se.fit = TRUE)
+
+# compute the fitted classification error based on training data
+compute_class_error(class_input[!is.na(train_class)]$train_class,class_input[!is.na(train_class)]$glmnet_twostep_per_read_prob_constrained)
+
+# compute aggregated score for each junction
+class_input[fileTypeR1=="Chimeric",p_predicted_glmnet_twostep_constrained:= 1/( exp(sum(log( (1 - glmnet_twostep_per_read_prob_constrained)/glmnet_twostep_per_read_prob_constrained ))) + 1) ,by = refName_newR1]
 ######################################
 ######################################
 
@@ -488,9 +601,10 @@ if (is.SE == 0){
   class_input[,ave_max_run_R2:=mean(max_run_R2),by = refName_newR1]
 }
 
-tic("junc_median_p_val")
+
 ### compute p-value for how close is the median overlap to what we expect based on the read length
 iter=5000
+tic("junc_median_p_val")
 for (num_reads in 1:15){
   rnd_overlaps = matrix(0,iter,num_reads)
   rnd_overlaps = apply(rnd_overlaps,1,function(x) sample(min_overlap_R1:max_overlap_R1,num_reads))
@@ -501,39 +615,40 @@ for (num_reads in 1:15){
   null_dist_medians = apply(rnd_overlaps,1,function(x) median(x))
   class_input[numReads == num_reads, p_val_median_overlap_R1:=length(which(null_dist_medians >= median_overlap_R1))/iter,by = median_overlap_R1]
 }
-
 class_input[numReads > 15, p_val_median_overlap_R1:=pnorm(median_overlap_R1, mean = (min_overlap_R1+max_overlap_R1)/2, sd = sqrt( ((max_overlap_R1-min_overlap_R1+1)^2-1) /12), lower.tail = TRUE),by = refName_newR1]
-#####################################
 toc()
+#####################################
 
-
-tic("uniformity test")
 
 ###################################################
 ## compute p-value for the uniformity test ########
+tic("uniformity test")
 class_input[numReads > 1 & numReads < 15 & (p_predicted_glmnet_twostep > 0.9 | p_predicted_glmnet > 0.85),uniformity_test_pval:=uniformity_test(overlap_R1,min_overlap_R1,max_overlap_R1),by = refName_newR1]
-
-##################################################
-##################################################
-
 toc()
+##################################################
+##################################################
 
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","geneR1A","geneR1B","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glmnet","p_predicted_glmnet_corrected","p_predicted_glmnet_twostep","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_corrected","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_max_run_R2","uniformity_test_pval","sd_overlap","p_val_median_overlap_R1")
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","geneR1A","geneR1B","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glmnet","p_predicted_glmnet_constrained","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_constrained","p_predicted_glmnet_twostep","p_predicted_glmnet_twostep_constrained","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_constrained","junc_cdf_glmnet_corrected","junc_cdf_glmnet_corrected_constrained","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_max_run_R2","uniformity_test_pval","sd_overlap","p_val_median_overlap_R1")
 junction_prediction = unique(class_input[,colnames(class_input)%in%col_names_to_keep_in_junc_pred_file,with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]
 
- 
-#### compute emp.p values based upon different junc_cdfs
-null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glm
+#### compute emp.p values based upon different junc_cdfs and using those junctions that have at least 10% genomic reads
+null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads > 0.1]$junc_cdf_glm
 junction_prediction[,emp.p_glm:=length(which(null_dist>junc_cdf_glm))/length(null_dist),by=junc_cdf_glm]
-null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glmnet
+null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads > 0.1]$junc_cdf_glmnet
 junction_prediction[,emp.p_glmnet:=length(which(null_dist>junc_cdf_glmnet))/length(null_dist),by=junc_cdf_glmnet]
+null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads > 0.1]$junc_cdf_glmnet_constrained
+junction_prediction[,emp.p_glmnet_constrained:=length(which(null_dist>junc_cdf_glmnet_constrained))/length(null_dist),by=junc_cdf_glmnet_constrained]
+
 
 if (is.SE == 0){
   null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glm_corrected
   junction_prediction[,emp.p_glm_corrected:=length(which(null_dist>junc_cdf_glm_corrected))/length(null_dist),by=junc_cdf_glm_corrected]
   null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glmnet_corrected
   junction_prediction[,emp.p_glmnet_corrected:=length(which(null_dist>junc_cdf_glmnet_corrected))/length(null_dist),by=junc_cdf_glmnet_corrected]
+  null_dist = junction_prediction[is.na(is.STAR_Chim) & frac_genomic_reads>0.1]$junc_cdf_glmnet_corrected_constrained
+  junction_prediction[,emp.p_glmnet_corrected_constrained:=length(which(null_dist>junc_cdf_glmnet_corrected_constrained))/length(null_dist),by=junc_cdf_glmnet_corrected_constrained]
+  
 }
 
 tic("add_junc_seq")

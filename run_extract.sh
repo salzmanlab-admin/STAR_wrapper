@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-#SBATCH --job-name=extract_TSP1_blood_2_S23_L004
-#SBATCH --output=job_output/extract_TSP1_blood_2_S23_L004.%j.out
-#SBATCH --error=job_output/extract_TSP1_blood_2_S23_L004.%j.err
+#SBATCH --job-name=extract_SRR6782112
+#SBATCH --output=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/SC_benchmarking_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/SRR6782112/log_files/extract_SRR6782112.%j.out
+#SBATCH --error=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/SC_benchmarking_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/SRR6782112/log_files/extract_SRR6782112.%j.err
 #SBATCH --time=20:00:00
 #SBATCH -p owners
 #SBATCH --nodes=1
 #SBATCH --mem=20Gb
-#SBATCH --dependency=afterok:48137503
+#SBATCH --dependency=afterok:55462617
 #SBATCH --kill-on-invalid-dep=yes
 date
-umi_tools extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin /scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_2/TSP1_blood_2_S23_L004_R1_001.fastq.gz --stdout /scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_2/TSP1_blood_2_S23_L004_extracted_R1_001.fastq.gz --read2-in /scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_2/TSP1_blood_2_S23_L004_R2_001.fastq.gz --read2-out=/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_2/TSP1_blood_2_S23_L004_extracted_R2_001.fastq.gz --filter-cell-barcode --whitelist=/scratch/PI/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_2/TSP1_blood_2_S23_L004_whitelist.txt --error-correct-cell 
+umi_tools extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin /oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/SRR6782112_1.fastq --stdout /oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/SRR6782112_extracted_1.fastq --read2-in /oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/SRR6782112_2.fastq --read2-out=/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/SRR6782112_extracted_2.fastq --filter-cell-barcode --whitelist=/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/SRR6782112_whitelist.txt --error-correct-cell 
 date

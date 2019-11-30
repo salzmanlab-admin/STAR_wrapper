@@ -17,7 +17,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --output={}{}/log_files/{}.%j.out\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --error={}{}/log_files/{}.%j.err\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --time={}\n".format(time))
-  #job_file.write("#SBATCH --qos=high_p\n")
+ # job_file.write("#SBATCH --qos=normal\n")
 #  job_file.write("#SBATCH -p horence\n")
   job_file.write("#SBATCH -p owners\n")
   job_file.write("#SBATCH --nodes=1\n")
@@ -45,7 +45,7 @@ def star_fusion(out_path, name, single, dep = ""):
 def modify_class(out_path, name, dep = ""):
   """Run the script that modifies the junction ids in the class input file"""
   command = "Rscript scripts/modify_junction_ids.R {}{}/ ".format(out_path, name)
-  sbatch_file("run_modify_class.sh",out_path, name, "modify_{}".format(name), "24:00:00", "150Gb", command, dep=dep)  # changed it from 50 to 80Gb for exopancreas sample, 24:00:00  150 Gb for Lu
+  sbatch_file("run_modify_class.sh",out_path, name, "modify_{}".format(name), "12:00:00", "50Gb", command, dep=dep)
   return submit_job("run_modify_class.sh")
 
 
@@ -66,7 +66,7 @@ def GLM(out_path, name, single, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "24:00:00", "100Gb", command, dep=dep)  # used 170Gb for CML 80Gb for others
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "12:00:00", "100Gb", command, dep=dep)
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -120,7 +120,7 @@ def class_input(out_path, name, assembly, gtf_file, tenX, single,dep=""):
     command += "--single "
   if tenX:
     command += "--tenX"
-  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "250Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
+  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "24:00:00", "170Gb", command, dep=dep)
   return submit_job("run_class_input.sh")
 
 def HISAT_class_input(out_path, name, assembly, gtf_file, tenX, single,dep=""):
@@ -137,7 +137,7 @@ def sam_to_bam(out_path, name, single,dep=""):
   """converts the sam output file by HISAT to a bam file so that it can be read by the class input file script"""
   command = "samtools view -S -b {}{}/2Aligned.out.sam > {}{}/2Aligned.out.bam \n".format(out_path, name, out_path, name)
   if not single:
-    command += "samtools view -S -b {}{}/1Aligned.out.sam > {}{}/1Aligned.out.bam".format(out_path, name, out_path, name)
+    command += "samtools view -S -b {}{}/1Aligned.out.sam > {}{}/1Aligned.out.bam"
   sbatch_file("run_sam_to_bam.sh", out_path, name,"sam_to_bam_{}".format(name), "24:00:00", "100Gb", command, dep=dep)
   return submit_job("run_sam_to_bam.sh")
 
@@ -186,13 +186,13 @@ def HISAT_map(out_path, data_path, name, r_ends, assembly, single, tenX, dep = "
   else:
     l = 0
   for i in range(l,2):
-    command += "/scratch/PI/horence/Roozbeh/hisat2-2.1.0/hisat2 -p 4 -q --max-intronlen 1000000 -t --no-unal -k 7 --secondary --met-file {}{}/{}HISAT_alignment_metric.txt".format(out_path, name, i + 1)
+    command += "/scratch/PI/horence/Roozbeh/hisat2-2.1.0/hisat2 -p 4 -q --max-intronlen 1000000 -t --no-unal -k 7 --met-file {}{}/{}HISAT_alignment_metric.txt".format(out_path, name, i + 1)
     command += "-x /oak/stanford/groups/horence/Roozbeh/single_cell_project/HISAT2/index_files/{}_HISAT2 ".format(assembly)
     if tenX:
       command += "-U {}{}_extracted{} ".format(data_path, name, r_ends[i])
     else:
       command += "-U {}{}{} ".format(data_path, name, r_ends[i])
-    command += "-S {}{}/{}Aligned.out.sam \n\n".format(out_path, name, i + 1)
+    command += "-S {}{}/{}Aligned.out.sam ".format(out_path, name, i + 1)
     
   sbatch_file("run_HISAT_map.sh", out_path, name,"HISAT_map_{}".format(name), "12:00:00", "60Gb", command, dep = dep)
   return submit_job("run_HISAT_map.sh")
@@ -253,11 +253,11 @@ def main():
 
 
 # Tabula Sapiens pilot (10X)
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_2/"
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_1/"
   assembly = "hg38"
   run_name = "TS_pilot_10X_withinbam"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_blood_2_S23_L003","TSP1_blood_2_S23_L004"]
+  names = ["TSP1_muscle_1_S18_L001","TSP1_muscle_1_S18_L002","TSP1_muscle_1_S18_L003","TSP1_muscle_1_S18_L004"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
   tenX = True
@@ -266,11 +266,11 @@ def main():
 
 
 # Tabula Sapiens pilot (smartseq)
-#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S105/"
+#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S75/"
 #  assembly = "hg38"
 #  run_name = "TS_pilot_smartseq_Chim_Multimap_test"
 #  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-#  names = ["B107809_A15_S105"]
+#  names = ["B107809_A15_S75"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
 #  tenX = False
@@ -289,8 +289,8 @@ def main():
 #  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/CML/"
 #  assembly = "hg38"
 #  run_name = "CML_2410"
-#  r_ends = ["_1.fq.gz", "_2.fq.gz"]
-#  names = ["SRR3192410_val"]
+#  r_ends = ["_val_1.fq.gz", "_val_2.fq.gz"]
+#  names = ["SRR3192410"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
 #  tenX = False
@@ -308,37 +308,15 @@ def main():
 
 
 # STAR_sim
-  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
-  assembly = "hg38"
-  run_name = "sim_101"
-  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
-  names = ["sim1_reads","sim2_reads","sim3_reads","sim4_reads","sim5_reads"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
-  HISAT = False
-  tenX = False
- 
-# SC benchmarking data
-#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/cell_lines/"
+#  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
 #  assembly = "hg38"
-#  run_name = "SC_benchmarking"
-#  r_ends = ["_1.fastq","_1.fastq"]
-#  names = ["SRR2060160","SRR4113662","SRR4113665","SRR4113666","SRR4113668"]
+#  run_name = "sim_101"
+#  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
+#  names = ["sim1_reads","sim2_reads"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
+#  single = False
 #  HISAT = False
-#  tenX= False
 
-# SC 10X benchmarking data
-#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/"
-#  assembly = "hg38"
-#  run_name = "SC_benchmarking_10X"
-#  r_ends = ["_1.fastq","_2.fastq"]
-#  names = ["SRR6782109","SRR6782110","SRR6782111","SRR6782112"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
-#  HISAT = False
-#  tenX= True
 
 # DNA_Seq
 #  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/"
@@ -362,7 +340,7 @@ def main():
 #  tenX = False
 #  HISAT = False
 
-#HISAT sim data mismatch
+#HISAT sim data
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
 #  assembly = "hg38"
 #  run_name = "HISAT_sim_data_SE"
@@ -373,18 +351,19 @@ def main():
 #  tenX = False
 #  HISAT = False
 
+
 #Lu data
 #  data_path = "/oak/stanford/groups/horence/Roozbeh/Lu_data/"
 #  assembly = "hg38"
 #  run_name = "Lu_data"
 #  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
-#  names = ["31160_ID1232_1-1A_S1_L002","31161_ID1232_2-1B_S2_L002","31162_ID1232_3-2A_S3_L002","31163_ID1232_4-3A_S4_L002","31164_ID1232_5-4A_S5_L002","31165_ID1232_6-5A_S6_L002"]
+#  names = ["31160_ID1232_1-1A_S1_L002","31161_ID1232_2-1B_S2_L002","31162_ID1232_3-2A_S3_L002","31163_ID1232_4-3A_S4_L002","31164_ID1232_5-4A_S7_L002","31165_ID1232_6-5A_S6_L002"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
 #  tenX = False
 #  HISAT = False
 
-#HISAT sim data perfect
+#HISAT sim data
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_perfect/"
 #  assembly = "hg38"
 #  run_name = "HISAT_sim_data_SE"
@@ -429,8 +408,8 @@ def main():
   run_class = False
   run_HISAT_class = False
   run_modify_class = True
-  run_ensembl = False
-  run_compare = False
+  run_ensembl = True
+  run_compare = True
   run_GLM = True
   
 
@@ -533,14 +512,7 @@ def main():
                       job_nums.append(ann_SJ_jobid)
                     else:
                       ann_SJ_jobid =  ""
-
-                    if run_HISAT_class:
-                      HISAT_class_input_jobid = HISAT_class_input(out_path, name, assembly, gtf_file, tenX, single, dep=":".join(job_nums))
-                      jobs.append("HISAT_class_input_{}.{}".format(name,HISAT_class_input_jobid))
-                      job_nums.append(HISAT_class_input_jobid)
-                    else:
-                      HISAT_class_input_jobid = ""
-
+        
                     if run_class:
                       class_input_jobid = class_input(out_path, name, assembly, gtf_file, tenX, single, dep=":".join(job_nums))
                       jobs.append("class_input_{}.{}".format(name,class_input_jobid))
@@ -548,6 +520,13 @@ def main():
                     else:
                       class_input_jobid = ""
 
+                    if run_HISAT_class:
+                      HISAT_class_input_jobid = HISAT_class_input(out_path, name, assembly, gtf_file, tenX, single, dep=":".join(job_nums))
+                      jobs.append("HISAT_class_input_{}.{}".format(name,HISAT_class_input_jobid))
+                      job_nums.append(HISAT_class_input_jobid)
+                    else:
+                      HISAT_class_input_jobid = ""
+   
                     if run_modify_class:
                       modify_class_jobid = modify_class(out_path, name, dep=":".join(job_nums))
                       jobs.append("modify_class_{}.{}".format(name,modify_class_jobid))

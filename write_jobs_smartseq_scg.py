@@ -216,10 +216,10 @@ def main():
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
   run_whitelist = False
   run_extract = False
-  run_map = True
-  run_star_fusion = True
-  run_ann = True
-  run_class = True
+  run_map = False
+  run_star_fusion = False
+  run_ann = False
+  run_class = False
   run_modify_class = True
   run_ensembl = True
   run_compare = True
@@ -244,9 +244,8 @@ def main():
                 for sDB in scoreDelBase:
               #cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
                   cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
-#           out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
-                #  out_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
-                  out_path = "/nodes/scratch/sgiuv300-srcf-d10-01/rdehghan/output/{}/".format(cond_run_name)
+                  out_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
+                #  out_path = "/nodes/scratch/sgiuv300-srcf-d10-01/rdehghan/output/{}/".format(cond_run_name)
         #   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 #           gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
         
