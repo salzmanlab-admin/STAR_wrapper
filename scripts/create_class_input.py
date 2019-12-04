@@ -433,7 +433,7 @@ def get_SM(cigar):
       S += int(m[0])
   return M, S
 
-def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
+def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX, include_one_read):
   k = 14
   splices = pickle.load(open("/oak/stanford/groups/horence/JuliaO/pickled/grch38_juncs.pkl","rb"))
   kmer_dict = pickle.load(open("/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/kmer_dict_{}.pkl".format(k),"rb"))
@@ -448,7 +448,11 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
     organ = fill_char
     cell_type = fill_char
 
-  out = open(out_file,"w")
+  if include_one_read:
+    out = open(".".join(out_file.split(".")[:-1]) + "_inc." + out_file.split(".")[-1],"w")
+  else:
+    out = open(out_file,"w")
+
 #   out.write("\t".join(["id", "class", "posA", "qualA", "aScoreA", "numN", 
 #                        "posB", "qualB", "aScoreB", "readLen", "junction", "strandA", "strandB", "posR2A", 
 #                        "qualR2A", "aScoreR2A", "numR2", "readLenR2", "junctionR2", "strandR2A", "posr2B", "qualR2B",
@@ -477,7 +481,8 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
   out_dict = {}
   for junc in junc_read_dict.keys():
     for read_name in junc_read_dict[junc].keys():
-      if (len(junc_read_dict[junc][read_name]) == 2 and not single) or (len(junc_read_dict[junc][read_name]) == 1 and single):
+      one_read = (len(junc_read_dict[junc][read_name]) == 1 and include_one_read)
+      if (len(junc_read_dict[junc][read_name]) == 2 and not single) or (len(junc_read_dict[junc][read_name]) == 1 and single) or one_read:
         out_dict["id"] = read_name
         out_dict["Organ"] = organ
         out_dict["Cell_Type(s)"] = cell_type
@@ -494,7 +499,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
         else:
           out_dict["barcode"] = fill_char
           out_dict["UMI"] = fill_char
-        if single:
+        if single or one_read:
           out_dict["read_strand_compatible"] = fill_char
           out_dict["location_compatible"] = fill_char
 
@@ -592,7 +597,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX):
         out_dict["max_junc_{}mer".format(k)] = max_val
 
 
-        if single:
+        if single or one_read:
           out_dict["class"] = r1.refName.split("|")[-1]
           for c in [col for col in columns if "R2" in col]:
             out_dict[c] = fill_char
@@ -734,6 +739,11 @@ def main():
   parser.add_argument("-I", "--input_file",help="specify file name of different format",default="")
   parser.add_argument("-s", "--single", action="store_true", help="use this flag if the reads you are running on are single-ended")
   parser.add_argument("-t", "--tenX", action="store_true", help="indicate whether this is 10X data (with UMIs and barcodes)")
+  parser.add_argument("-T", "--test", action="store_true", help="save dictionaries and don't write class input")
+  parser.add_argument("-n", "--include_one_read", action="store_true",help="also save reads where only r1 maps")
+#  include_one_read = True
+
+
   args = parser.parse_args()
 #  gtf_data = pyensembl.Genome(reference_name='hg38', annotation_name='my_genome_features', gtf_path_or_url='/scratch/PI/horence/JuliaO/single_cell/STAR_output/mm10_files/mm10.gtf')
 #  gtf_data.index()
@@ -795,7 +805,7 @@ def main():
   else:
     read_junc_dict, junc_read_dict, genomic_alignments = STAR_parseBAM(bamFile1, "r1", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
     read_junc_dict, junc_read_dict, _ = STAR_parseBAM(bamFile2, "r2", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
-
+  
 
  # if regime == "priorityAlign":
  #   read_junc_dict, junc_read_dict = STAR_parseSam(samFile2, "r1align", read_junc_dict, junc_read_dict, fastqIdStyle, ann)
@@ -822,9 +832,13 @@ def main():
 
 #  print("parsed all {}".format(regime), time.time() - t0)
 #  write_class_file(junc_read_dict,"/scratch/PI/horence/JuliaO/single_cell/scripts/output/create_class_input/{}.tsv".format(fastq_id))
-  write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single, genomic_alignments, args.tenX)
-  print("genomic alignments",genomic_alignments)
-
+  if args.test:
+    pickle.dump(read_junc_dict, open("{}read_junc_dict.pkl".format(args.input_path), "wb"))
+    pickle.dump(junc_read_dict, open("{}junc_read_dict.pkl".format(args.input_path), "wb"))
+  else:
+    write_class_file(junc_read_dict,"{}class_input_{}.tsv".format(args.input_path, "WithinBAM"), args.single, genomic_alignments, args.tenX, args.include_one_read)
+    print("genomic alignments",genomic_alignments)
+#
 #time.time() - t0
 
 main()

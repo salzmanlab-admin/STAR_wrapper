@@ -113,13 +113,15 @@ def ann_SJ(out_path, name, assembly, gtf_file, single, dep = ""):
   sbatch_file("run_ann_SJ.sh", out_path, name,"ann_SJ_{}".format(name), "24:00:00", "40Gb", command, dep=dep)
   return submit_job("run_ann_SJ.sh")
 
-def class_input(out_path, name, assembly, gtf_file, tenX, single,dep=""):
+def class_input(out_path, name, assembly, gtf_file, tenX, single,include_one_read,dep=""):
   """Run script to create class input file"""
   command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
   if single:
     command += "--single "
   if tenX:
-    command += "--tenX"
+    command += "--tenX "
+  if include_one_read: 
+    command += "--include_one_read "
   sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "250Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
   return submit_job("run_class_input.sh")
 
@@ -227,6 +229,7 @@ def main():
   scoreInsBase = [-2]
   scoreDelOpen = [-2]
   scoreDelBase = [-2]
+  include_one_read = True
 
   # benchmarking
 #  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/benchmarking/"
@@ -542,7 +545,7 @@ def main():
                       HISAT_class_input_jobid = ""
 
                     if run_class:
-                      class_input_jobid = class_input(out_path, name, assembly, gtf_file, tenX, single, dep=":".join(job_nums))
+                      class_input_jobid = class_input(out_path, name, assembly, gtf_file, tenX, single, include_one_read,dep=":".join(job_nums))
                       jobs.append("class_input_{}.{}".format(name,class_input_jobid))
                       job_nums.append(class_input_jobid)
                     else:
