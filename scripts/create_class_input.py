@@ -426,12 +426,15 @@ def get_SM(cigar):
   matches = re.findall(r'(\d+)([A-Z]{1})', cigar)
   M = 0
   S = 0
+  I = 0
   for m in matches:
     if m[1] == "M":
       M += int(m[0])
     elif m[1] == "S":
       S += int(m[0])
-  return M, S
+    elif m[1] == "I":
+      I += int(m[0])
+  return M, S, I
 
 def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX, include_one_read):
   k = 14
@@ -556,12 +559,14 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX, 
         out_dict["nmmR1B"] = r1.nmmB
         out_dict["cigarR1A"] = r1.cigarA
         out_dict["cigarR1B"] = r1.cigarB
-        M, S = get_SM(r1.cigarA)
+        M, S, I = get_SM(r1.cigarA)
         out_dict["MR1A"] = M
         out_dict["SR1A"] = S
-        M, S = get_SM(r1.cigarB)
+        out_dict["IR1A"] = I
+        M, S, I = get_SM(r1.cigarB)
         out_dict["MR1B"] = M
         out_dict["SR1B"] = S
+        out_dict["IR1B"] = I
         out_dict["NHR1A"] = r1.NHA
         out_dict["NHR1B"] = r1.NHB
         out_dict["HIR1A"] = r1.HIA
@@ -657,9 +662,10 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX, 
           out_dict["nmmR2B"] = r2.nmmB
           out_dict["cigarR2A"] = r2.cigarA
           out_dict["cigarR2B"] = r2.cigarB
-          M, S = get_SM(r2.cigarA)
+          M, S, I = get_SM(r2.cigarA)
           out_dict["MR2A"] = M
           out_dict["SR2A"] = S
+          out_dict["IR2A"] = I
           out_dict["NHR2A"] = r2.NHA
           out_dict["NHR2B"] = r2.NHB
           out_dict["HIR2A"] = r2.HIA
@@ -690,9 +696,11 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX, 
             out_dict["juncPosR2A"] = split_ref[0].split(":")[2]
             out_dict["juncPosR2B"] = split_ref[1].split(":")[2]
             out_dict["readClassR2"] = split_ref[2]
-            M, S = get_SM(r2.cigarB)
+            M, S, I = get_SM(r2.cigarB)
             out_dict["MR2B"] = M
             out_dict["SR2B"] = S
+            out_dict["IR2B"] = I
+
             if out_dict["read_strandR1A"] == out_dict["read_strandR2A"]:
               out_dict["read_strand_compatible"] = 0
             elif out_dict["read_strandR1A"] != out_dict["read_strandR2A"]:
