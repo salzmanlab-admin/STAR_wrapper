@@ -19,7 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
   #job_file.write("#SBATCH --qos=high_p\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p owners\n")
+  job_file.write("#SBATCH -p quake\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -56,7 +56,7 @@ def compare(out_path, name, single, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_compare.sh",out_path, name, "compare_{}".format(name), "12:00:00", "150Gb", command, dep=dep)
+  sbatch_file("run_compare.sh",out_path, name, "compare_{}".format(name), "12:00:00", "200Gb", command, dep=dep)   # for Lu data changed to 200Gb for others 150Gb
   return submit_job("run_compare.sh")
 
 def GLM(out_path, name, single, dep = ""):
@@ -66,7 +66,7 @@ def GLM(out_path, name, single, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "24:00:00", "100Gb", command, dep=dep)  # used 170Gb for CML 80Gb for others
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "24:00:00", "250Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -76,7 +76,7 @@ def whitelist(data_path,out_path, name, bc_pattern, r_ends):
   command += "--bc-pattern={} ".format(bc_pattern)
   command += "--log2stderr > {}{}_whitelist.txt ".format(data_path,name)
   command += "--plot-prefix={}{} ".format(data_path, name)
-  command += "--knee-method=density "
+ # command += "--knee-method=density "
   sbatch_file("run_whitelist.sh",out_path, name, "whitelist_{}".format(name), "2:00:00", "20Gb", command)
   return submit_job("run_whitelist.sh")
 
@@ -152,7 +152,7 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
     l = 0
   for i in range(l,2):
     command += "/scratch/PI/horence/Roozbeh/STAR-2.7.1a/bin/Linux_x86_64/STAR --runThreadN 4 "
- #   command += "--alignIntronMax 21 "
+    command += "--alignIntronMax 1000000 "
     command += "--genomeDir /scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_index_2.7.1a ".format(assembly)
     if tenX:
       command += "--readFilesIn {}{}_extracted{} ".format(data_path, name, r_ends[i])
@@ -253,11 +253,11 @@ def main():
 
 
 # Tabula Sapiens pilot (10X)
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_2/"
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_blood_3/"
   assembly = "hg38"
   run_name = "TS_pilot_10X_withinbam"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_blood_2_S23_L003","TSP1_blood_2_S23_L004"]
+  names = ["TSP1_blood_3_S24_L003","TSP1_blood_3_S24_L004"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
   tenX = True
@@ -266,11 +266,11 @@ def main():
 
 
 # Tabula Sapiens pilot (smartseq)
-#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S105/"
+#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S125/"
 #  assembly = "hg38"
 #  run_name = "TS_pilot_smartseq_Chim_Multimap_test"
 #  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-#  names = ["B107809_A15_S105"]
+#  names = ["B107809_A15_S125"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = False
 #  tenX = False
@@ -299,7 +299,7 @@ def main():
 #circRNA thirdparty benchmarking
 #  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
 #  assembly = "hg38"
-#  run_name = "circRNA_thirdparty_benchmarking"
+#  run_name = "circRNA_thirdparty_benchmarking_IntronMax_1000000"
 #  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
 #  names = ["TxDx2016-001-001_S1_L001"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
@@ -308,15 +308,15 @@ def main():
 
 
 # STAR_sim
-  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
-  assembly = "hg38"
-  run_name = "sim_101"
-  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
-  names = ["sim1_reads","sim2_reads","sim3_reads","sim4_reads","sim5_reads"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
-  HISAT = False
-  tenX = False
+#  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
+#  assembly = "hg38"
+#  run_name = "sim_101"
+#  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
+#  names = ["sim1_reads","sim2_reads","sim3_reads","sim4_reads","sim5_reads"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
+#  HISAT = False
+#  tenX = False
  
 # SC benchmarking data
 #  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/cell_lines/"
@@ -428,7 +428,7 @@ def main():
   run_ann = False
   run_class = False
   run_HISAT_class = False
-  run_modify_class = True
+  run_modify_class = False
   run_ensembl = False
   run_compare = False
   run_GLM = True

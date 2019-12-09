@@ -216,10 +216,10 @@ def main():
 #  names = ["SRR65462{}".format(i) for i in range(73,85)]
   run_whitelist = False
   run_extract = False
-  run_map = False
-  run_star_fusion = False
-  run_ann = False
-  run_class = False
+  run_map = True
+  run_star_fusion = True
+  run_ann = True
+  run_class = True
   run_modify_class = True
   run_ensembl = True
   run_compare = True
