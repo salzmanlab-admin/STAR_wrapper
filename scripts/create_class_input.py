@@ -449,7 +449,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX, 
     cell_type = fill_char
 
   if include_one_read:
-    out = open(".".join(out_file.split(".")[:-1]) + "_inc." + out_file.split(".")[-1],"w")
+    out = open(".".join(out_file.split(".")[:-1]) + "." + out_file.split(".")[-1],"w")
   else:
     out = open(out_file,"w")
 

@@ -66,7 +66,7 @@ def GLM(out_path, name, single, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "24:00:00", "250Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "24:00:00", "200Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -300,15 +300,15 @@ def main():
 #  HISAT = False
 
 #circRNA thirdparty benchmarking
-#  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
-#  assembly = "hg38"
-#  run_name = "circRNA_thirdparty_benchmarking_IntronMax_1000000"
-#  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
-#  names = ["TxDx2016-001-001_S1_L001"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-
+  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
+  assembly = "hg38"
+  run_name = "circRNA_thirdparty_benchmarking_IntronMax_1000000"
+  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
+  names = ["TxDx2016-001-001_S1_L001"]
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+  single = False
+  tenX = False
+  HISAT = False
 
 # STAR_sim
 #  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
@@ -337,7 +337,7 @@ def main():
 #  assembly = "hg38"
 #  run_name = "SC_benchmarking_10X"
 #  r_ends = ["_1.fastq","_2.fastq"]
-#  names = ["SRR6782109","SRR6782110","SRR6782111","SRR6782112"]
+#  names = ["SRR6782110","SRR6782111"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
 #  single = True
 #  HISAT = False
@@ -387,6 +387,17 @@ def main():
 #  tenX = False
 #  HISAT = False
 
+#DMD data
+#  data_path = "/oak/stanford/groups/horence/Roozbeh/DMD_Artandi/data/191122_NS500615_0903_AHTTK2BGXC/"
+#  assembly = "hg38"
+#  run_name = "DMD_Artandi"
+#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+#  names = ["SM2-AAGTCCAA-TACTCATA_S1"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
+#  tenX = False
+#  HISAT = False
+
 #HISAT sim data perfect
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_perfect/"
 #  assembly = "hg38"
@@ -431,9 +442,9 @@ def main():
   run_ann = False
   run_class = False
   run_HISAT_class = False
-  run_modify_class = False
-  run_ensembl = False
-  run_compare = False
+  run_modify_class = True
+  run_ensembl = True
+  run_compare = True
   run_GLM = True
   
 
