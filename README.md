@@ -217,8 +217,8 @@ jI:B:I,Start1,End1,Start2,End2,...
 138. `is.multimapping`: indicates whether the alignment is multimapping 
 139. `njunc_binR1A`: junction noise score for `R1A`
 140. `njunc_binR1B`: junction noise score for `R1B`
-141. `threeprime_partner_number_R1`: number of distinct 3' splice sites across for each 5' splice site in the class input file
-142. `fiveprime_partner_number_R1`: number of distinct 5' splice sites across for each 3' splice site in the class input file
+141. `threeprime_partner_number_R1`: number of distinct 3' splice sites across the class input file for each 5' splice site in the class input file
+142. `fiveprime_partner_number_R1`: number of distinct 5' splice sites across the class input file for each 3' splice site in the class input file
 143. `length_adj_AS_R2`: length ajusted alignment score for R2
 144. `nmmR2`: number of mismatches in R2
 145. `qual_R2`: mapping quality value for R2
@@ -255,7 +255,7 @@ jI:B:I,Start1,End1,Start2,End2,...
 176. `ave_AT_run_R1`:  the average of `AT_run_R1` across the reads aligned to the junction
 177. `ave_GC_run_R1`:  the average of `GC_run_R1` across the reads aligned to the junction
 178. `ave_max_run_R1`: the average of `max_run_R1` across the reads aligned to the junction
-179. `p_val_median_overlap_R1`: the p-value of the statistical test for comparing the median overlaps of the aligned reads to the junction against the null of randomly aligned reads
+179. `p_val_median_overlap_R1`: the p-value of the statistical test for comparing the median overlaps of the aligned reads to the junction against the null of randomly aligned reads and small p-values are desired as they indicate that the median_overlap of the junction is large enough.  
 180. `uniformity_test_pval`: the p_value of the uniformity test for the junction overlap of the reads aligned to the junction computed by chisq.test. It is computed only for junctions with at most 15 reads and p-values close to 1 are desired as they indicate reads are uniformly distributed.
 181. `sd_overlap`: the standard deviation of the junction overlap for the reads aligned to the junction 
 
@@ -282,7 +282,7 @@ This file is built by the `GLM_script.R` and contains all junction level metrics
 
 `refName_newR1`, `geneR1B_uniq`, `geneR1A_uniq`, `geneR1B_ensembl`, `geneR1A_ensembl`, `readClassR1`, `geneR1A`, `geneR1B`, `geneR1A_expression_unstranded`, `geneR1A_expression_stranded`, `geneR1B_expression_unstranded`, `geneR1B_expression_stranded`, `is.STAR_Chim`, `is.STAR_SJ`, `is.STAR_Fusion`, `numReads`, `median_overlap_R1`, `sd_overlap`, `njunc_binR1A`, `njunc_binR1B`, `threeprime_partner_number_R1`, `fiveprime_partner_number_R1`,`p_predicted_glm`, `junc_cdf_glm`, `p_predicted_glm_corrected`, `junc_cdf_glm_corrected`, `p_predicted_glmnet`, `junc_cdf_glmnet`, ` p_predicted_glmnet_corrected`, `junc_cdf_glmnet_corrected`, `p_predicted_glmnet_twostep`, `junc_cdf_glmnet_twostep`, `frac_genomic_reads`, `frac_anomaly`, `ave_min_junc_14mer`, `ave_max_junc_14mer`, `ave_AT_run_R1`, `ave_GC_run_R1`, `ave_max_run_R1`, `ave_AT_run_R2`, `ave_GC_run_R2`, `ave_max_run_R2`, `p_val_median_overlap_R1`, `uniformity_test_pval`,  `p_predicted_glmnet_constrained`, `junc_cdf_glmnet_constrained`, `p_predicted_glmnet_corrected_constrained`, `junc_cdf_glmnet_corrected_constrained`, `p_predicted_glmnet_twostep_constrained`, `seqR1`, `seqR2`
 
-The following columsn are added from the STAR output file for "Aligned" junctions: 
+The following columsn are added from the STAR output file for "Aligned" junctions (`SJ.out.tab`): 
 
 `intron_motif`, `is.annotated`, `num_uniq_map_reads`, `num_multi_map_reads`, `maximum_SJ_overhang`,
 
