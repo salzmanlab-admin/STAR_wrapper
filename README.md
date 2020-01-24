@@ -217,34 +217,48 @@ jI:B:I,Start1,End1,Start2,End2,...
 138. `is.multimapping`: indicates whether the alignment is multimapping 
 139. `njunc_binR1A`: junction noise score for `R1A`
 140. `njunc_binR1B`: junction noise score for `R1B`
-141. `threeprime_partner_number_R1`: number of distinct 3' splice sites across for each 5' splice site in the class input file
-142. `fiveprime_partner_number_R1`: number of distinct 5' splice sites across for each 3' splice site in the class input file
+141. `threeprime_partner_number_R1`: number of distinct 3' splice sites across the class input file for each 5' splice site in the class input file
+142. `fiveprime_partner_number_R1`: number of distinct 5' splice sites across the class input file for each 3' splice site in the class input file
 143. `length_adj_AS_R2`: length ajusted alignment score for R2
 144. `nmmR2`: number of mismatches in R2
 145. `qual_R2`: mapping quality value for R2
 146. `overlap_R2`: junction overlap for R2 (the minimum of junction anchors)
 147. `max_overlap_R2`: maximum overlap for R2 (the maximum of junction anchors)
 148. `glm_per_read_prob`: per-read score for each read alignment computed by GLM 
-149. `p_predicted_glm`: aggregated score for each junction based on `glm_per_read_prob` 
-150. `glm_per_read_prob_corrected`: per-read score for each read alignment computed by GLM where per-read scores for anomalous reads are downscaled   
-151. `p_predicted_glm_corrected`: aggregated score for each junction based on `glm_per_read_prob_corrected`
-152. `glmnet_per_read_prob`: per-read score for each read alignment computed by GLMnet 
-153. `p_predicted_glmnet`: aggregated score for each junction based on `glmnet_per_read_prob`
-154. `glmnet_per_read_prob_corrected`: per-read score for each read alignment computed by GLMnet where per-read scores for anomalous reads are downscaled
-155. `p_predicted_glmnet_corrected`: aggregated score for each junction based on `glmnet_per_read_prob_corrected`
-156. `glmnet_twostep_per_read_prob`: the two-step per-read score for each chimeric read 
-157. `p_predicted_glmnet_twostep`: aggregated score for each junction based on `glmnet_twostep_per_read_prob`
-158. `glm_per_read_prob_corrected_genomic`: per-read score for each read alignment computed by GLM where per-read scores for anomalous reads and read with genomic alignment are downscaled
-159. `p_predicted_glm_corrected_genomic`: aggregated score for each junction based on `glm_per_read_prob_corrected_genomic`
-160. `glmnet_per_read_prob_corrected_genomic`: per-read score for each read alignment computed by GLMnet where per-read scores for anomalous reads and read with genomic alignment are downscaled
-161. `p_predicted_glmnet_corrected_genomic`: aggregated score for each junction based on `glmnet_per_read_prob_corrected_genomic`
-162. `frac_genomic_reads`: fraction of aligned reads for each junction that have also genomic alignment 
-163. `junc_cdf_glm`: cdf of `p_predicted_glm` relative to its null distribution by randomly assigning reads to junctions
-164. `junc_cdf_glm_corrected`: cdf of `p_predicted_glm_corrected` relative to its null distribution by randomly assigning reads to junctions
-165. `junc_cdf_glmnet`: cdf of `p_predicted_glmnet` relative to its null distribution by randomly assigning reads to junctions
-166. `junc_cdf_glmnet_corrected`: cdf of `p_predicted_glmnet_corrected` relative to its null distribution by randomly assigning reads to junctions
-167. `junc_cdf_glmnet_twostep`: cdf of `p_predicted_glmnet_twostep` relative to its null distribution by randomly assigning reads to junctions
-168. `genomic_aScoreR1`: the maximum alignment score of all genomic alignments of that read (NA if `genomicAlignmentR1` == 0)
+149. `glm_per_read_prob_corrected`: per-read score for each read alignment computed by GLM where per-read scores for anomalous reads are downscaled   
+150. `glmnet_per_read_prob`: per-read score for each read alignment computed by GLMnet 
+151. `glmnet_per_read_prob_corrected`: per-read score for each read alignment computed by GLMnet and per-read scores for anomalous reads are downscaled
+152. `glmnet_per_read_prob_constrained`: per-read score for each read alignment computed by constrained GLMnet model
+153. `glmnet_per_read_prob_corrected_constrained`: per-read score for each read alignment computed by constrained GLMnet model and per-read scores for anomalous reads are downscaled
+154. `glmnet_twostep_per_read_prob`: the two-step per-read score for each chimeric read 
+155. `glmnet_twostep_per_read_prob_constrained`:  per-read score for each read alignment computed by twostep GLMnet with constrained cofficients
+156. `p_predicted_glm`: aggregated score for each junction based on `glm_per_read_prob` 
+157. `p_predicted_glm_corrected`: aggregated score for each junction based on `glm_per_read_prob_corrected`
+158. `p_predicted_glmnet`: aggregated score for each junction based on `glmnet_per_read_prob`
+159. `p_predicted_glmnet_corrected`: aggregated score for each junction based on `glmnet_per_read_prob_corrected`
+160. `p_predicted_glmnet_constrained`: aggregated score for each junction based on `glmnet_per_read_prob_constrained`
+161. `p_predicted_glmnet_corrected_constrained`: aggregated score for each junction based on `glmnet_per_read_prob_corrected_constrained`
+162. `p_predicted_glmnet_twostep`: aggregated score for each junction based on `glmnet_twostep_per_read_prob`
+163. `p_predicted_glmnet_twostep_constrained`:  aggregated score for each junction based on `glmnet_twostep_per_read_prob_constrained`
+164. `junc_cdf_glm`: cdf of `p_predicted_glm` relative to its null distribution by randomly assigning reads to junctions
+165. `junc_cdf_glm_corrected`: cdf of `p_predicted_glm_corrected` relative to its null distribution by randomly assigning reads to junctions
+166. `junc_cdf_glmnet`: cdf of `p_predicted_glmnet` relative to its null distribution by randomly assigning reads to junctions
+167. `junc_cdf_glmnet_corrected`: cdf of `p_predicted_glmnet_corrected` relative to its null distribution by randomly assigning reads to junctions
+168. `junc_cdf_glmnet_constrained`: cdf of `p_predicted_glmnet_constrained` relative to its null distribution by randomly assigning reads to junctions
+169. `junc_cdf_glmnet_corrected_constrained`: cdf of `p_predicted_glmnet_corrected_constrained` relative to its null distribution by randomly assigning reads to junctions
+170. `junc_cdf_glmnet_twostep`: cdf of `p_predicted_glmnet_twostep` relative to its null distribution by randomly assigning reads to junctions
+171. `genomic_aScoreR1`: the maximum alignment score of all genomic alignments of that read (NA if `genomicAlignmentR1` == 0)
+172. `frac_genomic_reads`: fraction of aligned reads for each junction that have also genomic alignment 
+173. `frac_anomaly`: the fraction of the aligned reads for the junction that are anamolous
+174. `ave_min_junc_14mer`:  the average of `min_junc_14mer` across the reads aligned to the junction
+175. `ave_max_junc_14mer`:  the average of `max_junc_14mer` across the reads aligned to the junction
+176. `ave_AT_run_R1`:  the average of `AT_run_R1` across the reads aligned to the junction
+177. `ave_GC_run_R1`:  the average of `GC_run_R1` across the reads aligned to the junction
+178. `ave_max_run_R1`: the average of `max_run_R1` across the reads aligned to the junction
+179. `p_val_median_overlap_R1`: the p-value of the statistical test for comparing the median overlaps of the aligned reads to the junction against the null of randomly aligned reads and small p-values are desired as they indicate that the median_overlap of the junction is large enough.  
+180. `uniformity_test_pval`: the p_value of the uniformity test for the junction overlap of the reads aligned to the junction computed by chisq.test. It is computed only for junctions with at most 15 reads and p-values close to 1 are desired as they indicate reads are uniformly distributed.
+181. `sd_overlap`: the standard deviation of the junction overlap for the reads aligned to the junction 
+
 
 ### New columns in the class input file after run_ensembl step:
 * `geneR1B_ensembl`: the gene ensembl id for `geneR1B`
@@ -256,8 +270,21 @@ jI:B:I,Start1,End1,Start2,End2,...
 
 
 ### GLM_output.txt: 
-This file is built by the `GLM_script.R` and contains all junction level metrics including aggregated p_predicted and junc_cdf scores and other alignment qualities at the junction level. The following columns from the `class input file` is written in `GLM_output.txt`:
-`geneR1B_uniq`, `geneR1A_uniq`, `readClassR1`, `refName_newR1`, `is.STAR_Chim`, `is.STAR_SJ`, `intron_motif`, `is.annotated`,  `num_uniq_map_reads`, `num_multi_map_reads`, `maximum_SJ_overhang`, `is.STAR_Fusion`, `numReads`, `median_overlap_R1`, `njunc_binR1A`, `njunc_binR1B`, `threeprime_partner_number_R1`, `fiveprime_partner_number_R1`, `p_predicted_glm`, `p_predicted_glm_corrected`, `    p_predicted_glmnet`, `p_predicted_glmnet_corrected`, `p_predicted_glmnet_twostep`, `p_predicted_glm_corrected_genomic`, `p_predicted_glmnet_corrected_genomic`, `frac_genomic_reads`, `junc_cdf_glm`, `junc_cdf_glm_corrected`, `junc_cdf_glmnet`, `junc_cdf_glmnet_corrected`, `junc_cdf_glmnet_twostep`.
+This file is built by the `GLM_script.R` and contains all junction level metrics including aggregated p_predicted and junc_cdf scores and other alignment qualities at the junction level. Specifically `GLM_output.txt` contains emperical p-values computed by comparing the `junc_cdf` scores obtained via various varioations of the GLM(net) model against the distribution of those scores in "Bad junctios", junctions with at least 10% of reads with genomic alignment. There are currently the following empirical p-values in the GLM output file:
+* `emp.p_glm`: obtained based on `junc_cdf_glm`
+* `emp.p_glmnet`: obtained based on `junc_cdf_glmnet`
+* `emp.p_glmnet_constrained`: obtained based on `junc_cdf_glmnet_constrained`
+* `emp.p_glm_corrected`: obtained based on `junc_cdf_glm_corrected`
+* `emp.p_glmnet_corrected`: obtained based on `junc_cdf_glmnet_corrected`
+* `emp.p_glmnet_corrected_constrained`: obtained based on `junc_cdf_glmnet_corrected_constrained`
+
+ The following columns from the `class input file` is written in `GLM_output.txt`:
+
+`refName_newR1`, `geneR1B_uniq`, `geneR1A_uniq`, `geneR1B_ensembl`, `geneR1A_ensembl`, `readClassR1`, `geneR1A`, `geneR1B`, `geneR1A_expression_unstranded`, `geneR1A_expression_stranded`, `geneR1B_expression_unstranded`, `geneR1B_expression_stranded`, `is.STAR_Chim`, `is.STAR_SJ`, `is.STAR_Fusion`, `numReads`, `median_overlap_R1`, `sd_overlap`, `njunc_binR1A`, `njunc_binR1B`, `threeprime_partner_number_R1`, `fiveprime_partner_number_R1`,`p_predicted_glm`, `junc_cdf_glm`, `p_predicted_glm_corrected`, `junc_cdf_glm_corrected`, `p_predicted_glmnet`, `junc_cdf_glmnet`, ` p_predicted_glmnet_corrected`, `junc_cdf_glmnet_corrected`, `p_predicted_glmnet_twostep`, `junc_cdf_glmnet_twostep`, `frac_genomic_reads`, `frac_anomaly`, `ave_min_junc_14mer`, `ave_max_junc_14mer`, `ave_AT_run_R1`, `ave_GC_run_R1`, `ave_max_run_R1`, `ave_AT_run_R2`, `ave_GC_run_R2`, `ave_max_run_R2`, `p_val_median_overlap_R1`, `uniformity_test_pval`,  `p_predicted_glmnet_constrained`, `junc_cdf_glmnet_constrained`, `p_predicted_glmnet_corrected_constrained`, `junc_cdf_glmnet_corrected_constrained`, `p_predicted_glmnet_twostep_constrained`, `seqR1`, `seqR2`
+
+The following columsn are added from the STAR output file for "Aligned" junctions (`SJ.out.tab`): 
+
+`intron_motif`, `is.annotated`, `num_uniq_map_reads`, `num_multi_map_reads`, `maximum_SJ_overhang`,
 
 
 ###  Files for comparing the junctions in the class input files with those in the STAR output files:
