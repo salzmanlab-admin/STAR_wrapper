@@ -19,7 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
   #job_file.write("#SBATCH --qos=high_p\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p quake\n")
+  job_file.write("#SBATCH -p quake,horence,owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -42,9 +42,9 @@ def star_fusion(out_path, name, single, dep = ""):
   return submit_job("run_star_fusion.sh")
 
 
-def modify_class(out_path, name, dep = ""):
+def modify_class(out_path, name, assembly, dep = ""):
   """Run the script that modifies the junction ids in the class input file"""
-  command = "Rscript scripts/modify_junction_ids.R {}{}/ ".format(out_path, name)
+  command = "Rscript scripts/modify_junction_ids.R {}{}/ {} ".format(out_path, name, assembly)
   sbatch_file("run_modify_class.sh",out_path, name, "modify_{}".format(name), "24:00:00", "150Gb", command, dep=dep)  # changed it from 50 to 80Gb for exopancreas sample, 24:00:00  150 Gb for Lu
   return submit_job("run_modify_class.sh")
 
@@ -66,7 +66,7 @@ def GLM(out_path, name, single, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "24:00:00", "200Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "300Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -94,9 +94,9 @@ def extract(out_path, data_path, name, bc_pattern, r_ends, dep = ""):
   sbatch_file("run_extract.sh", out_path, name,"extract_{}".format(name), "20:00:00", "20Gb", command, dep = dep)
   return submit_job("run_extract.sh")
 
-def ensembl(out_path, name, single, dep = ""):
+def ensembl(out_path, name, single, assembly, dep = ""):
   """Run script to add both ensembl gene ids and gene counts to the class input files"""
-  command = "Rscript scripts/add_ensembl_id.R {}{}/ ".format(out_path, name)
+  command = "Rscript scripts/add_ensembl_id.R {}{}/ {} ".format(out_path, name, assembly)
   if single:
     command += " 1 "
   else:
@@ -153,9 +153,9 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
   else:
     l = 0
   for i in range(l,2):
-    command += "/scratch/PI/horence/Roozbeh/STAR-2.7.1a/bin/Linux_x86_64/STAR --runThreadN 4 "
+    command += "/oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.3a/bin/Linux_x86_64/STAR --runThreadN 4 "
     command += "--alignIntronMax 1000000 "
-    command += "--genomeDir /scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_index_2.7.1a ".format(assembly)
+    command += "--genomeDir /oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.1a/{}_index_2.7.1a ".format(assembly)
     if tenX:
       command += "--readFilesIn {}{}_extracted{} ".format(data_path, name, r_ends[i])
     else:
@@ -176,7 +176,7 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
     command += "--quantMode GeneCounts "
     command += "--sjdbGTFfile {} ".format(gtf_file)
     command += "--outReadsUnmapped Fastx \n\n"
-  sbatch_file("run_map.sh", out_path, name,"map_{}".format(name), "12:00:00", "60Gb", command, dep = dep)
+  sbatch_file("run_map.sh", out_path, name,"map_{}".format(name), "24:00:00", "60Gb", command, dep = dep)
   return submit_job("run_map.sh")
 
 def HISAT_map(out_path, data_path, name, r_ends, assembly, single, tenX, dep = ""):
@@ -268,6 +268,20 @@ def main():
   bc_pattern = "C"*16 + "N"*10
 
 
+# Lemur (10X)
+  data_path = "/oak/stanford/groups/krasnow/MLCA/data10X/rawdata/Antoine_10X/Antoine_Cortex_fastq/"
+  assembly = "Mmur_3.0"
+  run_name = "Lemur_Antoine_10X"
+  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+  names = ["MLCA_ANTOINE_COLON_LARGEPROXIMAL_S9_L001","MLCA_ANTOINE_COLON_LARGEPROXIMAL_S9_L002"]
+  gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/Lemur_genome/Kransow_reference/ref_Mmur_3.0.gtf"
+  single = True
+  tenX = True
+  HISAT = False
+  bc_pattern = "C"*16 + "N"*10
+
+
+
 # Tabula Sapiens pilot (smartseq)
 #  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/B107809_A15_S125/"
 #  assembly = "hg38"
@@ -300,15 +314,15 @@ def main():
 #  HISAT = False
 
 #circRNA thirdparty benchmarking
-  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
-  assembly = "hg38"
-  run_name = "circRNA_thirdparty_benchmarking_IntronMax_1000000"
-  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
-  names = ["TxDx2016-001-001_S1_L001"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
-  tenX = False
-  HISAT = False
+#  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
+#  assembly = "hg38"
+#  run_name = "circRNA_thirdparty_benchmarking_IntronMax_1000000"
+#  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
+#  names = ["TxDx2016-001-001_S1_L001"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
+#  tenX = False
+#  HISAT = False
 
 # STAR_sim
 #  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
@@ -388,15 +402,15 @@ def main():
 #  HISAT = False
 
 #DMD data
-#  data_path = "/oak/stanford/groups/horence/Roozbeh/DMD_Artandi/data/191122_NS500615_0903_AHTTK2BGXC/"
-#  assembly = "hg38"
-#  run_name = "DMD_Artandi"
-#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-#  names = ["SM2-AAGTCCAA-TACTCATA_S1"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
+  data_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/data/191122_NS500615_0903_AHTTK2BGXC/"
+  assembly = "hg38"
+  run_name = "DMD_Artandi"
+  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+  names = ["HM3-CCGCGGTT-CTAGCGCT_S2"]
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+  single = False
+  tenX = False
+  HISAT = False
 
 #HISAT sim data perfect
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_perfect/"
@@ -442,9 +456,9 @@ def main():
   run_ann = False
   run_class = False
   run_HISAT_class = False
-  run_modify_class = True
-  run_ensembl = True
-  run_compare = True
+  run_modify_class = False
+  run_ensembl = False
+  run_compare = False
   run_GLM = True
   
 
@@ -482,6 +496,8 @@ def main():
                   cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
 #                  out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
                   out_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
+                  if run_name == "DMD_Artandi":
+                    out_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/{}/".format(cond_run_name)
                   #out_path = "output/{}/".format(cond_run_name)
 
         #   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
@@ -563,7 +579,7 @@ def main():
                       class_input_jobid = ""
 
                     if run_modify_class:
-                      modify_class_jobid = modify_class(out_path, name, dep=":".join(job_nums))
+                      modify_class_jobid = modify_class(out_path, name, assembly, dep=":".join(job_nums))
                       jobs.append("modify_class_{}.{}".format(name,modify_class_jobid))
                       job_nums.append(modify_class_jobid)
                     else:
@@ -571,7 +587,7 @@ def main():
 
                  
                     if run_ensembl:
-                      ensembl_jobid = ensembl(out_path, name, single, dep=":".join(job_nums))
+                      ensembl_jobid = ensembl(out_path, name, single, assembly, dep=":".join(job_nums))
                       jobs.append("ensembl_{}.{}".format(name,ensembl_jobid))
                       job_nums.append(ensembl_jobid)
                     else:

@@ -43,9 +43,9 @@ def star_fusion(out_path, name, single, dep = ""):
   return submit_job("run_star_fusion.sh")
 
 
-def modify_class(out_path, name, dep = ""):
+def modify_class(out_path, name, assembly, dep = ""):
   """Run the script that modifies the junction ids in the class input file"""
-  command = "Rscript scripts/modify_junction_ids.R {}{}/ ".format(out_path, name)
+  command = "Rscript scripts/modify_junction_ids.R {}{}/ {} ".format(out_path, name, assembly)
   sbatch_file("run_modify_class.sh",out_path, name, "modify_{}".format(name), "12:00:00", "50Gb", command, dep=dep)
   return submit_job("run_modify_class.sh")
 
@@ -95,9 +95,9 @@ def extract(out_path, data_path, name, bc_pattern, r_ends, dep = ""):
   sbatch_file("run_extract.sh", out_path, name,"extract_{}".format(name), "20:00:00", "20Gb", command, dep = dep)
   return submit_job("run_extract.sh")
 
-def ensembl(out_path, name, single, dep = ""):
+def ensembl(out_path, name, single, assembly, dep = ""):
   """Run script to add both ensembl gene ids and gene counts to the class input files"""
-  command = "Rscript scripts/add_ensembl_id.R {}{}/ ".format(out_path, name)
+  command = "Rscript scripts/add_ensembl_id.R {}{}/ {} ".format(out_path, name, assembly)
   if single:
     command += " 1 "
   else:
@@ -133,7 +133,7 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
   else:
     l = 0
   for i in range(l,2):
-    command += "/oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.2b/bin/Linux_x86_64/STAR --runThreadN 4 "
+    command += "/oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.3a/bin/Linux_x86_64/STAR --runThreadN 4 "
 #    command += "--alignIntronMax 21 "
     command += "--genomeDir /oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.1a/{}_index_2.7.1a ".format(assembly)
     if tenX:
@@ -193,7 +193,7 @@ def main():
 
 
 # Lemur smart seq sample
-  data_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/"+args.sample+"/"
+  data_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/"+args.sample+"/"
   assembly = "Mmur_3.0"
   run_name = "Lemur_smartseq"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
@@ -232,7 +232,7 @@ def main():
                 for sDB in scoreDelBase:
               #cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
                   cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
-                  out_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/{}/".format(cond_run_name)
+                  out_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/salzman_pipeline_output/{}/".format(cond_run_name)
                 #  out_path = "/nodes/scratch/sgiuv300-srcf-d10-01/rdehghan/output/{}/".format(cond_run_name)
         #   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 #           gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
@@ -294,7 +294,7 @@ def main():
                       class_input_jobid = ""
    
                     if run_modify_class:
-                      modify_class_jobid = modify_class(out_path, name, dep=":".join(job_nums))
+                      modify_class_jobid = modify_class(out_path, name, assembly, dep=":".join(job_nums))
                       jobs.append("modify_class_{}.{}".format(name,modify_class_jobid))
                       job_nums.append(modify_class_jobid)
                     else:
@@ -302,7 +302,7 @@ def main():
 
                  
                     if run_ensembl:
-                      ensembl_jobid = ensembl(out_path, name, single, dep=":".join(job_nums))
+                      ensembl_jobid = ensembl(out_path, name, single, assembly, dep=":".join(job_nums))
                       jobs.append("ensembl_{}.{}".format(name,ensembl_jobid))
                       job_nums.append(ensembl_jobid)
                     else:
@@ -322,9 +322,9 @@ def main():
                     else:
                       GLM_jobid =  ""
         
-                    log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
-                    jobs.append("log_{}.{}".format(name,log_jobid))
-                    job_nums.append(log_jobid)
+         #           log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
+         #           jobs.append("log_{}.{}".format(name,log_jobid))
+         #           job_nums.append(log_jobid)
         
                     total_jobs += job_nums
                     total_job_names += jobs 

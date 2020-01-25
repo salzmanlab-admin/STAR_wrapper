@@ -1,15 +1,15 @@
 #!/bin/bash
 #
-#SBATCH --job-name=ann_SJ_H10_B000376_B009051_S178
-#SBATCH --output=/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/H10_B000376_B009051_S178/log_files/ann_SJ_H10_B000376_B009051_S178.%j.out
-#SBATCH --error=/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/H10_B000376_B009051_S178/log_files/ann_SJ_H10_B000376_B009051_S178.%j.err
+#SBATCH --job-name=ann_SJ_P9_B001493_B007957_S369
+#SBATCH --output=/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P9_B001493_B007957_S369/log_files/ann_SJ_P9_B001493_B007957_S369.%j.out
+#SBATCH --error=/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P9_B001493_B007957_S369/log_files/ann_SJ_P9_B001493_B007957_S369.%j.err
 #SBATCH --time=24:00:00
 #SBATCH --account=horence
 #SBATCH --partition=nih_s10
 #SBATCH --nodes=1
 #SBATCH --mem=40Gb
-#SBATCH --dependency=afterok:13063484:13063485
+#SBATCH --dependency=afterok:14052727:14052730
 #SBATCH --kill-on-invalid-dep=yes
 date
-python3 scripts/annotate_SJ.py -i /oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/H10_B000376_B009051_S178/ -a Mmur_3.0 -g /oak/stanford/groups/horence/Roozbeh/single_cell_project/Lemur_genome/Kransow_reference/ref_Mmur_3.0.gtf 
+python3 scripts/annotate_SJ.py -i /oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P9_B001493_B007957_S369/ -a Mmur_3.0 -g /oak/stanford/groups/horence/Roozbeh/single_cell_project/Lemur_genome/Kransow_reference/ref_Mmur_3.0.gtf 
 date

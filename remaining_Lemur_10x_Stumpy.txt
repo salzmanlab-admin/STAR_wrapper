@@ -1,0 +1,2 @@
+Stumpy_Pancreas_10X_fastq/10X_P8_4_S5_L001
+Stumpy_Pancreas_10X_fastq/10X_P8_4_S5_L002

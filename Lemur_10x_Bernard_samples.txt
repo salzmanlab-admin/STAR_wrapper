@@ -1,0 +1,6 @@
+Bernard_Blood_10X_fastq/10X_P3_10_S11_L001
+Bernard_Blood_10X_fastq/10X_P3_10_S11_L002
+Bernard_Brain_10X_fastq/10X_P3_11_S12_L001
+Bernard_Brain_10X_fastq/10X_P3_11_S12_L002
+Bernard_Lung_10X_fastq/10X_P3_12_S13_L001
+Bernard_Lung_10X_fastq/10X_P3_12_S13_L002

@@ -446,7 +446,7 @@ def write_class_file(junc_read_dict,out_file, single, genomic_alignments, tenX, 
   kmer_dict = pickle.load(open("/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/kmer_dict_{}.pkl".format(k),"rb"))
   exon_bounds = pickle.load(open("/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_exon_bounds_all.pkl","rb"))
   fill_char = "NA"
-  meta_df =  pd.read_csv("/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/TS_Pilot_Smartseq_metadata.csv") 
+  meta_df =  pd.read_csv("/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/meta_data/Tabula_Sapiens/TS_Pilot_Smartseq_metadata.csv") 
   plate = out_file.split("/")[-2].split("_")[0]
   if plate in list(meta_df["Plate ID"]): 
     organ = meta_df[meta_df["Plate ID"] == plate].iloc[0]["Organ"]

@@ -5,6 +5,7 @@ require(data.table)
 ###### Input arguments ##############
 args = commandArgs(trailingOnly = TRUE)
 directory = args[1]
+assembly = args[2]
 #####################################
 
 ### arguments for debugging ######
@@ -16,7 +17,13 @@ class_input_file = list.files(directory,pattern = "class_input_WithinBAM.tsv")
 class_input = fread(paste(directory,class_input_file,sep = ""),sep = "\t",header = TRUE)
 ###############################################
 
-index = fread("/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/grch38_gene_strand.txt",sep="\t",header = TRUE)
+if (assembly %like% "hg38"){
+  gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_gene_strand.txt"
+} else if(assembly %like% "Mmur"){ 
+  gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/Mmur3_gene_strand.txt"
+}
+
+gene_strand_info = fread(gene_strand_info_file,sep="\t",header = TRUE)
 
 class_input[fileTypeR1=="Aligned",read_strandR1B:=read_strandR1A]
 
@@ -38,6 +45,9 @@ class_input[,gene_strandR1A_new:=NULL] #if I rerun this script for a class input
 class_input[,gene_strandR1B_new:=NULL]
 
 # I remove SNORA and other weird gene names from the list of gene names on each side of junction if the strand inforamtion is already known or there are many genes in the junction id (after each removal one is deducted from the number of genes)
+# TRNA genes are mostly observed in the lemur data
+#class_input[((numgeneR1A>2) & (geneR1A%like%"SNORA")) | ((numgeneR1A>1) & !(gene_strandR1A=="?") & (geneR1A%like%"SNORA")),`:=`(geneR1A = gsub("^SNORA[[:digit:]]+,?", "", geneR1A), numgeneR1A = numgeneR1A-1)]
+#class_input[((numgeneR1B>2) & (geneR1B%like%"SNORA")) | ((numgeneR1B>1) & !(gene_strandR1B=="?") & (geneR1B%like%"SNORA")),`:=`(geneR1B = gsub("^SNORA[[:digit:]]+,?", "", geneR1B), numgeneR1B = numgeneR1B-1)]
 class_input[((numgeneR1A>2) & (geneR1A%like%"SNORA")) | ((numgeneR1A>1) & !(gene_strandR1A=="?") & (geneR1A%like%"SNORA")),`:=`(geneR1A = gsub("^SNORA[[:digit:]]+,?", "", geneR1A), numgeneR1A = numgeneR1A-1)]
 class_input[((numgeneR1B>2) & (geneR1B%like%"SNORA")) | ((numgeneR1B>1) & !(gene_strandR1B=="?") & (geneR1B%like%"SNORA")),`:=`(geneR1B = gsub("^SNORA[[:digit:]]+,?", "", geneR1B), numgeneR1B = numgeneR1B-1)]
 class_input[((numgeneR1A>2) & (geneR1A%like%"RP11")) | ((numgeneR1A>1) & !(gene_strandR1A=="?") & (geneR1A%like%"RP11")),`:=`(geneR1A = gsub("RP11-*[[:alnum:]]+[[:punct:]][[:digit:]]+,?", "", geneR1A), numgeneR1A = numgeneR1A-1)]
@@ -67,19 +77,36 @@ class_input[,geneR1A_uniq := geneR1A]
 class_input[,geneR1B_uniq := geneR1B]
 class_input[(numgeneR1A>1) & (num_shared_genes==0), geneR1A_uniq := tail(strsplit(geneR1A,split = ",")[[1]],n=1),by = refName_ABR1]
 class_input[(numgeneR1B>1) & (num_shared_genes==0), geneR1B_uniq := tail(strsplit(geneR1B,split = ",")[[1]],n=1),by = refName_ABR1]
-class_input = merge(class_input,index,all.x = TRUE,all.y = FALSE,by.x="geneR1A_uniq",by.y = "gene_name")
+if (assembly %like% "hg38"){
+  class_input = merge(class_input,gene_strand_info,all.x = TRUE,all.y = FALSE,by.x="geneR1A_uniq",by.y = "gene_name")
+} else if(assembly %like% "Mmur"){ 
+  class_input = merge(class_input,gene_strand_info,all.x = TRUE,all.y = FALSE, by.x = c("geneR1A_uniq","chrR1A"), by.y = c("gene_name","chr"))
+}
+
 setnames(class_input, old = "strand", new = "gene_strandR1A_new")
-class_input = merge(class_input,index,all.x = TRUE,all.y = FALSE,by.x = "geneR1B_uniq",by.y = "gene_name")
+if (assembly %like% "hg38"){
+  class_input = merge(class_input,gene_strand_info,all.x = TRUE,all.y = FALSE, by.x = "geneR1B_uniq", by.y = "gene_name")
+} else if(assembly %like% "Mmur"){ 
+  class_input = merge(class_input,gene_strand_info,all.x = TRUE,all.y = FALSE, by.x = c("geneR1B_uniq","chrR1B"), by.y = c("gene_name","chr"))
+}
 setnames(class_input,old = "strand",new = "gene_strandR1B_new")
 
 class_input[((gene_strandR1A_new!=read_strandR1A & gene_strandR1B_new==read_strandR1B) | (gene_strandR1A_new==read_strandR1A & gene_strandR1B_new!=read_strandR1B)) & (gene_strandR1A=="?") & (num_shared_genes == 0), geneR1A_uniq:=first(tail(strsplit(geneR1A,split=",")[[1]],n=2)),by = refName_ABR1]
 class_input[,gene_strandR1A_new := NULL]
-class_input = merge(class_input, index, all.x = TRUE, all.y = FALSE, by.x = "geneR1A_uniq", by.y = "gene_name")
+if (assembly %like% "hg38"){
+  class_input = merge(class_input, gene_strand_info, all.x = TRUE, all.y = FALSE, by.x = "geneR1A_uniq", by.y = "gene_name")
+} else if(assembly %like% "Mmur"){ 
+  class_input = merge(class_input, gene_strand_info, all.x = TRUE, all.y = FALSE, by.x = c("geneR1A_uniq","chrR1A"), by.y = c("gene_name","chr"))
+}
 setnames(class_input, old = "strand", new = "gene_strandR1A_new")
 
 class_input[((gene_strandR1A_new!=read_strandR1A & gene_strandR1B_new==read_strandR1B)  | (gene_strandR1A_new==read_strandR1A & gene_strandR1B_new!=read_strandR1B)) & (gene_strandR1B=="?") & (num_shared_genes == 0), geneR1B_uniq:=first(tail(strsplit(geneR1B,split=",")[[1]],n=2)),by = refName_ABR1]
 class_input[,gene_strandR1B_new:=NULL]
-class_input = merge(class_input, index, all.x = TRUE, all.y = FALSE, by.x = "geneR1B_uniq",by.y = "gene_name")
+if (assembly %like% "hg38"){
+  class_input = merge(class_input, gene_strand_info, all.x = TRUE, all.y = FALSE, by.x = "geneR1B_uniq", by.y = "gene_name")
+} else if(assembly %like% "Mmur"){ 
+  class_input = merge(class_input, gene_strand_info, all.x = TRUE, all.y = FALSE, by.x = c("geneR1B_uniq","chrR1B"), by.y = c("gene_name","chr"))
+}
 setnames(class_input, old = "strand", new = "gene_strandR1B_new")
 #################
 

@@ -42,9 +42,9 @@ def star_fusion(out_path, name, single, dep = ""):
   return submit_job("run_star_fusion.sh")
 
 
-def modify_class(out_path, name, dep = ""):
+def modify_class(out_path, name, assembly, dep = ""):
   """Run the script that modifies the junction ids in the class input file"""
-  command = "Rscript scripts/modify_junction_ids.R {}{}/ ".format(out_path, name)
+  command = "Rscript scripts/modify_junction_ids.R {}{}/ {} ".format(out_path, name, assembly)
   sbatch_file("run_modify_class.sh",out_path, name, "modify_{}".format(name), "12:00:00", "50Gb", command, dep=dep)
   return submit_job("run_modify_class.sh")
 
@@ -94,9 +94,9 @@ def extract(out_path, data_path, name, bc_pattern, r_ends, dep = ""):
   sbatch_file("run_extract.sh", out_path, name,"extract_{}".format(name), "20:00:00", "20Gb", command, dep = dep)
   return submit_job("run_extract.sh")
 
-def ensembl(out_path, name, single, dep = ""):
+def ensembl(out_path, name, single, assembly, dep = ""):
   """Run script to add both ensembl gene ids and gene counts to the class input files"""
-  command = "Rscript scripts/add_ensembl_id.R {}{}/ ".format(out_path, name)
+  command = "Rscript scripts/add_ensembl_id.R {}{}/ {} ".format(out_path, name, assembly)
   if single:
     command += " 1 "
   else:
@@ -316,7 +316,7 @@ def main():
                       class_input_jobid = ""
    
                     if run_modify_class:
-                      modify_class_jobid = modify_class(out_path, name, dep=":".join(job_nums))
+                      modify_class_jobid = modify_class(out_path, name, assembly, dep=":".join(job_nums))
                       jobs.append("modify_class_{}.{}".format(name,modify_class_jobid))
                       job_nums.append(modify_class_jobid)
                     else:
@@ -324,7 +324,7 @@ def main():
 
                  
                     if run_ensembl:
-                      ensembl_jobid = ensembl(out_path, name, single, dep=":".join(job_nums))
+                      ensembl_jobid = ensembl(out_path, name, single, assembly, dep=":".join(job_nums))
                       jobs.append("ensembl_{}.{}".format(name,ensembl_jobid))
                       job_nums.append(ensembl_jobid)
                     else:

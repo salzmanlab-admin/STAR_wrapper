@@ -8,32 +8,52 @@ args = commandArgs(trailingOnly = TRUE)
 
 ##### input files #########
 directory = args[1]
-is.single = as.numeric(args[2])
-gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/gtf_hg38_gene_name_ids.txt"
+assembly = args[2]
+is.single = as.numeric(args[3])
 ######################
 
-
-######### read in gene count file #######
-if(is.single == 1){
-  genecount_file = paste(directory,list.files(directory, pattern = "2ReadsPerGene.out.tab", all.files = FALSE),sep = "")
-} else {
-  genecount_file = paste(directory,list.files(directory, pattern = "1ReadsPerGene.out.tab", all.files = FALSE),sep = "")
+if (assembly %like% "hg38"){
+  gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_gene_name_ids.txt"
+} else if(assembly %like% "Mmur"){ 
+  gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/Mmur3_gene_name_ids.txt"
 }
-gene_count = fread(genecount_file,sep = "\t",header = FALSE)
-if (! ("ensembl_id" %in% names(gene_count)) ){  
-  gene_count = gene_count[V1%like%"ENSG"]
-  gene_count[,ensembl_id:=strsplit(V1,split = ".",fixed = TRUE)[[1]][1],by = 1:nrow(gene_count)]
-}
-if ("gene_name" %in% names(gene_count)){
-  gene_count[,gene_name := NULL]  # if there is a gene name column from the past in the file, we want to delete it to avoid errors
-}
-##########################################
 
 ######## read in gtf and class input files ################
 gtf_info = fread(gtf_file,sep = "\t",header = TRUE)
 gtf_info = gtf_info[!(duplicated(gene_name))]
 class_input = fread(paste(directory,"class_input_WithinBAM.tsv",sep = ""),sep = "\t",header = TRUE)
 ##########################################
+
+
+if(is.single == 1){
+  genecount_file = paste(directory,list.files(directory, pattern = "2ReadsPerGene.out.tab", all.files = FALSE),sep = "")
+} else {
+  genecount_file = paste(directory,list.files(directory, pattern = "1ReadsPerGene.out.tab", all.files = FALSE),sep = "")
+}
+######### read in gene count file #######
+gene_count = fread(genecount_file,sep = "\t",header = FALSE)
+if (assembly %like% "hg38"){
+  if (! ("ensembl_id" %in% names(gene_count)) ){  
+    gene_count = gene_count[V1%like%"ENSG"]
+    gene_count[,ensembl_id:=strsplit(V1,split = ".",fixed = TRUE)[[1]][1],by = 1:nrow(gene_count)]
+  }
+  if ("gene_name" %in% names(gene_count)){
+    gene_count[,gene_name := NULL]  # if there is a gene name column from the past in the file, we want to delete it to avoid errors
+  }
+}
+
+if (assembly %like% "Mmur"){
+  if (! ("ensembl_id" %in% names(gene_count)) ){  
+    gene_count = gene_count[V1%like%"gene"]
+    gene_count[,ensembl_id:=strsplit(V1,split = ".",fixed = TRUE)[[1]][1],by = 1:nrow(gene_count)]
+  }
+  if ("gene_name" %in% names(gene_count)){
+    gene_count[,gene_name := NULL]  # if there is a gene name column from the past in the file, we want to delete it to avoid errors
+  }
+}
+##########################################
+
+
 
 #add HUGO gene names to the gene count file
 gene_count = merge(gene_count,gtf_info,by.x = "ensembl_id",by.y = "gene_id",all.x = TRUE,all.y = FALSE)
@@ -44,7 +64,7 @@ gene_count = gene_count[!duplicated(ensembl_id)]
 
 
 # now add gene ensembl and gene counts to the class input file
-if ( "geneR1B_name" %in% names(class_input) ){
+if ( "geneR1B_ensembl" %in% names(class_input) ){
   class_input[,geneR1A_name := NULL]
   class_input[,geneR1B_name := NULL]
   class_input[,geneR1A_ensembl := NULL]
