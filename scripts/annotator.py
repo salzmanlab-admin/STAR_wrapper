@@ -2,7 +2,10 @@ import pandas as pd
 
 def get_gene_id(row):
 #  return row["attribute"].split(";")[0].split()[1][1:-1]
-  return row["attribute"].split("gene_name")[-1].split('"')[1]
+  if "gene_name" in row["attribute"]:
+    return row["attribute"].split("gene_name")[-1].split('"')[1]
+  elif ";gene=" in row["attribute"]:
+    return row["attribute"].split(";gene=")[-1].split(";")[0]
 
 def round_down(num, divisor): 
     return num - (num%divisor)
@@ -29,7 +32,7 @@ class Annotator:
   def get_gtf_dict(self):
   
     # load in gtf
-    gtf_df = pd.read_csv(self.gtf_file,sep="\t",names=["seqname","source","feature","start","end","score","strand","frame","attribute"])
+    gtf_df = pd.read_csv(self.gtf_file,sep="\t",names=["seqname","source","feature","start","end","score","strand","frame","attribute"],comment="#")
   
     # make gene id column
     gtf_df["gene_id"] = gtf_df.apply(get_gene_id, axis=1)
@@ -58,7 +61,10 @@ class Annotator:
               strand = self.unknown_strand
   
             # assign gene to all ranges it falls within
-            start = min(gene_df["start"])
+            try:
+              start = min(gene_df["start"])
+            except:
+              print(gene_df)
             end = max(gene_df["end"])
             for j in range(round_down(start,self.jump),round_down(end + self.jump, self.jump),self.jump):
                 gtf_dict[seqname][j][gene_id] = [start,end, strand] 
