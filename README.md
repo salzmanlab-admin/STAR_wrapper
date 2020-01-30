@@ -308,12 +308,21 @@ Should our pipeline be based on independent alignment of both reads, or alignmen
 ## Processed Files annotation columns
 
 For the processed files:
+
 `splice_ann`: both sides of the junction are annotated as exon boundaries and the junction itself is found in the GTF; subset of `both_ann`
+
 `both_ann`:  Both sides of the junction are annotated as exon boundaries; this is equivalent to `exon_annR1A` AND `exon_annR1B`
+
 `just_both_ann`: Both sides of the junction are annotated as exon boundaries, but the splice is not annotated; `just_both_ann` UNION `splice_ann` = `both_ann`
+
 `exon_annR1A`: The exon on the first half of the junction is at an annotated boundary
+
 `exon_annR1B`: The exon on the second half of the junction is at an annotated boundary
+
 `one_ann`: Exactly one of `exon_annR1A` and `exon_annR1B` is true
+
 `none_ann`: Neither of the boundaries of the splice junction are annotated exon boundaries. 
+
 `none_ann_known_gene`: `none_ann` is TRUE and `geneR1A_uniq` is NOT unknown or blank
+
 `none_ann_unknown_gene`: `none_ann` is TRUE and `geneR1A_uniq` IS unknown or blank
