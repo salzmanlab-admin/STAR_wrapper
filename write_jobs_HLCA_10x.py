@@ -196,11 +196,11 @@ def main():
   print("inpout sample".format(path))
   folder = path.split("/")[0]
   sample = path.split("/")[1]
-  data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/data10x/sequencing_runs/171205_A00111_0088_BH55NYDMXX/fastqs/"+folder+"/"
+  data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/data10x/sequencing_runs/180607_A00111_0155_BHFCWYDMXX/fastqs/"+folder+"/"
   # 171205_A00111_0088_BH55NYDMXX
   # 180607_A00111_0155_BHFCWYDMXX
   assembly = "hg38"
-  run_name = "HLCA_171205_10X"
+  run_name = "HLCA_180607_10X"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
@@ -328,12 +328,12 @@ def main():
                     else:
                       GLM_jobid =  ""
         
-                    log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
-                    jobs.append("log_{}.{}".format(name,log_jobid))
-                    job_nums.append(log_jobid)
+       #             log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
+       #             jobs.append("log_{}.{}".format(name,log_jobid))
+       #             job_nums.append(log_jobid)
         
-                    total_jobs += job_nums
-                    total_job_names += jobs 
-                  log(out_path, "", sorted(total_job_names), dep = ":".join(total_jobs))
+       #             total_jobs += job_nums
+       #             total_job_names += jobs 
+#                  log(out_path, "", sorted(total_job_names), dep = ":".join(total_jobs))
 
 main()

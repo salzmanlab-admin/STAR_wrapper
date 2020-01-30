@@ -95,6 +95,10 @@ class_input_file = list.files(directory, pattern = "class_input_WithinBAM.tsv")
 class_input =  fread(paste(directory, class_input_file, sep = ""), sep = "\t", header = TRUE)
 ###############################################
 
+# do deduplication for 10X data
+if(directory %like% "10X"){
+  class_input = class_input[!duplicated(paste(barcode,UMI,refName_newR1))]
+}
 
 ###### find the best alignment rank across all aligned reads for each junction ######   
 #star_sj_output[, junction:=paste(V1,V2,V1,V3, sep= ":"), by = 1:nrow(star_sj_output)]
@@ -263,6 +267,7 @@ is.10X = 0 # we use a different set of random reads for 10x data
 if (directory %like% "10X"){
   is.10X=1
 }
+is.10X = 0   # for now we decided to use the same set of random reads for both 10X and SS
 class_input = compute_junc_cdf(class_input , "p_predicted_glm", "glm_per_read_prob", "junc_cdf_glm",is.10X)
 print("done with GLM")
 toc()
@@ -497,12 +502,17 @@ class_input[, frac_genomic_reads :=mean(genomicAlignmentR1), by = refName_newR1]
 class_input[, frac_anomaly:=0]
 class_input[(location_compatible==0 | read_strand_compatible==0), frac_anomaly:=.N/numReads, by = refName_newR1] # the fraction of anomalous reads for each junction
 
+# compute the average of read-level quantities for having a single quantity at the junction level
 class_input[, ave_min_junc_14mer:=mean(min_junc_14mer), by = refName_newR1]
 class_input[, ave_max_junc_14mer:=mean(max_junc_14mer), by = refName_newR1]
 
 class_input[, ave_AT_run_R1:=mean(AT_run_R1), by = refName_newR1]
 class_input[, ave_GC_run_R1:=mean(GC_run_R1), by = refName_newR1]
 class_input[, ave_max_run_R1:=mean(max_run_R1), by = refName_newR1]
+
+class_input[, ave_entropyR1:=mean(entropyR1), by = refName_newR1]
+class_input[, ave_entropyR2:=mean(entropyR2), by = refName_newR1]
+
 if (is.SE == 0){
   class_input[, ave_AT_run_R2:=mean(AT_run_R2), by = refName_newR1]
   class_input[, ave_GC_run_R2:=mean(GC_run_R2), by = refName_newR1]
@@ -536,7 +546,7 @@ toc()
 ##################################################
 ##################################################
 
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","geneR1A","geneR1B","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glmnet","p_predicted_glmnet_constrained","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_constrained","p_predicted_glmnet_twostep","p_predicted_glmnet_twostep_constrained","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_constrained","junc_cdf_glmnet_corrected","junc_cdf_glmnet_corrected_constrained","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_max_run_R2","sd_overlap","p_val_median_overlap_R1","chrR1A","chrR1B","posR1A","posR1B","gene_strandR1A","gene_strandR1B","")
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","geneR1A","geneR1B","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glmnet","p_predicted_glmnet_constrained","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_constrained","p_predicted_glmnet_twostep","p_predicted_glmnet_twostep_constrained","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_constrained","junc_cdf_glmnet_corrected","junc_cdf_glmnet_corrected_constrained","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_entropyR1","ave_entropyR2","ave_max_run_R2","sd_overlap","p_val_median_overlap_R1","chrR1A","chrR1B","posR1A","posR1B","gene_strandR1A","gene_strandR1B","")
 junction_prediction = unique(class_input[, colnames(class_input)%in%col_names_to_keep_in_junc_pred_file, with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]
 
