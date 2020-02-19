@@ -20,6 +20,8 @@ def get_args():
   parser.add_argument('--bams', nargs="+",required=True, help='bams to parse (either one or two for paired end)')
   parser.add_argument("--outpath",help="folder to write output to")
   parser.add_argument("--assembly",choices = ["hg38","Mmur"], help="which assembly to use to modify class input")
+  parser.add_argument("--UMI_bar", action="store_true",help="extract UMI and barcode")
+
   args = parser.parse_args()
   return args
 
@@ -145,7 +147,7 @@ def main():
   # bamFile = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/1Aligned.out.bam"
   # bamFile2 = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/2Aligned.out.bam"
   
-  UMI_bar = True
+#  UMI_bar = True
 
 #  paired = True
   suffixes = ["R1","R2"]
@@ -187,13 +189,13 @@ def main():
               count += 1
 
               # note: removing chim for this test ONLY; uncomment after
-              CI_dict = extract_info_chim(CI_dict,prev_read,bam_read,suffix, alignFile, ann, UMI_bar)
+              CI_dict = extract_info_chim(CI_dict,prev_read,bam_read,suffix, alignFile, ann, args.UMI_bar)
               first = False
   
             # add info from align read
             elif "N" in bam_read.cigarstring:
               count += 1
-              CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, UMI_bar)
+              CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, args.UMI_bar)
   
             # save genomic alignment information
             else:
@@ -203,7 +205,7 @@ def main():
                 else:
                   genomic_alignments[bam_read.query_name] = max(bam_read.get_tag("AS"), genomic_alignments[bam_read.query_name])
               else:
-                CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, UMI_bar)
+                CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, args.UMI_bar)
   #     if count == 10000:
   #       continue
     CI_df = pd.DataFrame.from_dict(CI_dict)
