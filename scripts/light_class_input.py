@@ -1,9 +1,11 @@
+import argparse
 from collections import defaultdict
 import datetime
 import math
 import numpy as np
 import os
 import pandas as pd
+import pyarrow
 import pickle
 import pysam
 import re
@@ -12,6 +14,14 @@ import sys
 #sys.path.insert(1, '/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/scripts/')
 import annotator
 from light_utils import *
+
+def get_args():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--fastqs', nargs="+",required=True, help='fastqs to parse (either one or two for paired end)')
+  parser.add_argument("--outpath",help="folder to write output to")
+  parser.add_argument("--assembly",choices = ["hg38","Mmur"], help="which assembly to use to modify class input")
+  args = parser.parse_args()
+  return args
 
 def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, fill_char = np.nan):
   sec_dict = {True: 0, False: 1}
@@ -27,6 +37,7 @@ def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, fill_char
   CI_dict["readLen" + suffix].append(bam_read.query_length)
   CI_dict["aScore{}A".format(suffix)].append(bam_read.get_tag("AS"))
   CI_dict["NH{}A".format(suffix)].append(bam_read.get_tag("NH"))
+  CI_dict["HI{}A".format(suffix)].append(bam_read.get_tag("HI"))
   CI_dict["nmm{}A".format(suffix)].append(nmm(bam_read.get_tag("MD")))
   CI_dict["qual{}A".format(suffix)].append(bam_read.mapping_quality)
   cigar1, cigar2 = split_cigar_align(bam_read.cigarstring)
@@ -61,7 +72,7 @@ def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, fill_char
   CI_dict["read_strand{}B".format(suffix)].append(fill_char)
   CI_dict["primary{}A".format(suffix)].append(sec_dict[bam_read.is_secondary])
   CI_dict["primary{}B".format(suffix)].append(fill_char)
-  empty_cols = ["aScore{}B".format(suffix),"qual{}B".format(suffix),"NH{}B".format(suffix),"nmm{}B".format(suffix)]
+  empty_cols = ["aScore{}B".format(suffix),"qual{}B".format(suffix),"NH{}B".format(suffix),"nmm{}B".format(suffix), "HI{}B".format(suffix)]
   for c in empty_cols:
     CI_dict[c].append(fill_char)
   return CI_dict
@@ -103,6 +114,7 @@ def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar
     CI_dict["aScore{}{}".format(suffix,halves[i])].append(reads[i].get_tag("AS"))
     CI_dict["qual{}{}".format(suffix,halves[i])].append(reads[i].mapping_quality)
     CI_dict["NH{}{}".format(suffix,halves[i])].append(reads[i].get_tag("NH"))
+    CI_dict["HI{}{}".format(suffix,halves[i])].append(reads[i].get_tag("HI"))
     CI_dict["nmm{}{}".format(suffix,halves[i])].append(nmm(reads[i].get_tag("MD")))
     cigar = split_cigar_chim(reads[i].cigarstring)
     M, S, I, D = get_SM(cigar)
@@ -116,18 +128,26 @@ def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar
 
 def main():
   t0 = time.time()
+  args = get_args()
+
+  bam_files = args.fastqs
+  print("bam_files",bam_files)
 
   wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
-  assembly = "Mmur_3.0"
+#  assembly = "Mmur_3.0"
+  assembly = "hg38"  
   annotator_path = "{}annotators/{}.pkl".format(wrapper_path, assembly)
   ann = pickle.load(open(annotator_path, "rb"))
-  bam_files = ["/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/1Aligned.out.bam",
-              "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/2Aligned.out.bam"]
+#  bam_files = ["/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/1Aligned.out.bam",
+#              "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/2Aligned.out.bam"]
+#  bam_files = ["/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/Lemur_Antoine_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/MLCA_ANTOINE_RETINA_S6_L001/2Aligned.out.bam"]
+#  bam_files = ["/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_171205_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P1_3_S1_L001/2Aligned.out.bam"]
   # bamFile = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/1Aligned.out.bam"
   # bamFile2 = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/2Aligned.out.bam"
   
-  UMI_bar = False
-  paired = True
+  UMI_bar = True
+
+#  paired = True
   suffixes = ["R1","R2"]
   CI_dfs = []
   for i in range(len(bam_files)):
@@ -136,7 +156,7 @@ def main():
     else:
       read_ids = set()
     suffix = suffixes[i]
-    col_bases = ["aScore","M","S","nmm","qual","NH","cigar", "juncPos", "gene", "chr", "read_strand","primary"]
+    col_bases = ["aScore","M","S","nmm","qual","NH","HI","cigar", "juncPos", "gene", "chr", "read_strand","primary"]
     columns = ["id","readLen" + suffix, "fileType" + suffix,"seq" + suffix,"AT_run_" + suffix,"GC_run_" + suffix,
                "max_run_" + suffix,"entropy" + suffix,"refName_AB" + suffix, "UMI","barcode"]
     for c in col_bases:
@@ -165,6 +185,8 @@ def main():
             # add info from chimeric read
             if bam_read.has_tag("ch"):
               count += 1
+
+              # note: removing chim for this test ONLY; uncomment after
               CI_dict = extract_info_chim(CI_dict,prev_read,bam_read,suffix, alignFile, ann, UMI_bar)
               first = False
   
@@ -202,12 +224,41 @@ def main():
   else:
     final_df = CI_dfs[0]
 #  final_df.fillna(np.nan,inplace=True)
-  float_cols = ["aScoreR1B","nmmR1B","qualR1B","NHR1B","primaryR1B","genomic_aScoreR1","readLenR2","AT_run_R2",
+  float_cols = ["aScoreR1B","nmmR1B","qualR1B","NHR1B","primaryR1B","genomic_aScoreR1","HIR1B"]
+  if len(bam_files) == 2:
+    float_cols += ["readLenR2","AT_run_R2",
                 "GC_run_R2","max_run_R2","aScoreR2A","aScoreR2B","MR2A","MR2B","SR2A","SR2B","nmmR2A","nmmR2B",
-                "qualR2A","qualR2B","NHR2A","NHR2B","juncPosR2A","juncPosR2B","primaryR2A","primaryR2B"]
+                "qualR2A","qualR2B","NHR2A","NHR2B","juncPosR2A","juncPosR2B","primaryR2A","primaryR2B",  "HIR2A", "HIR2B"]
+
   for c in float_cols:
     final_df[c] = final_df[c].astype("Int32")
-  final_df.to_csv("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/test/test_CI.tsv",sep="\t",index=False)
+  print("started modify", time.time() - t0)
+#  for c in final_df.columns:
+#    str_dtype = final_df[c].dtype 
+#    if str(str_dtype)[0] == "i":
+#      final_df[c] = final_df[c].astype("I" + str_dtype[1:])
 
-  print(datetime.timedelta(seconds=time.time() - t0))
+  final_df = modify_refnames(final_df, assembly) 
+
+  print("ended modify", time.time() - t0)
+  final_df["max_id_priority"] = final_df["id"].map(final_df.groupby("id")["HIR1A"].max())
+
+  for c in final_df.columns:
+    if str(final_df[c].dtype)[0] == "I":
+      final_df[c] = final_df[c].astype("float32")
+
+#  final_df.to_parquet(args.outpath + "class_input_final.pq")
+
+  final_df[final_df["HIR1A"] == final_df["max_id_priority"]].to_parquet(args.outpath + "class_input.pq")
+  final_df[final_df["HIR1A"] != final_df["max_id_priority"]].to_parquet(args.outpath + "class_input_secondary.pq")
+
+#  final_df[final_df["HIR1A"] == final_df["max_id_priority"]].to_hdf(args.outpath + "class_input.h5", key="class_input")
+#  final_df[final_df["HIR1A"] != final_df["max_id_priority"]].to_hdf(args.outpath + "class_input_secondary.h5", key="class_input_secondary")
+
+  final_df[final_df["HIR1A"] == final_df["max_id_priority"]].to_csv(args.outpath + "class_input.tsv",sep="\t",index=False)
+  final_df[final_df["HIR1A"] != final_df["max_id_priority"]].to_csv(args.outpath + "class_input_secondary.tsv",sep="\t",index=False)
+#  final_df["juncPosR1A"] = final_df["juncPosR1A"].astype("Int32")
+#  final_df["juncPosR1B"] = final_df["juncPosR1B"].astype("Int32") 
+
+  print("total time",datetime.timedelta(seconds=time.time() - t0))
 main()
