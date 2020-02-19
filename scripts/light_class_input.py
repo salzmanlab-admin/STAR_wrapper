@@ -17,7 +17,7 @@ from light_utils import *
 
 def get_args():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--fastqs', nargs="+",required=True, help='fastqs to parse (either one or two for paired end)')
+  parser.add_argument('--bams', nargs="+",required=True, help='bams to parse (either one or two for paired end)')
   parser.add_argument("--outpath",help="folder to write output to")
   parser.add_argument("--assembly",choices = ["hg38","Mmur"], help="which assembly to use to modify class input")
   args = parser.parse_args()
@@ -130,7 +130,7 @@ def main():
   t0 = time.time()
   args = get_args()
 
-  bam_files = args.fastqs
+  bam_files = args.bams
   print("bam_files",bam_files)
 
   wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
