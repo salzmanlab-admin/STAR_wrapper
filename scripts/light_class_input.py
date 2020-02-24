@@ -232,8 +232,8 @@ def main():
                 "GC_run_R2","max_run_R2","aScoreR2A","aScoreR2B","MR2A","MR2B","SR2A","SR2B","nmmR2A","nmmR2B",
                 "qualR2A","qualR2B","NHR2A","NHR2B","juncPosR2A","juncPosR2B","primaryR2A","primaryR2B",  "HIR2A", "HIR2B"]
 
-  for c in float_cols:
-    final_df[c] = final_df[c].astype("Int32")
+#  for c in float_cols:
+#    final_df[c] = final_df[c].astype("Int32")
   print("started modify", time.time() - t0)
 #  for c in final_df.columns:
 #    str_dtype = final_df[c].dtype 
@@ -245,9 +245,9 @@ def main():
   print("ended modify", time.time() - t0)
   final_df["max_id_priority"] = final_df["id"].map(final_df.groupby("id")["HIR1A"].max())
 
-  for c in final_df.columns:
-    if str(final_df[c].dtype)[0] == "I":
-      final_df[c] = final_df[c].astype("float32")
+#  for c in final_df.columns:
+#    if str(final_df[c].dtype)[0] == "I":
+#      final_df[c] = final_df[c].astype("float32")
 
 #  final_df.to_parquet(args.outpath + "class_input_final.pq")
 
