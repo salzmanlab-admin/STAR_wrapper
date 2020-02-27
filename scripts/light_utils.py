@@ -133,7 +133,7 @@ def modify_refnames(CI, assembly):
   for c in CI_new.columns:
     if str(CI_new[c].dtype)[0] == "i":
       CI_new[c] = CI_new[c].astype("I" + str(CI_new[c].dtype)[1:])
-  pickle.dump(CI_new,open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/test/CI_new.pkl", "wb"))
+#  pickle.dump(CI_new,open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/test/CI_new.pkl", "wb"))
   CI_new.loc[ind] = CI_new.loc[ind].rename(columns=name_swap)
   ind = CI_new[(CI_new["fileTypeR1"] == "Aligned") & (CI_new["gene_strandR1A_new"] == "+")].index
   

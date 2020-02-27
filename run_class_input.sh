@@ -1,15 +1,14 @@
 #!/bin/bash
 #
-#SBATCH --job-name=class_input_P9_B001493_B007957_S369
-#SBATCH --output=/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P9_B001493_B007957_S369/log_files/class_input_P9_B001493_B007957_S369.%j.out
-#SBATCH --error=/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P9_B001493_B007957_S369/log_files/class_input_P9_B001493_B007957_S369.%j.err
-#SBATCH --time=24:00:00
-#SBATCH --account=horence
-#SBATCH --partition=nih_s10
+#SBATCH --job-name=class_input_180819_11
+#SBATCH --output=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/Slide_Puck_180819_11_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/180819_11/log_files/class_input_180819_11.%j.out
+#SBATCH --error=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/Slide_Puck_180819_11_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/180819_11/log_files/class_input_180819_11.%j.err
+#SBATCH --time=48:00:00
+#SBATCH -p horence,owners
 #SBATCH --nodes=1
-#SBATCH --mem=60Gb
-#SBATCH --dependency=afterok:14081557:14081558:14081559
+#SBATCH --mem=250Gb
+#SBATCH --dependency=afterok:62091598:62091600:62091602
 #SBATCH --kill-on-invalid-dep=yes
 date
-python3 scripts/create_class_input.py -i /oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P9_B001493_B007957_S369/ -a Mmur_3.0 -g /oak/stanford/groups/horence/Roozbeh/single_cell_project/Lemur_genome/Kransow_reference/ref_Mmur_3.0.gtf 
+python3 scripts/light_class_input.py --outpath /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/Slide_Puck_180819_11_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/180819_11/ --assembly hg38 --bams /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/Slide_Puck_180819_11_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/180819_11/2Aligned.out.bam 
 date
