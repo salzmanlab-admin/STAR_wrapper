@@ -1,2 +1,0 @@
-Antoine_Heart_fastq/MLCA_ANTOINE_HEART_S2_L001
-Antoine_Heart_fastq/MLCA_ANTOINE_HEART_S2_L002
