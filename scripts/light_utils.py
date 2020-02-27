@@ -29,9 +29,9 @@ def modify_refnames(CI, assembly):
   # CI_new["read_strandR1B_orig"] = CI_new["read_strandR1B"]
   CI_new["gene_strandR1A"] = CI_new["refName_ABR1"].str.split("|").str[0].str.split(":").str[-1]
   CI_new["gene_strandR1B"] = CI_new["refName_ABR1"].str.split("|").str[1].str.split(":").str[-1]
-  CI_new["numgeneR1A"] = CI_new["geneR1A"].str.split(",").str.len().astype("Int32") # the number of overlapping genes on the R1A side
+  CI_new["numgeneR1A"] = CI_new["geneR1A"].str.split(",").str.len()#.astype("Int32") # the number of overlapping genes on the R1A side
   CI_new[["numgeneR1A"]] = CI_new[["numgeneR1A"]].fillna(0)
-  CI_new["numgeneR1B"] = CI_new["geneR1B"].str.split(",").str.len().astype("Int32") # the number of overlapping genes on the R1B side
+  CI_new["numgeneR1B"] = CI_new["geneR1B"].str.split(",").str.len()#.astype("Int32") # the number of overlapping genes on the R1B side
   CI_new[["numgeneR1B"]] = CI_new[["numgeneR1B"]].fillna(0)
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
   
@@ -40,7 +40,7 @@ def modify_refnames(CI, assembly):
     for suff in ["A","B"]:
       ind = CI_new[((CI_new["numgeneR1" + suff] > 2) & (CI_new["geneR1" + suff].str.contains(weird_gene,na=False))) | ((CI_new["numgeneR1" + suff] > 1) & ~(CI_new["gene_strandR1" + suff] == "?") & (CI_new["geneR1" + suff].str.contains(weird_gene,na=False)))].index
       CI_new.loc[ind,"geneR1" + suff] = CI_new.loc[ind,"geneR1" + suff].str.replace("{}[^,]*[,]".format(weird_gene),"",regex=True).str.replace(",{}.*".format(weird_gene),"")
-      CI_new.loc[ind,"numgeneR1" + suff] = CI_new.loc[ind,"geneR1" + suff].str.split(",").str.len().astype("Int32")
+      CI_new.loc[ind,"numgeneR1" + suff] = CI_new.loc[ind,"geneR1" + suff].str.split(",").str.len()#.astype("Int32")
   CI_new["shared_gene"] = [",".join([x for x in a.split(",") if x in b.split(",")]) for a,b in zip(CI_new["geneR1A"],CI_new["geneR1B"])]
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
   
@@ -130,10 +130,17 @@ def modify_refnames(CI, assembly):
       name_swap[c.replace("R1A","R1B")] = c
   
 #  CI_new = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/test/CI_new.pkl","rb"))
+<<<<<<< HEAD
   for c in CI_new.columns:
     if str(CI_new[c].dtype)[0] == "i":
       CI_new[c] = CI_new[c].astype("I" + str(CI_new[c].dtype)[1:])
 #  pickle.dump(CI_new,open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/test/CI_new.pkl", "wb"))
+=======
+#  for c in CI_new.columns:
+#    if str(CI_new[c].dtype)[0] == "i":
+#      CI_new[c] = CI_new[c].astype("I" + str(CI_new[c].dtype)[1:])
+  pickle.dump(CI_new,open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/test/CI_new.pkl", "wb"))
+>>>>>>> 5168ee1085da5596f43743bd7ca0589a1c10a0f2
   CI_new.loc[ind] = CI_new.loc[ind].rename(columns=name_swap)
   ind = CI_new[(CI_new["fileTypeR1"] == "Aligned") & (CI_new["gene_strandR1A_new"] == "+")].index
   
