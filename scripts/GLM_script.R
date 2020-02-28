@@ -208,11 +208,22 @@ class_input[, cur_weight := NULL]
 class_input[, train_class := NULL]
 ####### Assign pos and neg training data for GLM training #######
 n.neg = nrow(class_input[genomicAlignmentR1 ==1 & fileTypeR1 == "Aligned"])
-n.pos = nrow(class_input[genomicAlignmentR1 ==0 & fileTypeR1 == "Aligned"])
+print(paste("number of negative reads with genomicAlignmentR1 ==1 & entropyR1<1 is",nrow(class_input[genomicAlignmentR1 ==1 & entropyR1<1 & fileTypeR1 == "Aligned"])))
+print(paste("number of negative reads with genomicAlignmentR1 ==1 & entropyR1<2 is",nrow(class_input[genomicAlignmentR1 ==1 & entropyR1<2 & fileTypeR1 == "Aligned"])))
+print(paste("number of negative reads with genomicAlignmentR1 ==1 & entropyR1<3 is",nrow(class_input[genomicAlignmentR1 ==1 & entropyR1<3 & fileTypeR1 == "Aligned"])))
+print(paste("number of negative reads with genomicAlignmentR1 ==1 & entropyR1<4 is",nrow(class_input[genomicAlignmentR1 ==1 & entropyR1<4 & fileTypeR1 == "Aligned"])))
+print(quantile(class_input[genomicAlignmentR1 ==1 & fileTypeR1 == "Aligned"]$entropyR1,probs = 1:40/40 ))
+n.pos = nrow(class_input[genomicAlignmentR1 ==0 & entropyR1>2 & fileTypeR1 == "Aligned"])
+print(paste("number of positive reads with genomicAlignmentR1 ==0 & entropyR1>1 is",nrow(class_input[genomicAlignmentR1 ==0 & entropyR1>1 & fileTypeR1 == "Aligned"])))
+print(paste("number of positive reads with genomicAlignmentR1 ==0 & entropyR1>2 is",nrow(class_input[genomicAlignmentR1 ==0 & entropyR1>2 & fileTypeR1 == "Aligned"])))
+print(paste("number of positive reads with genomicAlignmentR1 ==0 & entropyR1>3 is",nrow(class_input[genomicAlignmentR1 ==0 & entropyR1>3 & fileTypeR1 == "Aligned"])))
+print(paste("number of positive reads with genomicAlignmentR1 ==0 & entropyR1>4 is",nrow(class_input[genomicAlignmentR1 ==0 & entropyR1>4 & fileTypeR1 == "Aligned"])))
+print(quantile(class_input[genomicAlignmentR1 ==0 & fileTypeR1 == "Aligned"]$entropyR1,probs = 1:40/40 ))
+
 n.neg = min(n.neg,150000)
 n.pos = min(n.pos,150000)  # number of positive reads that we want to subsample from the list of all reads
-all_neg_reads = which((class_input$genomicAlignmentR1 ==1) & (class_input$fileTypeR1 == "Aligned"))
-all_pos_reads = which((class_input$genomicAlignmentR1 ==0) & (class_input$fileTypeR1 == "Aligned"))
+all_neg_reads = which((class_input$genomicAlignmentR1 ==1)  & (class_input$fileTypeR1 == "Aligned"))
+all_pos_reads = which((class_input$genomicAlignmentR1 ==0) & (class_input$entropyR1>2) & (class_input$fileTypeR1 == "Aligned"))
 class_input[sample(all_neg_reads, n.neg, replace= FALSE), train_class := 0]
 class_input[sample(all_pos_reads, n.pos, replace= FALSE), train_class := 1]
 #################################################################
@@ -241,7 +252,7 @@ if (n.pos >= n.neg){
 if (is.SE == 0){
   regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A + MR1B:SR1B + length_adj_AS_R1 + nmmR2 + length_adj_AS_R2 + NHR2A + entropyR1*entropyR2 + location_compatible + read_strand_compatible")
 } else {
-  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A +  MR1B:SR1B + entropyR1 + length_adj_AS_R1")
+  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A +  MR1B:SR1B + entropyR1 + length_adj_AS_R1 + entropyR1:NHR1A + entropyR1:length_adj_AS_R1")
 }
 
 tic("GLM model")
@@ -326,7 +337,7 @@ x_glmnet = model.matrix(regression_formula, class_input[!is.na(train_class)])
 if (is.SE==0){
   glmnet_model_constrained = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family =c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50, nfolds = 5, upper.limits=c(rep(Inf,3),0,0, rep(Inf,12)), lower.limits=c(-Inf,0,0, rep(-Inf,2),0, rep(-Inf,3),0,0,0,0, rep(-Inf,4)) )
 }else{
-  glmnet_model_constrained = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family =c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50, nfolds = 5, upper.limits=c(rep(Inf,3),0,0, rep(Inf,5)), lower.limits=c(-Inf,0,0, rep(-Inf,2),0,0, rep(-Inf,3)) )
+  glmnet_model_constrained = cv.glmnet(x_glmnet, as.factor(class_input[!is.na(train_class)]$train_class), family =c("binomial"), class_input[!is.na(train_class)]$cur_weight, intercept = FALSE, alpha = 1, nlambda = 50, nfolds = 5, upper.limits=c(rep(Inf,3),0,0, rep(Inf,7)), lower.limits=c(-Inf,0,0, rep(-Inf,2),0,0, rep(-Inf,4),0) )
 }
 print("done with fitting GLMnet constrained")
 toc()
@@ -512,6 +523,8 @@ class_input[, ave_max_run_R1:=mean(max_run_R1), by = refName_newR1]
 
 class_input[, ave_entropyR1:=mean(entropyR1), by = refName_newR1]
 class_input[, ave_entropyR2:=mean(entropyR2), by = refName_newR1]
+class_input[, min_entropyR1:=min(entropyR1), by = refName_newR1]
+class_input[, min_entropyR2:=min(entropyR2), by = refName_newR1]
 
 if (is.SE == 0){
   class_input[, ave_AT_run_R2:=mean(AT_run_R2), by = refName_newR1]
@@ -546,7 +559,7 @@ toc()
 ##################################################
 ##################################################
 
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","geneR1A","geneR1B","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glmnet","p_predicted_glmnet_constrained","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_constrained","p_predicted_glmnet_twostep","p_predicted_glmnet_twostep_constrained","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_constrained","junc_cdf_glmnet_corrected","junc_cdf_glmnet_corrected_constrained","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_entropyR1","ave_entropyR2","ave_max_run_R2","sd_overlap","p_val_median_overlap_R1","chrR1A","chrR1B","posR1A","posR1B","gene_strandR1A","gene_strandR1B","")
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","readClassR1","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","geneR1A","geneR1B","intron_motif","is.annotated","num_uniq_map_reads","num_multi_map_reads","maximum_SJ_overhang","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glmnet","p_predicted_glmnet_constrained","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_constrained","p_predicted_glmnet_twostep","p_predicted_glmnet_twostep_constrained","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_constrained","junc_cdf_glmnet_corrected","junc_cdf_glmnet_corrected_constrained","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_entropyR1","ave_entropyR2","min_entropyR1","min_entropyR2","ave_max_run_R2","sd_overlap","p_val_median_overlap_R1","chrR1A","chrR1B","posR1A","posR1B","gene_strandR1A","gene_strandR1B","")
 junction_prediction = unique(class_input[, colnames(class_input)%in%col_names_to_keep_in_junc_pred_file, with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]
 

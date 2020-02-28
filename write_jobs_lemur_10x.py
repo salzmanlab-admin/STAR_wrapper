@@ -192,14 +192,14 @@ def main():
   scoreDelBase = [-2]
 
 
-# Lemur smart seq sample
+# Lemur 10x sample
   path = args.directory
   print("inpout sample".format(path))
   folder = path.split("/")[0]
   sample = path.split("/")[1]
-  data_path = "/oak/stanford/groups/krasnow/MLCA/data10X/rawdata/Stumpy_10X/"+folder+"/"
+  data_path = "/oak/stanford/groups/krasnow/MLCA/data10X/rawdata/Martine_10X/"+folder+"/"
   assembly = "Mmur_3.0"
-  run_name = "Lemur_Stumpy_10X"
+  run_name = "Lemur_Martine_10X"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
   gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/Lemur_genome/Kransow_reference/ref_Mmur_3.0.gtf"
@@ -211,7 +211,7 @@ def main():
   run_whitelist = False
   run_extract = False
   run_map = False
-  run_star_fusion = True
+  run_star_fusion = False
   run_ann = False
   run_class = False
   run_modify_class = False
@@ -327,12 +327,12 @@ def main():
                     else:
                       GLM_jobid =  ""
         
-                    log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
-                    jobs.append("log_{}.{}".format(name,log_jobid))
-                    job_nums.append(log_jobid)
+#                    log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
+#                    jobs.append("log_{}.{}".format(name,log_jobid))
+#                    job_nums.append(log_jobid)
         
-                    total_jobs += job_nums
-                    total_job_names += jobs 
-                  log(out_path, "", sorted(total_job_names), dep = ":".join(total_jobs))
+#                    total_jobs += job_nums
+#                    total_job_names += jobs 
+#                  log(out_path, "", sorted(total_job_names), dep = ":".join(total_jobs))
 
 main()
