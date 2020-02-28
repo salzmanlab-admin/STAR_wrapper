@@ -243,7 +243,7 @@ def main():
   final_df = modify_refnames(final_df, assembly) 
 
   print("ended modify", time.time() - t0)
-  final_df["max_id_priority"] = final_df["id"].map(final_df.groupby("id")["HIR1A"].max())
+  final_df["max_id_priority"] = final_df["id"].map(final_df.groupby("id")["HIR1A"].min())
 
 #  for c in final_df.columns:
 #    if str(final_df[c].dtype)[0] == "I":
