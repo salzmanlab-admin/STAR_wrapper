@@ -201,9 +201,9 @@ def main():
 
 
 # HLCA smart seq sample
-  data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/datass2/sequencing_runs/180301_A00111_0106_AH3K7NDSXX_Final/fastqs/"
+  data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/datass2/sequencing_runs/180305_A00111_0108_BH3K7JDSXX_Final/fastqs/"
   assembly = "hg38"
-  run_name = "HLCA_smartseq_0106"
+  run_name = "HLCA_smartseq_0108"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [args.sample]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
@@ -211,7 +211,7 @@ def main():
   tenX = False
   HISAT = False
 
-  
+
   run_whitelist = False
   run_extract = False
   run_map = True
@@ -258,10 +258,6 @@ def main():
                   out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
                   if run_name == "DMD_Artandi":
                     out_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/{}/".format(cond_run_name)
-                  #out_path = "output/{}/".format(cond_run_name)
-
-        #   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
-#           gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
         
                   curr_run_whitelist = False
                   curr_run_extract = False
@@ -273,11 +269,6 @@ def main():
               
                     if not os.path.exists("{}{}/log_files".format(out_path, name)):
                       os.makedirs("{}{}/log_files".format(out_path, name))
-              #  if single:
-              #    if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
-              #      curr_run_whitelist = True
-              #    if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
-              #      curr_run_extract = True
 
                     if run_whitelist or curr_run_whitelist:
                       whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)

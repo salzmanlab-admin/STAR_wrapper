@@ -42,31 +42,14 @@ def star_fusion(out_path, name, single, dep = ""):
   return submit_job("run_star_fusion.sh")
 
 
-def modify_class(out_path, name, assembly, dep = ""):
-  """Run the script that modifies the junction ids in the class input file"""
-  command = "Rscript scripts/modify_junction_ids.R {}{}/ {} ".format(out_path, name, assembly)
-  sbatch_file("run_modify_class.sh",out_path, name, "modify_{}".format(name), "24:00:00", "150Gb", command, dep=dep)  # changed it from 50 to 80Gb for exopancreas sample, 24:00:00  150 Gb for Lu
-  return submit_job("run_modify_class.sh")
-
-
-def compare(out_path, name, single, dep = ""):
-  """Run the script that compares the junctions in the class input file with those in the STAR SJ.out, Chim.out and STAR-Fusion file"""
-  command = "Rscript scripts/compare_class_input_STARchimOut.R {}{}/ ".format(out_path, name)
-  if single:
-    command += " 1 "
-  else:
-    command += " 0 "
-  sbatch_file("run_compare.sh",out_path, name, "compare_{}".format(name), "12:00:00", "200Gb", command, dep=dep)   # for Lu data changed to 200Gb for others 150Gb
-  return submit_job("run_compare.sh")
-
-def GLM(out_path, name, single, dep = ""):
+def GLM(out_path, name, single, assembly, dep = ""):
   """Run the GLM script to compute the statistical scores for junctions in the class input file"""
-  command = "Rscript scripts/GLM_script.R {}{}/ ".format(out_path, name)
+  command = "Rscript scripts/GLM_script_light.R {}{}/ {} ".format(out_path, name, assembly)
   if single:
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "300Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "200Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -94,16 +77,6 @@ def extract(out_path, data_path, name, bc_pattern, r_ends, dep = ""):
   sbatch_file("run_extract.sh", out_path, name,"extract_{}".format(name), "20:00:00", "20Gb", command, dep = dep)
   return submit_job("run_extract.sh")
 
-def ensembl(out_path, name, single, assembly, dep = ""):
-  """Run script to add both ensembl gene ids and gene counts to the class input files"""
-  command = "Rscript scripts/add_ensembl_id.R {}{}/ {} ".format(out_path, name, assembly)
-  if single:
-    command += " 1 "
-  else:
-    command += " 0 " 
-  sbatch_file("run_ensembl.sh", out_path, name,"ensembl_{}".format(name), "12:00:00", "150Gb", command, dep=dep)
-  return submit_job("run_ensembl.sh")
-
 
 def ann_SJ(out_path, name, assembly, gtf_file, single, dep = ""):
   """Run script to add gene names to SJ.out.tab and Chimeric.out.junction"""
@@ -113,15 +86,16 @@ def ann_SJ(out_path, name, assembly, gtf_file, single, dep = ""):
   sbatch_file("run_ann_SJ.sh", out_path, name,"ann_SJ_{}".format(name), "24:00:00", "40Gb", command, dep=dep)
   return submit_job("run_ann_SJ.sh")
 
-def class_input(out_path, name, assembly, gtf_file, tenX, single,include_one_read,dep=""):
+def class_input(out_path, name, assembly, tenX, single,dep=""):
   """Run script to create class input file"""
-  command = "python3 scripts/create_class_input.py -i {}{}/ -a {} -g {} ".format(out_path, name, assembly, gtf_file)
+  command = "python3 scripts/light_class_input.py --outpath {}{}/ --assembly {} --bams ".format(out_path, name, assembly) 
   if single:
-    command += "--single "
+    command += "{}{}/2Aligned.out.bam ".format(out_path,name)
+  else:
+    command += "{}{}/1Aligned.out.bam ".format(out_path,name)
+    command += "{}{}/2Aligned.out.bam ".format(out_path,name)
   if tenX:
-    command += "--tenX "
-  if include_one_read: 
-    command += "--include_one_read "
+    command += "--UMI_bar "
   sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "250Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
   return submit_job("run_class_input.sh")
 
@@ -199,11 +173,6 @@ def HISAT_map(out_path, data_path, name, r_ends, assembly, single, tenX, dep = "
   sbatch_file("run_HISAT_map.sh", out_path, name,"HISAT_map_{}".format(name), "12:00:00", "60Gb", command, dep = dep)
   return submit_job("run_HISAT_map.sh")
 
-def log(out_path, name, jobs, dep = ""):
-  """Run job to concatenate all individual job outputs for the sample into one file"""
-  command = "python3 scripts/create_log.py -i {}{}/ -j {}".format(out_path,name, " ".join(jobs))
-  sbatch_file("run_log.sh", out_path, name,"log_{}".format(name), "5:00", "500", command, dep = dep,dep_type = "afterany")
-  return submit_job("run_log.sh")
 
 def submit_job(file_name):
   """Submit sbatch job to cluster"""
@@ -258,12 +227,12 @@ def main():
 # Tabula Sapiens pilot (10X)
   data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_3/"
   assembly = "hg38"
-  run_name = "TS_pilot_10X_withinbam"
-  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_muscle_3_S21_L001","TSP1_muscle_3_S21_L002","TSP1_muscle_3_S21_L003","TSP1_muscle_3_S21_L004"]
+  run_name = "TS_pilot_10X_test"
+  r_ends = ["_R2_001.fastq.gz", "asd"]
+  names = ["TSP1_muscle_3_S21_L003"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
-  tenX = True
+  tenX = False
   HISAT = False
   bc_pattern = "C"*16 + "N"*10
 
@@ -300,7 +269,18 @@ def main():
 #  single = False
 #  HISAT = False
 #  tenX = False
- 
+
+#V3 chemistry
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_nextgem_fastqs/"
+  assembly = "hg38"
+  run_name = "V3_chemistry_10X"
+  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+  names = ["5k_pbmc_v3_nextgem_S1_L001"]
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+  single = True
+  tenX = False
+  HISAT = False
+
 # SC benchmarking data
 #  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/cell_lines/"
 #  assembly = "hg38"
@@ -348,11 +328,11 @@ def main():
 #HISAT sim data mismatch
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
 #  assembly = "hg38"
-#  run_name = "HISAT_sim_data_SE"
+#  run_name = "HISAT_sim_data"
 #  r_ends = ["_1.fq", "_2.fq"]
 #  names = ["reads_mismatch_20M"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
+#  single = False
 #  tenX = False
 #  HISAT = False
 
@@ -381,11 +361,11 @@ def main():
 #HISAT sim data perfect
 #  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_perfect/"
 #  assembly = "hg38"
-#  run_name = "HISAT_sim_data_SE"
+#  run_name = "HISAT_sim_data"
 #  r_ends = ["_1.fq", "_2.fq"]
 #  names = ["reads_perfect_20M"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
+#  single = False
 #  tenX = False
 #  HISAT = False
 
@@ -393,39 +373,24 @@ def main():
 #Engstrom
 #  data_path = "/scratch/PI/horence/Roozbeh/Engstrom/data/"
 #  assembly = "hg38"
-#  run_name = "Engstrom_SE"
+#  run_name = "Engstrom"
 #  r_ends = ["_R1.fq.gz", "_R2.fq.gz"]
 #  names = ["Engstrom_sim1_trimmed","Engstrom_sim2_trimmed"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
+#  single = False
 #  tenX = False
 #  HISAT = False
 
-
-  # path that contains fastqs
-#  data_path = ""
-
-  # assembly and gtf file to use for alignment
-#  assembly = "mm10"
-
-  # unique endings for the file names of read one (location 0) and read 2 (location 1)
-#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-
-  # unique identifiers for each fastq; file location for read 1 should be <data_path><name><r_ends[0]>
-#  names = ["SRR65462{}".format(i) for i in range(73,85)]
   run_whitelist = False
   run_extract = False
-  run_map = False
+  run_map = True
   run_HISAT_map = False
   run_sam_to_bam = False
   run_star_fusion = False
   run_ann = False
   run_class = False
   run_HISAT_class = False
-  run_modify_class = False
-  run_ensembl = False
-  run_compare = False
-  run_GLM = True
+  run_GLM = False
   
 
   if not single:
@@ -439,8 +404,6 @@ def main():
     run_star_fusion = False
     run_ann = False
     run_class = False
-    run_ensembl = False
-    run_compare = False
 
   if run_HISAT_map:
     run_sam_to_bam = True
@@ -464,10 +427,6 @@ def main():
                   out_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
                   if run_name == "DMD_Artandi":
                     out_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/{}/".format(cond_run_name)
-                  #out_path = "output/{}/".format(cond_run_name)
-
-        #   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
-#           gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
         
                   curr_run_whitelist = False
                   curr_run_extract = False
@@ -479,11 +438,6 @@ def main():
               
                     if not os.path.exists("{}{}/log_files".format(out_path, name)):
                       os.makedirs("{}{}/log_files".format(out_path, name))
-              #  if single:
-              #    if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
-              #      curr_run_whitelist = True
-              #    if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
-              #      curr_run_extract = True
 
                     if run_whitelist or curr_run_whitelist:
                       whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)
@@ -538,47 +492,17 @@ def main():
                       HISAT_class_input_jobid = ""
 
                     if run_class:
-                      class_input_jobid = class_input(out_path, name, assembly, gtf_file, tenX, single, include_one_read,dep=":".join(job_nums))
+                      class_input_jobid = class_input(out_path, name, assembly, tenX, single,dep=":".join(job_nums))
                       jobs.append("class_input_{}.{}".format(name,class_input_jobid))
                       job_nums.append(class_input_jobid)
                     else:
                       class_input_jobid = ""
 
-                    if run_modify_class:
-                      modify_class_jobid = modify_class(out_path, name, assembly, dep=":".join(job_nums))
-                      jobs.append("modify_class_{}.{}".format(name,modify_class_jobid))
-                      job_nums.append(modify_class_jobid)
-                    else:
-                      modify_class_jobid = ""
-
-                 
-                    if run_ensembl:
-                      ensembl_jobid = ensembl(out_path, name, single, assembly, dep=":".join(job_nums))
-                      jobs.append("ensembl_{}.{}".format(name,ensembl_jobid))
-                      job_nums.append(ensembl_jobid)
-                    else:
-                      ensembl_jobid =  ""
-            
-                    if run_compare:
-                     compare_jobid = compare(out_path, name, single, dep=":".join(job_nums))
-                     jobs.append("compare_{}.{}".format(name,compare_jobid))
-                     job_nums.append(compare_jobid)
-                    else:
-                      compare_jobid =  ""
-
                     if run_GLM:
-                     GLM_jobid = GLM(out_path, name, single, dep=":".join(job_nums))
+                     GLM_jobid = GLM(out_path, name, single, assembly, dep=":".join(job_nums))
                      jobs.append("GLM_{}.{}".format(name,GLM_jobid))
                      job_nums.append(GLM_jobid)
                     else:
                       GLM_jobid =  ""
-        
-      #              log_jobid = log(out_path, name, jobs, dep = ":".join(job_nums))
-      #              jobs.append("log_{}.{}".format(name,log_jobid))
-      #              job_nums.append(log_jobid)
-      #  
-       #             total_jobs += job_nums
-       #             total_job_names += jobs 
-#                  log(out_path, "", sorted(total_job_names), dep = ":".join(total_jobs))
 
 main()
