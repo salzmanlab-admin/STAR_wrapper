@@ -15,6 +15,13 @@ import sys
 import annotator
 from light_utils import *
 
+def max_base(seq):
+  base_counts = {"A" : [], "T" : [], "G" : [], "C" : []}
+  for i in range(len(seq) - 9):
+    for b in base_counts.keys():
+      base_counts[b].append(seq[i:i + 10].count(b))
+  return max(base_counts["A"]),max(base_counts["T"]),max(base_counts["G"]),max(base_counts["C"])
+
 def get_args():
   parser = argparse.ArgumentParser()
   parser.add_argument('--bams', nargs="+",required=True, help='bams to parse (either one or two for paired end)')
@@ -57,7 +64,13 @@ def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, fill_char
   CI_dict["GC_run_" + suffix].append(max(counts["G"],counts["C"]))
   CI_dict["max_run_" + suffix].append(max(counts.values()))
   CI_dict["seq{}".format(suffix)].append(seq)
-  CI_dict["entropy" + suffix].append(float('%3.f'%(entropy(seq))))
+  CI_dict["entropy" + suffix].append(float('{:.3f}'.format(entropy(seq))))
+  maxA, maxT, maxG, maxC = max_base(seq)
+  CI_dict["maxA_10mer" + suffix].append(maxA)
+  CI_dict["maxT_10mer" + suffix].append(maxT)
+  CI_dict["maxG_10mer" + suffix].append(maxG)
+  CI_dict["maxC_10mer" + suffix].append(maxC)
+
   refName, chrA, geneA, posA, chrB, geneB, posB = readObj_refname(bam_read.flag, bam_read.cigarstring, bam_file.get_reference_name(bam_read.tid), bam_read.reference_start + 1, ann, fill_char)
 #   print("refName",refName)
   CI_dict["refName_AB" + suffix].append(refName)
@@ -103,6 +116,12 @@ def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar
   CI_dict["max_run_" + suffix].append(max(counts.values()))
   CI_dict["seq{}".format(suffix)].append(seq)
   CI_dict["entropy" + suffix].append(float('%3.f'%(entropy(seq))))
+  maxA, maxT, maxG, maxC = max_base(seq)
+  CI_dict["maxA_10mer" + suffix].append(maxA)
+  CI_dict["maxT_10mer" + suffix].append(maxT)
+  CI_dict["maxG_10mer" + suffix].append(maxG)
+  CI_dict["maxC_10mer" + suffix].append(maxC)
+
   refName, chrA, geneA, posA, chrB, geneB, posB  = chim_refName([x.flag for x in reads], [x.cigarstring for x in reads], [x.reference_start + 1 for x in reads], [bam_file.get_reference_name(x.tid) for x in reads], ann)
   CI_dict["refName_AB" + suffix].append(refName)
 #   split_ref = refName.split("|")
@@ -160,7 +179,7 @@ def main():
     suffix = suffixes[i]
     col_bases = ["aScore","M","S","nmm","qual","NH","HI","cigar", "juncPos", "gene", "chr", "read_strand","primary"]
     columns = ["id","readLen" + suffix, "fileType" + suffix,"seq" + suffix,"AT_run_" + suffix,"GC_run_" + suffix,
-               "max_run_" + suffix,"entropy" + suffix,"refName_AB" + suffix, "UMI","barcode"]
+               "max_run_" + suffix,"entropy" + suffix,"refName_AB" + suffix, "UMI","barcode","maxA_10mer" + suffix,"maxT_10mer" + suffix,"maxG_10mer" + suffix,"maxC_10mer" + suffix]
     for c in col_bases:
   #     for r in ["R1"]:
       for l in ["A","B"]:

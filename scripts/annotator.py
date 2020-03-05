@@ -30,12 +30,14 @@ class Annotator:
     self.get_gtf_dict()
 
   def get_gtf_dict(self):
+    print("here")
   
     # load in gtf
     gtf_df = pd.read_csv(self.gtf_file,sep="\t",names=["seqname","source","feature","start","end","score","strand","frame","attribute"],comment="#")
-  
+    print(gtf_df.head()) 
     # make gene id column
     gtf_df["gene_id"] = gtf_df.apply(get_gene_id, axis=1)
+    print(gtf_df.head())
     
     # figure out how long to make each chromosome entry
     seqname_len_dict = {}
@@ -52,22 +54,28 @@ class Annotator:
     for seqname in seqname_len_dict:
         seqname_df = gtf_df[gtf_df["seqname"] == seqname]
         for gene_id in seqname_df["gene_id"].unique():
-            gene_df = seqname_df[seqname_df["gene_id"] == gene_id]
-            if len(gene_df["strand"].unique()) == 1:
-#              print("gene_df['strand'].unique(): {}".format(gene_df['strand'].unique()))
-#              print("gene_df['strand'].unique()[0]: {}".format(gene_df["strand"].unique()[0]))
-              strand = gene_df["strand"].unique()[0]
-            else:
-              strand = self.unknown_strand
-  
-            # assign gene to all ranges it falls within
-            try:
-              start = min(gene_df["start"])
-            except:
-              print(gene_df)
-            end = max(gene_df["end"])
-            for j in range(round_down(start,self.jump),round_down(end + self.jump, self.jump),self.jump):
-                gtf_dict[seqname][j][gene_id] = [start,end, strand] 
+            if gene_id is not None:
+              gene_df = seqname_df[seqname_df["gene_id"] == gene_id]
+              if len(gene_df["strand"].unique()) == 1:
+  #              print("gene_df['strand'].unique(): {}".format(gene_df['strand'].unique()))
+  #              print("gene_df['strand'].unique()[0]: {}".format(gene_df["strand"].unique()[0]))
+                strand = gene_df["strand"].unique()[0]
+              else:
+                strand = self.unknown_strand
+    
+              # assign gene to all ranges it falls within
+              try:
+                start = min(gene_df["start"])
+              except:
+                print("gene_id",gene_id)
+                print("start failed", gene_df)
+              try: 
+                end = max(gene_df["end"])
+              except:
+                print("gene_id",gene_id)
+                print("end failed",gene_df)
+              for j in range(round_down(start,self.jump),round_down(end + self.jump, self.jump),self.jump):
+                  gtf_dict[seqname][j][gene_id] = [start,end, strand] 
     self.gtf_dict = gtf_dict
 
   def get_name_given_locus(self, seqname, position): 
