@@ -326,15 +326,15 @@ def main():
 #  HISAT = False
 
 #HISAT sim data mismatch
-#  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
-#  assembly = "hg38"
-#  run_name = "HISAT_sim_data"
-#  r_ends = ["_1.fq", "_2.fq"]
-#  names = ["reads_mismatch_20M"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
+  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
+  assembly = "hg38"
+  run_name = "HISAT_sim_data"
+  r_ends = ["_1.fq", "_2.fq"]
+  names = ["reads_mismatch_20M"]
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+  single = False
+  tenX = False
+  HISAT = False
 
 #Lu data
 #  data_path = "/oak/stanford/groups/horence/Roozbeh/Lu_data/"
@@ -383,14 +383,14 @@ def main():
 
   run_whitelist = False
   run_extract = False
-  run_map = True
+  run_map = False
   run_HISAT_map = False
   run_sam_to_bam = False
   run_star_fusion = False
   run_ann = False
-  run_class = False
+  run_class = True
   run_HISAT_class = False
-  run_GLM = False
+  run_GLM = True
   
 
   if not single:
