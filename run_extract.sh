@@ -7,8 +7,8 @@
 #SBATCH -p quake,horence,owners
 #SBATCH --nodes=1
 #SBATCH --mem=20Gb
-#SBATCH --dependency=afterok:62091872
+#SBATCH --dependency=afterok:62113224
 #SBATCH --kill-on-invalid-dep=yes
 date
-umi_tools extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin /oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_R1_001.fastq.gz --stdout /oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_extracted_R1_001.fastq.gz --read2-in /oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_R2_001.fastq.gz --read2-out=/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_extracted_R2_001.fastq.gz --filter-cell-barcode --whitelist=/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_whitelist.txt --error-correct-cell 
+umi_tools extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin /oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_R1.fq.gz --stdout /oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_extracted_R1.fq.gz --read2-in /oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_R2.fq.gz --read2-out=/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_extracted_R2.fq.gz --filter-cell-barcode --whitelist=/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_fastqs/5k_pbmc_v3_S1_L001_whitelist.txt --error-correct-cell 
 date

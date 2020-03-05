@@ -202,11 +202,14 @@ def main():
 
   
   #Engstrom
-  data_path = "/scratch/PI/horence/rob/Puck_180819_11/"   # should always end with "/"
+  data_path = "/scratch/PI/horence/rob/Puck_180819_11/"
   assembly = "hg38"
-  run_name = "Slide_Puck_180819_11"
+  run_name = "Slide_Puck_single_cells_180819_11"
   r_ends = ["_R1.fq.gz","_R2.fq.gz"]
-  names = ["180819_11"]
+  names = [
+    "180819_11_50M_subset", # I called this R2!! "180819_11_50M_subset_R2.fq.gz", so keep R1/R2 order above
+  ]
+
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
   tenX = False

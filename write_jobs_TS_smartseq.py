@@ -19,8 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
   #job_file.write("#SBATCH --qos=high_p\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH --account=horence\n")
-  job_file.write("#SBATCH --partition=nih_s10\n")
+  job_file.write("#SBATCH -p quake,horence,owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -201,28 +200,27 @@ def main():
   scoreDelBase = [-2]
 
 
-# Lemur smart seq sample
-  data_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/"+args.sample+"/"
-  assembly = "Mmur"
-  run_name = "Lemur_smartseq"
+# Tabula Sapiens pilot (smartseq)
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/"+args.sample+"/"
+  assembly = "hg38"
+  run_name = "TS_pilot_smartseq"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [args.sample]
-  gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/Lemur_genome/Kransow_reference/ref_Mmur_3.0.gtf"
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = False
   tenX = False
   HISAT = False
 
-  
-  run_whitelist = False
-  run_extract = False
-  run_map = False
+  run_whitelist = True
+  run_extract = True
+  run_map = True
   run_HISAT_map = False
   run_sam_to_bam = False
   run_star_fusion = False
   run_ann = False
-  run_class = True
+  run_class = False
   run_HISAT_class = False
-  run_GLM = True
+  run_GLM = False
   
 
   if not single:
@@ -255,7 +253,8 @@ def main():
                 for sDB in scoreDelBase:
               #cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
                   cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
-                  out_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/salzman_pipeline_output/{}/".format(cond_run_name)
+#                  out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
+                  out_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
                   if run_name == "DMD_Artandi":
                     out_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/{}/".format(cond_run_name)
         
@@ -269,11 +268,6 @@ def main():
               
                     if not os.path.exists("{}{}/log_files".format(out_path, name)):
                       os.makedirs("{}{}/log_files".format(out_path, name))
-              #  if single:
-              #    if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
-              #      curr_run_whitelist = True
-              #    if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
-              #      curr_run_extract = True
 
                     if run_whitelist or curr_run_whitelist:
                       whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)
