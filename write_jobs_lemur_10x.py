@@ -206,7 +206,7 @@ def main():
   folder = path.split("/")[0]
   sample = path.split("/")[1]
   data_path = "/oak/stanford/groups/krasnow/MLCA/data10X/rawdata/Antoine_10X/"+folder+"/"
-  assembly = "Mmur"
+  assembly = "Mmur_3.0"
   run_name = "Lemur_Antoine_10X"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
