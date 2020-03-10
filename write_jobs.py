@@ -224,15 +224,15 @@ def main():
 #  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
 
 
-# Tabula Sapiens pilot (10X)
+# TSP1 10x
   data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_3/"
   assembly = "hg38"
   run_name = "TS_pilot_10X_test"
-  r_ends = ["_R2_001.fastq.gz", "asd"]
+  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = ["TSP1_muscle_3_S21_L003"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
-  tenX = False
+  tenX = True
   HISAT = False
   bc_pattern = "C"*16 + "N"*10
 
@@ -281,21 +281,21 @@ def main():
   tenX = False
   HISAT = False
 
-# SC benchmarking data
-#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/cell_lines/"
-#  assembly = "hg38"
-#  run_name = "SC_gdc_benchmarking"
-#  r_ends = ["_1.fq.gz","_2.fq.gz"]
-#  names = ["G20499.A549"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  HISAT = False
-#  tenX= False
+# SC benchmarking CCLE data
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/cell_lines/"
+  assembly = "hg38"
+  run_name = "SC_benchmarking_CCLE"
+  r_ends = ["_1.fq.gz","_2.fq.gz"]
+  names = ["G20499.A549","G26194.HCC827","G26203.NCI-H838","G26264.NCI-H1975","G28616.NCI-H2228"]
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+  single = False
+  HISAT = False
+  tenX= False
 
 # SC 10X benchmarking data
 #  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/"
 #  assembly = "hg38"
-#  run_name = "SC_benchmarking_10X"
+#  run_name = "SC_benchmarking_10X_5cl"
 #  r_ends = ["_1.fastq","_2.fastq"]
 #  names = ["SRR8606521"]
 #  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
@@ -326,15 +326,15 @@ def main():
 #  HISAT = False
 
 #HISAT sim data mismatch
-  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
-  assembly = "hg38"
-  run_name = "HISAT_sim_data"
-  r_ends = ["_1.fq", "_2.fq"]
-  names = ["reads_mismatch_20M"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
-  tenX = False
-  HISAT = False
+#  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
+#  assembly = "hg38"
+#  run_name = "HISAT_sim_data"
+#  r_ends = ["_1.fq", "_2.fq"]
+#  names = ["reads_mismatch_20M"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
+#  tenX = False
+#  HISAT = False
 
 #Lu data
 #  data_path = "/oak/stanford/groups/horence/Roozbeh/Lu_data/"

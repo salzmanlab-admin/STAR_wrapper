@@ -200,16 +200,14 @@ def main():
   scoreDelBase = [-2]
 
 
-# HLCA 10x sample
+# TSP1 10x sample
   path = args.directory
   print("input sample".format(path))
   folder = path.split("/")[0]
   sample = path.split("/")[1]
-  data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/data10x/sequencing_runs/171205_A00111_0088_BH55NYDMXX/fastqs/"+folder+"/"
-  # 171205_A00111_0088_BH55NYDMXX
-  # 180607_A00111_0155_BHFCWYDMXX
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/"+folder+"/"
   assembly = "hg38"
-  run_name = "HLCA_180607_10X"
+  run_name = "TS_pilot_10X_withinbam"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"

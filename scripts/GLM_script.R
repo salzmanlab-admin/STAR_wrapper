@@ -97,7 +97,7 @@ class_input =  fread(paste(directory, class_input_file, sep = ""), sep = "\t", h
 
 # do deduplication for 10X data
 if(directory %like% "10X"){
-  class_input = class_input[!duplicated(paste(barcode,UMI,refName_newR1))]
+  class_input = class_input[!duplicated(paste(barcode,UMI))]
 }
 
 ###### find the best alignment rank across all aligned reads for each junction ######   

@@ -26,7 +26,7 @@ def get_args():
   parser = argparse.ArgumentParser()
   parser.add_argument('--bams', nargs="+",required=True, help='bams to parse (either one or two for paired end)')
   parser.add_argument("--outpath",help="folder to write output to")
-  parser.add_argument("--assembly",choices = ["hg38","Mmur"], help="which assembly to use to modify class input")
+  parser.add_argument("--assembly",choices = ["hg38","Mmur_3.0"], help="which assembly to use to modify class input")
   parser.add_argument("--UMI_bar", action="store_true",help="extract UMI and barcode")
 
   args = parser.parse_args()
@@ -155,8 +155,6 @@ def main():
   print("bam_files",bam_files)
 
   wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
-#  assembly = "Mmur_3.0"
-  assembly = "hg38"  
   annotator_path = "{}annotators/{}.pkl".format(wrapper_path, assembly)
   ann = pickle.load(open(annotator_path, "rb"))
 #  bam_files = ["/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/1Aligned.out.bam",

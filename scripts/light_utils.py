@@ -12,7 +12,7 @@ import sys
 import annotator
 
 def modify_refnames(CI, assembly):
-  if "Mmur" in assembly:
+  if "Mmur_3.0" in assembly:
     gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/Mmur3_gene_strand.txt"
   elif "hg38" in assembly:
     gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_gene_strand.txt"
@@ -60,7 +60,7 @@ def modify_refnames(CI, assembly):
   CI_new.loc[ind,"geneR1B_uniq"] = CI_new.loc[ind]["geneR1B"].str.split(",").str[-1]
   for let in ["A","B"]:
   
-    if assembly == "Mmur":
+    if assembly == "Mmur_3.0":
       CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let),"chrR1{}".format(let)], right_on=["gene_name","chr"])
       CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
       CI_new = CI_new.drop(["gene_name","chr"],axis=1)
@@ -75,7 +75,7 @@ def modify_refnames(CI, assembly):
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:28601:21715_GTTTCTACAAGCGAGT_TAGTTCACTG"])
   
   CI_new = CI_new.drop(["gene_strandR1A_new"],axis=1)
-  if assembly == "Mmur":
+  if assembly == "Mmur_3.0":
     CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1A_uniq","chrR1A"], right_on=["gene_name","chr"])
     CI_new = CI_new.rename(columns={"strand" : "gene_strandR1A_new"})
     ind = CI_new[(((CI_new["gene_strandR1A_new"] != CI_new["read_strandR1A"]) & (~CI_new["gene_strandR1A_new"].isna())  & (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"])) | ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) & (CI_new["gene_strandR1B_new"] != CI_new["read_strandR1B"]))) & (CI_new["gene_strandR1B"] == "?") & (CI_new["num_shared_genes"] == 0) & (CI_new["numgeneR1B"] > 1)].index
