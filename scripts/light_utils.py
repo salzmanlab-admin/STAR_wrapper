@@ -7,12 +7,14 @@ import pickle
 import pysam
 import re
 
+pd.options.mode.chained_assignment = None #RB addition to suppress warnings
+
 import sys
 #sys.path.insert(1, '/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/scripts/')
 import annotator
 
 def modify_refnames(CI, assembly):
-  if "Mmur_3.0" in assembly:
+  if "Mmur" in assembly:
     gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/Mmur3_gene_strand.txt"
   elif "hg38" in assembly:
     gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_gene_strand.txt"
@@ -29,9 +31,9 @@ def modify_refnames(CI, assembly):
   # CI_new["read_strandR1B_orig"] = CI_new["read_strandR1B"]
   CI_new["gene_strandR1A"] = CI_new["refName_ABR1"].str.split("|").str[0].str.split(":").str[-1]
   CI_new["gene_strandR1B"] = CI_new["refName_ABR1"].str.split("|").str[1].str.split(":").str[-1]
-  CI_new["numgeneR1A"] = CI_new["geneR1A"].str.split(",").str.len()#.astype("Int32") # the number of overlapping genes on the R1A side
+  CI_new["numgeneR1A"] = CI_new["geneR1A"].str.split(",").str.len().astype("Int32") # the number of overlapping genes on the R1A side
   CI_new[["numgeneR1A"]] = CI_new[["numgeneR1A"]].fillna(0)
-  CI_new["numgeneR1B"] = CI_new["geneR1B"].str.split(",").str.len()#.astype("Int32") # the number of overlapping genes on the R1B side
+  CI_new["numgeneR1B"] = CI_new["geneR1B"].str.split(",").str.len().astype("Int32") # the number of overlapping genes on the R1B side
   CI_new[["numgeneR1B"]] = CI_new[["numgeneR1B"]].fillna(0)
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
   
@@ -40,7 +42,7 @@ def modify_refnames(CI, assembly):
     for suff in ["A","B"]:
       ind = CI_new[((CI_new["numgeneR1" + suff] > 2) & (CI_new["geneR1" + suff].str.contains(weird_gene,na=False))) | ((CI_new["numgeneR1" + suff] > 1) & ~(CI_new["gene_strandR1" + suff] == "?") & (CI_new["geneR1" + suff].str.contains(weird_gene,na=False)))].index
       CI_new.loc[ind,"geneR1" + suff] = CI_new.loc[ind,"geneR1" + suff].str.replace("{}[^,]*[,]".format(weird_gene),"",regex=True).str.replace(",{}.*".format(weird_gene),"")
-      CI_new.loc[ind,"numgeneR1" + suff] = CI_new.loc[ind,"geneR1" + suff].str.split(",").str.len()#.astype("Int32")
+      CI_new.loc[ind,"numgeneR1" + suff] = CI_new.loc[ind,"geneR1" + suff].str.split(",").str.len().astype("Int32")
   CI_new["shared_gene"] = [",".join([x for x in a.split(",") if x in b.split(",")]) for a,b in zip(CI_new["geneR1A"],CI_new["geneR1B"])]
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
   
@@ -60,14 +62,29 @@ def modify_refnames(CI, assembly):
   CI_new.loc[ind,"geneR1B_uniq"] = CI_new.loc[ind]["geneR1B"].str.split(",").str[-1]
   for let in ["A","B"]:
   
-    if assembly == "Mmur_3.0":
+    if assembly == "Mmur":
       CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let),"chrR1{}".format(let)], right_on=["gene_name","chr"])
       CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
       CI_new = CI_new.drop(["gene_name","chr"],axis=1)
     elif assembly == "hg38":
+      sys.stdout.write('\n\n')
+      sys.stdout.write('GENE STRAND INFO\n')
+      sys.stdout.write(str(gene_strand_info.iloc[0])) #RB for debugging
+      sys.stdout.flush()
+
+      sys.stdout.write('\n\n')
+      sys.stdout.write('CI_NEW\n')
+      sys.stdout.write(str(CI_new.iloc[0])) #RB for debugging
+      sys.stdout.flush()
+
       CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let)], right_on=["gene_name"])
       CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
       CI_new = CI_new.drop(["gene_name"],axis=1)
+    elif assembly == "hg38_covid19":
+      CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let)], right_on=["gene_name"])
+      CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
+      CI_new = CI_new.drop(["gene_name"],axis=1)
+
   ind = CI_new[((((CI_new["gene_strandR1A_new"] != CI_new["read_strandR1A"]) & (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"])) | ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) & (~CI_new["gene_strandR1B_new"].isna()) & (CI_new["gene_strandR1B_new"] != CI_new["read_strandR1B"]))) & (CI_new["gene_strandR1A"] == "?") & (CI_new["num_shared_genes"] == 0)) & (CI_new["numgeneR1A"] > 1)].index
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:28601:21715_GTTTCTACAAGCGAGT_TAGTTCACTG"])
   
@@ -75,7 +92,7 @@ def modify_refnames(CI, assembly):
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:28601:21715_GTTTCTACAAGCGAGT_TAGTTCACTG"])
   
   CI_new = CI_new.drop(["gene_strandR1A_new"],axis=1)
-  if assembly == "Mmur_3.0":
+  if assembly == "Mmur":
     CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1A_uniq","chrR1A"], right_on=["gene_name","chr"])
     CI_new = CI_new.rename(columns={"strand" : "gene_strandR1A_new"})
     ind = CI_new[(((CI_new["gene_strandR1A_new"] != CI_new["read_strandR1A"]) & (~CI_new["gene_strandR1A_new"].isna())  & (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"])) | ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) & (CI_new["gene_strandR1B_new"] != CI_new["read_strandR1B"]))) & (CI_new["gene_strandR1B"] == "?") & (CI_new["num_shared_genes"] == 0) & (CI_new["numgeneR1B"] > 1)].index
@@ -130,7 +147,10 @@ def modify_refnames(CI, assembly):
       name_swap[c.replace("R1A","R1B")] = c
   
 #  CI_new = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/test/CI_new.pkl","rb"))
-
+  for c in CI_new.columns:
+    if str(CI_new[c].dtype)[0] == "i":
+      CI_new[c] = CI_new[c].astype("I" + str(CI_new[c].dtype)[1:])
+#  pickle.dump(CI_new,open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/test/CI_new.pkl", "wb"))
   CI_new.loc[ind] = CI_new.loc[ind].rename(columns=name_swap)
   ind = CI_new[(CI_new["fileTypeR1"] == "Aligned") & (CI_new["gene_strandR1A_new"] == "+")].index
   
@@ -166,9 +186,9 @@ def modify_refnames(CI, assembly):
       name_swap[c] = c.replace("R1A","R1B")
       name_swap[c.replace("R1A","R1B")] = c
 
-
-  CI.loc[ind] = CI.loc[ind].rename(columns=name_swap)
-  CI_new = CI
+  CI.loc[ind].rename(columns=name_swap, inplace=True) #RB doing everything but the assignment in place to avoid AttributeError: 'IntegerArray' object has no attribute 'size'
+  #CI.loc[ind] = CI.loc[ind].rename(columns=name_swap) #RB this line is failing for me but not when I do it by hand...
+  CI_new = CI.copy() #RB added the copy to make sure not operating on a view (not sure this is necessary)
 
   CI_new["gene_strandR1A"] = CI_new["refName_newR1"].str.split("|").str[0].str.split(":").str[-1]
   CI_new["gene_strandR1B"] = CI_new["refName_newR1"].str.split("|").str[1].str.split(":").str[-1]

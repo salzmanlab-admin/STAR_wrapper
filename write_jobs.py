@@ -17,15 +17,15 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --output={}{}/log_files/{}.%j.out\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --error={}{}/log_files/{}.%j.err\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --time={}\n".format(time))
-  #job_file.write("#SBATCH --qos=high_p\n")
-#  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p quake,horence,owners\n")
+  job_file.write("#SBATCH -p horence,owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
     job_file.write("#SBATCH --dependency={}:{}\n".format(dep_type,dep))
     job_file.write("#SBATCH --kill-on-invalid-dep=yes\n")
   job_file.write("date\n")
+  job_file.write("ml python/3.6.1\n") #RB load in sherlock managed python
+  job_file.write("ml R/3.6.1\n") #RB load in sherlock managed R
   job_file.write(command + "\n")
   job_file.write("date\n")
   job_file.close()
@@ -49,7 +49,7 @@ def GLM(out_path, name, single, assembly, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "200Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "300Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -129,7 +129,11 @@ def STAR_map(out_path, data_path, name, r_ends, assembly, gzip, cSM, cJOM, aSJMN
   for i in range(l,2):
     command += "/oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.3a/bin/Linux_x86_64/STAR --runThreadN 4 "
     command += "--alignIntronMax 1000000 "
-    command += "--genomeDir /oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.1a/{}_index_2.7.1a ".format(assembly)
+
+    #RB 03/17/2020 using a different STAR index
+    #command += "--genomeDir /oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.1a/{}_index_2.7.1a ".format(assembly)
+    command += "--genomeDir /scratch/PI/horence/rob/data/covid19/grch38_covid19_star_index "
+
     if tenX:
       command += "--readFilesIn {}{}_extracted{} ".format(data_path, name, r_ends[i])
     else:
@@ -200,195 +204,36 @@ def main():
   scoreDelBase = [-2]
   include_one_read = True
 
-  # benchmarking
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/benchmarking/"
-  assembly = "hg38"
-  run_name = "benchmarking"
-  r_ends = ["_2.fastq", "_2.fastq"]
-  names = ["SRR6782109", "SRR6782110", "SRR6782111", "SRR6782112", "SRR8606521"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = True
-  tenX = False
-
   
- # Tabula Muris colon
-#  data_path = "/scratch/PI/horence/JuliaO/single_cell/data/SRA/19.05.31.GSE109774/"
-#  assembly = "mm10"
-#  run_name = "GSE109774_colon"
-#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-#  names = ["SRR65462{}".format(i) for i in range(73,85)]
-#  names = ["SRR65462{}".format(i) for i in range(75,76)]
-#  single = False
-#  tenX = False
-#  HISAT = False
-#  gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
+  #COVID19 datasets
+  data_path = "/scratch/PI/horence/rob/data/covid19/fastqs/" #needs to end with "/"
+  assembly = "hg38_covid19" #the new STAR index I've made
+  run_name = "20200317_covid19"
+  r_ends = ["_2.fastq.gz","_1.fastq.gz"]
+  names = [
+    "SRR11241254",#  "SRR11247078",  "SRR11278165",
+    #"SRR11241255",  "SRR11278090",  "SRR11278166",
+    #"SRR11247075",  "SRR11278091",  "SRR11278167",
+    #"SRR11247076",  "SRR11278092",  "SRR11278168",
+    #"SRR11247077",  "SRR11278164",
+  ]
 
-
-# TSP1 10x
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_3/"
-  assembly = "hg38"
-  run_name = "TS_pilot_10X_test"
-  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_muscle_3_S21_L003"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = True
-  tenX = True
-  HISAT = False
-  bc_pattern = "C"*16 + "N"*10
-
-
-# CML sample
-#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/CML/"
-#  assembly = "hg38"
-#  run_name = "CML_2410"
-#  r_ends = ["_1.fq.gz", "_2.fq.gz"]
-#  names = ["SRR3192410_val"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
-
-#circRNA thirdparty benchmarking
-#  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
-#  assembly = "hg38"
-#  run_name = "circRNA_thirdparty_benchmarking_IntronMax_1000000"
-#  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
-#  names = ["TxDx2016-001-001_S1_L001"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
-
-# STAR_sim
-#  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
-#  assembly = "hg38"
-#  run_name = "sim_101"
-#  r_ends = ["_1.fq.renamed.fq.gz", "_2.fq.renamed.fq.gz"]
-#  names = ["sim1_reads","sim2_reads","sim3_reads","sim4_reads","sim5_reads"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  HISAT = False
-#  tenX = False
-
-#V3 chemistry
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_nextgem_fastqs/"
-  assembly = "hg38"
-  run_name = "V3_chemistry_10X"
-  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["5k_pbmc_v3_nextgem_S1_L001"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+  #RB 03/17/2020 I used the grch38_genes.gtf rather than the grch38_known_genes.gtf for building the grch38_covid genome
+  #RB 03/17/2020 I don't know what the difference is between these files
+  #gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf" #previous value
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_genes.gtf" #new value
   single = True
   tenX = False
   HISAT = False
-
-# SC benchmarking CCLE data
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/cell_lines/"
-  assembly = "hg38"
-  run_name = "SC_benchmarking_CCLE"
-  r_ends = ["_1.fq.gz","_2.fq.gz"]
-  names = ["G20499.A549","G26194.HCC827","G26203.NCI-H838","G26264.NCI-H1975","G28616.NCI-H2228"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
-  HISAT = False
-  tenX= False
-
-# SC 10X benchmarking data
-#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/"
-#  assembly = "hg38"
-#  run_name = "SC_benchmarking_10X_5cl"
-#  r_ends = ["_1.fastq","_2.fastq"]
-#  names = ["SRR8606521"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
-#  HISAT = False
-#  tenX= True
-
-# DNA_Seq
-#  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/"
-#  assembly = "hg38"
-#  run_name = "DNA_Seq"
-#  r_ends = ["_1.fastq", "_2.fastq"]
-#  names = ["SRR027963","SRR078586"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
-#  tenX = False
-#  HISAT = False
-
-#DNA-Seq (1000 Genome)
-#  data_path = "/scratch/PI/horence/Roozbeh/data/DNA_Seq/1000_Genome/"
-#  assembly = "hg38"
-#  run_name = "1000_Genome"
-#  r_ends = ["_1.fastq.gz", "_2.fastq.gz"]
-#  names = ["SRR9134109","SRR9134112","SRR9644810"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = True
-#  tenX = False
-#  HISAT = False
-
-#HISAT sim data mismatch
-#  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_mismatch/"
-#  assembly = "hg38"
-#  run_name = "HISAT_sim_data"
-#  r_ends = ["_1.fq", "_2.fq"]
-#  names = ["reads_mismatch_20M"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
-
-#Lu data
-#  data_path = "/oak/stanford/groups/horence/Roozbeh/Lu_data/"
-#  assembly = "hg38"
-#  run_name = "Lu_data"
-#  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
-#  names = ["31160_ID1232_1-1A_S1_L002","31161_ID1232_2-1B_S2_L002","31162_ID1232_3-2A_S3_L002","31163_ID1232_4-3A_S4_L002","31164_ID1232_5-4A_S5_L002","31165_ID1232_6-5A_S6_L002"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
-
-#DMD data
-#  data_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/data/191122_NS500615_0903_AHTTK2BGXC/"
-#  assembly = "hg38"
-#  run_name = "DMD_Artandi"
-#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-#  names = ["HM3-CCGCGGTT-CTAGCGCT_S2"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
-
-#HISAT sim data perfect
-#  data_path = "/scratch/PI/horence/Roozbeh/data/HISAT_sim_data/reads_perfect/"
-#  assembly = "hg38"
-#  run_name = "HISAT_sim_data"
-#  r_ends = ["_1.fq", "_2.fq"]
-#  names = ["reads_perfect_20M"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
-
-
-#Engstrom
-#  data_path = "/scratch/PI/horence/Roozbeh/Engstrom/data/"
-#  assembly = "hg38"
-#  run_name = "Engstrom"
-#  r_ends = ["_R1.fq.gz", "_R2.fq.gz"]
-#  names = ["Engstrom_sim1_trimmed","Engstrom_sim2_trimmed"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
 
   run_whitelist = False
   run_extract = False
-  run_map = False
+  run_map = False #NOTE just skipping this step for now, debugging downstream
   run_HISAT_map = False
   run_sam_to_bam = False
-  run_star_fusion = False
-  run_ann = False
-  run_class = True
+  run_star_fusion = False #NOTE, maybe change this
+  run_ann = False #NOTE just skipping for now
+  run_class = False #NOTE, already completed, skipping for now
   run_HISAT_class = False
   run_GLM = True
   
@@ -423,10 +268,10 @@ def main():
                 for sDB in scoreDelBase:
               #cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
                   cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
-#                  out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
-                  out_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
-                  if run_name == "DMD_Artandi":
-                    out_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/{}/".format(cond_run_name)
+                  out_path = "output/{}/".format(cond_run_name)
+
+        #   gtf_file = "/scratch/PI/horence/JuliaO/single_cell/STAR_output/{}_files/{}.gtf".format(assembly, assembly)
+#           gtf_file = "/share/PI/horence/circularRNApipeline_Cluster/index/{}_genes.gtf".format(assembly)
         
                   curr_run_whitelist = False
                   curr_run_extract = False
@@ -438,6 +283,11 @@ def main():
               
                     if not os.path.exists("{}{}/log_files".format(out_path, name)):
                       os.makedirs("{}{}/log_files".format(out_path, name))
+              #  if single:
+              #    if not os.path.exists("{}{}_whitelist.txt ".format(data_path, name)):
+              #      curr_run_whitelist = True
+              #    if not os.path.exists("{}{}_extracted{} ".format(data_path, name, r_ends[1])):
+              #      curr_run_extract = True
 
                     if run_whitelist or curr_run_whitelist:
                       whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)

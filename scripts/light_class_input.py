@@ -15,18 +15,13 @@ import sys
 import annotator
 from light_utils import *
 
-def max_base(seq):
-  base_counts = {"A" : [], "T" : [], "G" : [], "C" : []}
-  for i in range(len(seq) - 9):
-    for b in base_counts.keys():
-      base_counts[b].append(seq[i:i + 10].count(b))
-  return max(base_counts["A"]),max(base_counts["T"]),max(base_counts["G"]),max(base_counts["C"])
+pd.options.mode.chained_assignment = None #RB addition to suppress warnings
 
 def get_args():
   parser = argparse.ArgumentParser()
   parser.add_argument('--bams', nargs="+",required=True, help='bams to parse (either one or two for paired end)')
   parser.add_argument("--outpath",help="folder to write output to")
-  parser.add_argument("--assembly",choices = ["hg38","Mmur_3.0"], help="which assembly to use to modify class input")
+  parser.add_argument("--assembly",choices = ["hg38","Mmur","hg38_covid19"], help="which assembly to use to modify class input")
   parser.add_argument("--UMI_bar", action="store_true",help="extract UMI and barcode")
 
   args = parser.parse_args()
@@ -64,13 +59,7 @@ def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, fill_char
   CI_dict["GC_run_" + suffix].append(max(counts["G"],counts["C"]))
   CI_dict["max_run_" + suffix].append(max(counts.values()))
   CI_dict["seq{}".format(suffix)].append(seq)
-  CI_dict["entropy" + suffix].append(float('{:.3f}'.format(entropy(seq))))
-  maxA, maxT, maxG, maxC = max_base(seq)
-  CI_dict["maxA_10mer" + suffix].append(maxA)
-  CI_dict["maxT_10mer" + suffix].append(maxT)
-  CI_dict["maxG_10mer" + suffix].append(maxG)
-  CI_dict["maxC_10mer" + suffix].append(maxC)
-
+  CI_dict["entropy" + suffix].append(float('%3.f'%(entropy(seq))))
   refName, chrA, geneA, posA, chrB, geneB, posB = readObj_refname(bam_read.flag, bam_read.cigarstring, bam_file.get_reference_name(bam_read.tid), bam_read.reference_start + 1, ann, fill_char)
 #   print("refName",refName)
   CI_dict["refName_AB" + suffix].append(refName)
@@ -116,12 +105,6 @@ def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar
   CI_dict["max_run_" + suffix].append(max(counts.values()))
   CI_dict["seq{}".format(suffix)].append(seq)
   CI_dict["entropy" + suffix].append(float('%3.f'%(entropy(seq))))
-  maxA, maxT, maxG, maxC = max_base(seq)
-  CI_dict["maxA_10mer" + suffix].append(maxA)
-  CI_dict["maxT_10mer" + suffix].append(maxT)
-  CI_dict["maxG_10mer" + suffix].append(maxG)
-  CI_dict["maxC_10mer" + suffix].append(maxC)
-
   refName, chrA, geneA, posA, chrB, geneB, posB  = chim_refName([x.flag for x in reads], [x.cigarstring for x in reads], [x.reference_start + 1 for x in reads], [bam_file.get_reference_name(x.tid) for x in reads], ann)
   CI_dict["refName_AB" + suffix].append(refName)
 #   split_ref = refName.split("|")
@@ -155,7 +138,8 @@ def main():
   print("bam_files",bam_files)
 
   wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
-  assembly = args.assembly
+#  assembly = "Mmur_3.0"
+  assembly = "hg38"  
   annotator_path = "{}annotators/{}.pkl".format(wrapper_path, assembly)
   ann = pickle.load(open(annotator_path, "rb"))
 #  bam_files = ["/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/1Aligned.out.bam",
@@ -178,7 +162,7 @@ def main():
     suffix = suffixes[i]
     col_bases = ["aScore","M","S","nmm","qual","NH","HI","cigar", "juncPos", "gene", "chr", "read_strand","primary"]
     columns = ["id","readLen" + suffix, "fileType" + suffix,"seq" + suffix,"AT_run_" + suffix,"GC_run_" + suffix,
-               "max_run_" + suffix,"entropy" + suffix,"refName_AB" + suffix, "UMI","barcode","maxA_10mer" + suffix,"maxT_10mer" + suffix,"maxG_10mer" + suffix,"maxC_10mer" + suffix]
+               "max_run_" + suffix,"entropy" + suffix,"refName_AB" + suffix, "UMI","barcode"]
     for c in col_bases:
   #     for r in ["R1"]:
       for l in ["A","B"]:
@@ -250,8 +234,8 @@ def main():
                 "GC_run_R2","max_run_R2","aScoreR2A","aScoreR2B","MR2A","MR2B","SR2A","SR2B","nmmR2A","nmmR2B",
                 "qualR2A","qualR2B","NHR2A","NHR2B","juncPosR2A","juncPosR2B","primaryR2A","primaryR2B",  "HIR2A", "HIR2B"]
 
-#  for c in float_cols:
-#    final_df[c] = final_df[c].astype("Int32")
+  for c in float_cols:
+    final_df[c] = final_df[c].astype("Int32")
   print("started modify", time.time() - t0)
 #  for c in final_df.columns:
 #    str_dtype = final_df[c].dtype 
@@ -261,11 +245,11 @@ def main():
   final_df = modify_refnames(final_df, assembly) 
 
   print("ended modify", time.time() - t0)
-  final_df["max_id_priority"] = final_df["id"].map(final_df.groupby("id")["HIR1A"].min())
+  final_df["max_id_priority"] = final_df["id"].map(final_df.groupby("id")["HIR1A"].max())
 
-#  for c in final_df.columns:
-#    if str(final_df[c].dtype)[0] == "I":
-#      final_df[c] = final_df[c].astype("float32")
+  for c in final_df.columns:
+    if str(final_df[c].dtype)[0] == "I":
+      final_df[c] = final_df[c].astype("float32")
 
 #  final_df.to_parquet(args.outpath + "class_input_final.pq")
 
@@ -281,4 +265,12 @@ def main():
 #  final_df["juncPosR1B"] = final_df["juncPosR1B"].astype("Int32") 
 
   print("total time",datetime.timedelta(seconds=time.time() - t0))
-main()
+
+#RB added for debugging
+if __name__ == '__main__':
+    main()
+
+
+
+
+

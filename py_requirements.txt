@@ -1,0 +1,5 @@
+matplotlib==3.0.2
+numpy==1.16.1 
+pandas==1.0.3
+pyarrow==0.16.0
+pysam==0.15.4

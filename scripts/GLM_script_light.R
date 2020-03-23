@@ -112,7 +112,7 @@ compare_classinput_STARChimOut <- function(directory,is.SE){
   ####### read in files ############
   chimeric1 =  fread(paste(directory,star_chimeric_output_1_file,sep = ""),sep = "\t",header = FALSE)
   star_SJ_output_1 =  fread(paste(directory,star_SJ_output_1_file,sep = ""),sep = "\t",header = FALSE)
-  star_fusion = fread(paste(directory,star_fusion_file,sep = ""),sep = "\t" , header = TRUE)
+  #star_fusion = fread(paste(directory,star_fusion_file,sep = ""),sep = "\t" , header = TRUE) #RB temporary comment out
   #############################
   
   # if the script has been run previously on the class inout file, delete the following columns to avoid duplicate column names
@@ -132,7 +132,7 @@ compare_classinput_STARChimOut <- function(directory,is.SE){
   star_SJ_output_1[,junction := paste(V1,V2,V1,V3,sep = ":")]
   
   # building compatible junction coordinates for fusions called by STAR-Fusion
-  if ( nrow(star_fusion)>0 ) {
+  if ( exists(star_fusion) & nrow(star_fusion)>0 ) { #RB edited to include a check for if star_fusion exists
     star_fusion[,chr1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][1],by = 1:nrow(star_fusion)] 
     star_fusion[,pos1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][2],by = 1:nrow(star_fusion)]
     star_fusion[,strand1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][3],by = 1:nrow(star_fusion)]
@@ -157,7 +157,7 @@ compare_classinput_STARChimOut <- function(directory,is.SE){
   class_input = merge(class_input,star_SJ_output_1[,list(junction,V5,V6,V7,V8,V9)],by.x = "junction_compatible",by.y = "junction",all.x = TRUE,all.y = FALSE )
   
   class_input[fileTypeR1 == "Chimeric", is.STAR_Fusion := 0]
-  if ( nrow(star_fusion)>0 ) {
+  if ( exists(star_fusion) & nrow(star_fusion)>0 ) { #RB edited to include a check for if star_fusion exists
     class_input[fileTypeR1 == "Chimeric" & (junction_compatible %in% star_fusion$junction) ,is.STAR_Fusion := 1]
   }
   
