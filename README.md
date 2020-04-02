@@ -60,22 +60,80 @@ Each sample folder will contain a filed called `class_input_priorityAlign.tsv` a
 
 #### Determining whether a read is included in the class input file
 For single-end reads, a read is included in the class input file if it is Chimeric (contains the `ch` flag in the BAM file) or has an N in its cigar string (N codes for a base being skipped). For paired-end reads, if read1 is Chimeric or has an N in its cigar string, the read will be included in the class input file. Its line in the class input file will also include information about read 2, regardless of whether r2 is Chimeric/has an N in its CIGAR string or not. Note that if read 1 is not Chimeric and doesn't have an N in its CIGAR string, then read 2 won't be included in the class input file **even if read 2 is Chimeric or has an N in its CIGAR string** (this is something we could change).
+
+Each read is included in `class_input.tsv` at most one time. If a read has a genomic read and a junctional read, the junctional read will be included in the class input file (and the fact that a genomic alignment exists will be marked by a zero in the `genomicAlignmentR1` column). However, if there are multiple junctional reads then the read with the lowest value in the `HI` tag will be included in `class_input.tsv`. All other junctional alignments can be found in `class_input_secondary.tsv`.
+
 <!---For single-end reads, a read is included in the class input file if it is in `Chimeric.out.sam` or if it has an N in its CIGAR string in `Aligned.out.sam` (N codes for a base being skipped). Note that if the read is in both `Aligned.out.sam` and its CIGAR string doesn't have an N, and `Chimeric.out.sam`, then the read won't be included in `class_input_priorityAlign.tsv` but will be included in `class_input_priorityChimerc.tsv`. For paired-end reads, if read 1 is in `1Chimeric.out.sam` or if it has an N in its CIGAR string, the read will be included in the class input file (again, if it also appears in `1Aligned.out.sam` without an N then it won't appear in `class_input_priorityAlign.tsv`). Its line in the class input file will also include information about read 2, regardless of whether r2 is Chimeric/has an N in its CIGAR string or not. Note that if read 1 is not in `1Chimeric.out.sam` and doesn't have an N in its CIGAR string in `1Aligned.out.sam`, the read won't be included in the class input file **even if read 2 is Chimeric or has an N in its CIGAR string** (this is something we could change). ---> 
 
 #### Fields of the class input file
 
+The class input file is saved in both parquet format and tsv format (`class_input.tsv` and `class_input.pq`; same for `class_input_secondary`). `class_input.tsv` is modified by the GLM script to include the SICILIAN score, to deduplicate UMIs (by UMI + barcode + junction name), and to add a few columns such as `overlap_R1`. However, `class_input.pq` is not modified by the GLM.
+
 A note on the naming convention for the fields of the class input file: `id` and `class` are the only fields that are necessarily the same for read 1 and read 2. All other fields have `R1` in them if they pertain to read 1, and `R2` in them if they pertain to read 2. For single-end reads, the information for the one read will always show up in the `R1` columns, even if it's actually from the fastq file labeled 2. Then within read 1 and read 2 the columns are split into `A` and `B`. For a read that aligns to two locations (either in the Chimeric file, or with an N in the CIGAR string in the Aligned file), the first portion of the read is referred to as `A`  and the second is referred to as `B`. Here "first portion" means that if you saw the read in the raw fastq file, the first bases in the read would align to the `A` location, and the last bases would align to the `B` location.
+
+Categories of the form <field>R2 rather than <field>R1 follow the same definition but for the second read unless otherwise indicated.
 
 If a read is from the Aligned file rather than the Chimeric file, the following columns will have the value `NA`: `flagB`, `posB`, `aScoreB`, `qualB`, `seqB`. If a read doesn't contain a junction, the following columns will **also** have the value `NA`: `strandR2B`, `chrR2B`, `geneR2B`, `readClassR2`, `juncPosR2A`, `juncPosR2B`, `cigarR2B`, `MR2B`, `SR2B`. 
 
-The class input file contains the following fields in the following order:
+The class input file contains the following fields (not necessarily in this order):
 
-Note: :whale: indicates that it is safe to use without modification in a model between aligned and chimeric. :octopus: means it is safe to use without modification within chimeric.  
+<!---Note: :whale: indicates that it is safe to use without modification in a model between aligned and chimeric. :octopus: means it is safe to use without modification within chimeric. ---> 
 
 **Refnames for negative-strand genes will have the acceptor first and the donor second**
+* `id`: Read name. Example: `SRR6546273.367739`
+* `readLenR1`: length of read 1 (including any softclipped portions)
+* `fileTypeR1`: equals `Aligned` if the read came from the `1Aligned.out.sam` file, `Chimeric` if it came from the `1Chimeric.out.sam` file.
+* `seqR1`: The read sequence
+* `AT_run_R1`: max(the length of the longest run of A's, the length of the longest run of T's). The A's and T's are combined because we could have the sequence or the reverse complement. This is calculated from `seqR1`.
+* `GC_run_R1`: max(the length of the longest run of G's, the length of the longest run of C's). This is calculated from `seqR1`
+* `max_run_R1`: max(`AT_run_R1`, `GC_run_R1`)
+* `entropyR1`: The entropy of the read calculated based on 5-mers. Let $k_1, \ldots, k_n$ be all the 5-mers in the read sequence (for example, for ACTCCGAGTCCTCCG the 5-mers would be **ACTCC**GAGTCCTCCG, A**CTCCG**AGTCCTCCG, AC**TCCGA**GTCCTCCG, ACT**CCGAG**TCCTCCG, ACTC**CGAGT**CCTCCG, ACTCC**GAGTC**CTCCG, ACTCCG**AGTCC**TCCG, ACTCCGA**GTCCT**CCG, ACTCCGAG**TCCTC**CG, ACTCCGAGT**CCTCC**G, and ACTCCGAGTC**CTCCG**). Then let $N(c)$ equal the number of times the kmer c appears in $k_1, \ldots, k_n$ (for example, CTCCG appears twice in ACTCCGAGTCCTCCG). Then the entropy is defined as $\sum_C -\frac{N(c)}{n}\log\left(\frac{N(c)}{n}\right)$ (here C is the set of unique 5-mers in the read)
+* `refName_ABR1`: The refName for R1 will always be of the form `<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<readClassR1>`
+* `UMI`: for 10X data this is the UMI found through UMI-tools, otherwise this is NA
+* `barcode`: for 10X data this is the barcode found through UMI-tools, otherwise this is NA
+* `maxA_10merR1`: The maximum number of A's in a 10-base stretch in the read
+* `maxT_10merR1`: The maximum number of T's in a 10-base stretch in the read
+* `maxG_10merR1`: The maximum number of G's in a 10-base stretch in the read
+* `maxC_10merR1`: The maximum number of C's in a 10-base stretch in the read
+* `aScoreR1A`: alignment score from the SAM file after the `AS`.
+* `aScoreR1B`: alignment score from the SAM file after the `AS`.
+* `MR1A`: The number of M's in `cigarR1A`
+* `MR1B`: The number of M's in `cigarR1B`
+* `SR1A`: The number of S's in the portion of the cigar string corresponding to the first half of the splice
+* `SR1B`: The number of S's in the portion of the cigar string corresponding to the second half of the splice
+* `nmmR1A`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+* `nmmR1B`: The number of mismatches in the read; calculated by finding the number of times A,C,T or G appears in the MD flag
+* `qualR1A`: Mapping quality of the first portion of read 1. From the manual: "The mapping quality MAPQ (column 5) is 255 for uniquely mapping reads, and int(-10\*log10(1-1/Nmap)) for multi-mapping reads" 
+* `qualR1B`: Mapping quality for the second portion of read 1.
+* `NHR1A`: Number of reported alignments that contains the query in the current record
+* `NHR1B`: Number of reported alignments that contains the query in the current record
+* `HIR1A`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+* `HIR1B`: Query hit index, indicating the alignment record is the i-th one stored in SAM
+* `cigarR1A`: The cigar string for portion A (for Chimeric, this is without the softclipped portion that corresponds to B; for Aligned, this is without the long N sequence marking the intron and everything after)
+* `cigarR2B`: The cigar string for portion B
+* `juncPosR1A`: The last position part A of read 1 aligns to before the junction. If `fileTypeR1 = Chimeric`: if `flagR1A` is 0 or 256, this is equal to `posR1A + ` the sum of the M's, N's, and D's in the CIGAR string. If `flagR1A` is 16 or 272 this is equal to `posR1A`. If `fileTypeR1 = Aligned`, then this equals `posR1A` plus the sum of the M's, N's, and D's before the largest N value in the CIGAR string. 
+* `juncPosR1B`: The first position of part B of read 1 that aligns after the junction. If `fileTypeR1 = Chimeric`: if `flagR1B` is 0 or 256, this is equal to `posR1B`. If `flagR1B` is 16 or 272 this is equal to `posR1B + ` the sum of the M's, N's, and D's in the CIGAR string. If `fileTypeR1 = Aligned`, then this equals `posR1B`. 
+* `geneR1A`: Gene that read 1 part A was aligned to. If no gene was annotated in that area, it's marked as "unknown". If multiple genes are annotated in this area, it's marked with all of those gene names concatenated with commas in between Example: `Ubb,Gm1821`. Also see the note on the annotation. 
+* `geneR1B`: Gene that read 1 part B was aligned to.
+* `chrR1A`: Chromosome that read 1 part A was aligned to
+* `chrR1B`: Chromosome that read 1 part B was aligned to
+* `read_strand_compatible`: A 1 here indicates that the read strands are compatible, 0 indicates that they're not. This is 1 if `read_strandR1A` doesn't equal `read_strandR2A` and 0 otherwise. Note that this is **only** based on the "A" part of the read; cross-reference with `strand_crossR1` and `strand_crossR2` to verify that all read strands are in accordance. This is not present for single-end reads.
+* `location_compatible`: A 1 here indicates that the locations are compatible, a 0 indicates that they're not. If `readClassR1` is `fus`, this is 1. If `readClassR1` is `sc`, this is 0. If `readClassR1` is `lin` and `read_strandR1` is +, then this is 1 if `posR1A` < `posR2A` and 0 otherwise. If `readClassR1` is `lin` and `read_strandR1` is -, then this is 1 if `posR1A` > `posR2A` and 0 otherwise. if `readClassR1` is `rev`, then this is 1 if `posR2A` is between `posR1A` and `posR1B` and 0 otherwise. Note that this is **only** based on the "A" part of read 2 for right now. This is not present for single-end reads.
+* `genomicAlignmentR1`: Here 1 indicates that there is a genomic alignment for read 1, and 0 indicates that there is not.
+* `primaryR1A`: 
+* `primaryR1B`:
+* `genomic_aScoreR1`: the maximum alignment score of all genomic alignments of that read (NA if `genomicAlignmentR1` == 0)
+* `spliceDist`: The absolute difference between `juncPosR1A` and `juncPosR1B`
+* `refName_newR1`: the consistent disambiguated junction id obtained by `run_modify_class` step. All subsequent analyses on junctions are based on the ids in this column. 
+* `gene_strandR1A`: The strand that the gene at `juncPosR1A` is on (`+` or `-`); if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+* `gene_strandR1B`: The strand that the gene at `juncPosR1B` is on; if there is no gene at that location, or there is a gene on both strands, this equals `?`.
+* `geneR1A_uniq`: Gene name after disambiguation steps have been run on it (to try to narrow down to just one gene)
+* `geneR1B_uniq`: Gene name after disambiguation steps have been run on it (to try to narrow down to just one gene)
+* `max_id_priority`: The minimum `HIR1A` value for a given `id` (used to split alignments between `class_input` and `class_input_secondary`)
+<!---
 1. `geneR1B_uniq`: 
 2. `geneR1A_uniq`:
-3. `id`: Read name. Example: `SRR6546273.367739`
+3. 
 4. `class`: **deprecated: see read_strand_compatible and location_compatible** Class defined by read 1 or read 2. For paired end mode, the options are circular, linear, decoy, err (this happens when the strand is ambiguous, because in that case we can't tell if a potential circular junction is a circle or a decoy, since this definition depends on the strand), fusion (read 1 and read 2 are on different chromosomes, or either r1 or r2 is split between two chromosomes), and strandCross (both reads have flags indicating they're both on + or both on -; this is before we correct strandedness by gene location). For single end data the options are lin (linear-type junction), rev (circle-type junction), and fus (part of read maps to one chromosome and part maps to another)
 5. `refName_ABR1`: The refName for R1 will always be of the form `<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<readClassR1>`
 6. `refName_readStrandR1`: The refName for R1 will always be of the form either `<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<readClassR1>` or `<chrR1B>:<geneR1B>:<juncPosR1B>:<gene_strandR1B>|<chrR1A>:<geneR1A>:<juncPosR1A>:<gene_strandR1A>|<readClassR1>`. Which one of these two it is will be defined by whether the read strand is + (in which case it will be the first one) or the read strand is - (in which case it will be the second one). See the descriptions for these individual columns for more specifics. **Refnames for negative-strand genes will have the acceptor first and the donor second**
@@ -210,54 +268,51 @@ jI:B:I,Start1,End1,Start2,End2,...
 131. `length_adj_AS_R1B`: length adjusted alignment score for R1B
 132. `nmmR1`: number of mismatches in R1
 133. `qual_R1`: mapping quality value for R1
-134. `overlap_R1`: junction overlap for R1 (the minimum of junction anchors)
-135. `max_overlap_R1`: maximum overlap for R1 (the maximum of junction anchors)
-136. `median_overlap_R1`: median of `overlap_R1` across all aligned reads for each junction 
-137. `is.zero_nmm`: indicates whether the R1 alignment is mismatch free
-138. `is.multimapping`: indicates whether the alignment is multimapping 
-139. `njunc_binR1A`: junction noise score for `R1A`
-140. `njunc_binR1B`: junction noise score for `R1B`
-141. `threeprime_partner_number_R1`: number of distinct 3' splice sites across the class input file for each 5' splice site in the class input file
-142. `fiveprime_partner_number_R1`: number of distinct 5' splice sites across the class input file for each 3' splice site in the class input file
-143. `length_adj_AS_R2`: length ajusted alignment score for R2
-144. `nmmR2`: number of mismatches in R2
-145. `qual_R2`: mapping quality value for R2
-146. `overlap_R2`: junction overlap for R2 (the minimum of junction anchors)
-147. `max_overlap_R2`: maximum overlap for R2 (the maximum of junction anchors)
-148. `glm_per_read_prob`: per-read score for each read alignment computed by GLM 
-149. `glm_per_read_prob_corrected`: per-read score for each read alignment computed by GLM where per-read scores for anomalous reads are downscaled   
-150. `glmnet_per_read_prob`: per-read score for each read alignment computed by GLMnet 
-151. `glmnet_per_read_prob_corrected`: per-read score for each read alignment computed by GLMnet and per-read scores for anomalous reads are downscaled
-152. `glmnet_per_read_prob_constrained`: per-read score for each read alignment computed by constrained GLMnet model
-153. `glmnet_per_read_prob_corrected_constrained`: per-read score for each read alignment computed by constrained GLMnet model and per-read scores for anomalous reads are downscaled
-154. `glmnet_twostep_per_read_prob`: the two-step per-read score for each chimeric read 
-155. `glmnet_twostep_per_read_prob_constrained`:  per-read score for each read alignment computed by twostep GLMnet with constrained cofficients
-156. `p_predicted_glm`: aggregated score for each junction based on `glm_per_read_prob` 
-157. `p_predicted_glm_corrected`: aggregated score for each junction based on `glm_per_read_prob_corrected`
-158. `p_predicted_glmnet`: aggregated score for each junction based on `glmnet_per_read_prob`
-159. `p_predicted_glmnet_corrected`: aggregated score for each junction based on `glmnet_per_read_prob_corrected`
-160. `p_predicted_glmnet_constrained`: aggregated score for each junction based on `glmnet_per_read_prob_constrained`
-161. `p_predicted_glmnet_corrected_constrained`: aggregated score for each junction based on `glmnet_per_read_prob_corrected_constrained`
-162. `p_predicted_glmnet_twostep`: aggregated score for each junction based on `glmnet_twostep_per_read_prob`
-163. `p_predicted_glmnet_twostep_constrained`:  aggregated score for each junction based on `glmnet_twostep_per_read_prob_constrained`
-164. `junc_cdf_glm`: cdf of `p_predicted_glm` relative to its null distribution by randomly assigning reads to junctions
-165. `junc_cdf_glm_corrected`: cdf of `p_predicted_glm_corrected` relative to its null distribution by randomly assigning reads to junctions
-166. `junc_cdf_glmnet`: cdf of `p_predicted_glmnet` relative to its null distribution by randomly assigning reads to junctions
-167. `junc_cdf_glmnet_corrected`: cdf of `p_predicted_glmnet_corrected` relative to its null distribution by randomly assigning reads to junctions
-168. `junc_cdf_glmnet_constrained`: cdf of `p_predicted_glmnet_constrained` relative to its null distribution by randomly assigning reads to junctions
-169. `junc_cdf_glmnet_corrected_constrained`: cdf of `p_predicted_glmnet_corrected_constrained` relative to its null distribution by randomly assigning reads to junctions
-170. `junc_cdf_glmnet_twostep`: cdf of `p_predicted_glmnet_twostep` relative to its null distribution by randomly assigning reads to junctions
-171. `genomic_aScoreR1`: the maximum alignment score of all genomic alignments of that read (NA if `genomicAlignmentR1` == 0)
-172. `frac_genomic_reads`: fraction of aligned reads for each junction that have also genomic alignment 
-173. `frac_anomaly`: the fraction of the aligned reads for the junction that are anamolous
-174. `ave_min_junc_14mer`:  the average of `min_junc_14mer` across the reads aligned to the junction
-175. `ave_max_junc_14mer`:  the average of `max_junc_14mer` across the reads aligned to the junction
-176. `ave_AT_run_R1`:  the average of `AT_run_R1` across the reads aligned to the junction
-177. `ave_GC_run_R1`:  the average of `GC_run_R1` across the reads aligned to the junction
-178. `ave_max_run_R1`: the average of `max_run_R1` across the reads aligned to the junction
-179. `p_val_median_overlap_R1`: the p-value of the statistical test for comparing the median overlaps of the aligned reads to the junction against the null of randomly aligned reads and small p-values are desired as they indicate that the median_overlap of the junction is large enough.  
-180. `uniformity_test_pval`: the p_value of the uniformity test for the junction overlap of the reads aligned to the junction computed by chisq.test. It is computed only for junctions with at most 15 reads and p-values close to 1 are desired as they indicate reads are uniformly distributed.
-181. `sd_overlap`: the standard deviation of the junction overlap for the reads aligned to the junction 
+--->
+* `overlap_R1`: junction overlap for R1 (the minimum of junction anchors)
+* `max_overlap_R1`: maximum overlap for R1 (the maximum of junction anchors)
+* `median_overlap_R1`: median of `overlap_R1` across all aligned reads for each junction 
+* `is.zero_nmm`: indicates whether the R1 alignment is mismatch free
+* `is.multimapping`: indicates whether the alignment is multimapping 
+* `njunc_binR1A`: junction noise score for `R1A`
+* `njunc_binR1B`: junction noise score for `R1B`
+* `threeprime_partner_number_R1`: number of distinct 3' splice sites across the class input file for each 5' splice site in the class input file
+* `fiveprime_partner_number_R1`: number of distinct 5' splice sites across the class input file for each 3' splice site in the class input file
+* `length_adj_AS_R2`: length ajusted alignment score for R2
+* `glm_per_read_prob`: per-read score for each read alignment computed by GLM 
+* `glm_per_read_prob_corrected`: per-read score for each read alignment computed by GLM where per-read scores for anomalous reads are downscaled   
+* `glmnet_per_read_prob`: per-read score for each read alignment computed by GLMnet 
+* `glmnet_per_read_prob_corrected`: per-read score for each read alignment computed by GLMnet and per-read scores for anomalous reads are downscaled
+* `glmnet_per_read_prob_constrained`: per-read score for each read alignment computed by constrained GLMnet model
+* `glmnet_per_read_prob_corrected_constrained`: per-read score for each read alignment computed by constrained GLMnet model and per-read scores for anomalous reads are downscaled
+* `glmnet_twostep_per_read_prob`: the two-step per-read score for each chimeric read 
+* `glmnet_twostep_per_read_prob_constrained`:  per-read score for each read alignment computed by twostep GLMnet with constrained cofficients
+* `p_predicted_glm`: aggregated score for each junction based on `glm_per_read_prob` 
+* `p_predicted_glm_corrected`: aggregated score for each junction based on `glm_per_read_prob_corrected`
+* `p_predicted_glmnet`: aggregated score for each junction based on `glmnet_per_read_prob`
+* `p_predicted_glmnet_corrected`: aggregated score for each junction based on `glmnet_per_read_prob_corrected`
+* `p_predicted_glmnet_constrained`: aggregated score for each junction based on `glmnet_per_read_prob_constrained`
+* `p_predicted_glmnet_corrected_constrained`: aggregated score for each junction based on `glmnet_per_read_prob_corrected_constrained`
+* `p_predicted_glmnet_twostep`: aggregated score for each junction based on `glmnet_twostep_per_read_prob`
+* `p_predicted_glmnet_twostep_constrained`:  aggregated score for each junction based on `glmnet_twostep_per_read_prob_constrained`
+* `junc_cdf_glm`: cdf of `p_predicted_glm` relative to its null distribution by randomly assigning reads to junctions
+* `junc_cdf_glm_corrected`: cdf of `p_predicted_glm_corrected` relative to its null distribution by randomly assigning reads to junctions
+* `junc_cdf_glmnet`: cdf of `p_predicted_glmnet` relative to its null distribution by randomly assigning reads to junctions
+* `junc_cdf_glmnet_corrected`: cdf of `p_predicted_glmnet_corrected` relative to its null distribution by randomly assigning reads to junctions
+* `junc_cdf_glmnet_constrained`: cdf of `p_predicted_glmnet_constrained` relative to its null distribution by randomly assigning reads to junctions
+* `junc_cdf_glmnet_corrected_constrained`: cdf of `p_predicted_glmnet_corrected_constrained` relative to its null distribution by randomly assigning reads to junctions
+* `junc_cdf_glmnet_twostep`: cdf of `p_predicted_glmnet_twostep` relative to its null distribution by randomly assigning reads to junctions
+* `genomic_aScoreR1`: the maximum alignment score of all genomic alignments of that read (NA if `genomicAlignmentR1` == 0)
+* `frac_genomic_reads`: fraction of aligned reads for each junction that have also genomic alignment 
+* `frac_anomaly`: the fraction of the aligned reads for the junction that are anamolous
+* `ave_min_junc_14mer`:  the average of `min_junc_14mer` across the reads aligned to the junction
+* `ave_max_junc_14mer`:  the average of `max_junc_14mer` across the reads aligned to the junction
+* `ave_AT_run_R1`:  the average of `AT_run_R1` across the reads aligned to the junction
+* `ave_GC_run_R1`:  the average of `GC_run_R1` across the reads aligned to the junction
+* `ave_max_run_R1`: the average of `max_run_R1` across the reads aligned to the junction
+* `p_val_median_overlap_R1`: the p-value of the statistical test for comparing the median overlaps of the aligned reads to the junction against the null of randomly aligned reads and small p-values are desired as they indicate that the median_overlap of the junction is large enough.  
+* `uniformity_test_pval`: the p_value of the uniformity test for the junction overlap of the reads aligned to the junction computed by chisq.test. It is computed only for junctions with at most 15 reads and p-values close to 1 are desired as they indicate reads are uniformly distributed.
+* `sd_overlap`: the standard deviation of the junction overlap for the reads aligned to the junction 
 
 
 ### New columns in the class input file after run_ensembl step:
