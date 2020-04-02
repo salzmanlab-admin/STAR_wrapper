@@ -19,6 +19,12 @@ def get_exon_number(row):
   if "gene_name" in row["attribute"]:
     return int(row["attribute"].split("exon_number")[-1].split('"')[1])
 
+#def get_exon_number2(row):
+#  return int(row["attribute"].split("ID=exon")[1].split(";")[0].split("-")[-1])
+#  if "gene_name" in row["attribute"]:
+#    return int(row["attribute"].split("exon_number")[-1].split('"')[1])
+
+
 def get_gtf(gtf_path):
   gtf_df = pd.read_csv(gtf_path,sep="\t",names=["seqname","source","feature","start","end","score","strand","frame","attribute"],comment="#")
   gtf_df = gtf_df[gtf_df["feature"] == "exon"]
@@ -34,7 +40,11 @@ def get_exon_bounds(gtf_df):
 
 def get_splices(gtf_df):
   gtf_df["transcript_id"] = gtf_df.apply(get_transcript_id, axis=1)
+#  try:
   gtf_df["exon_number"] = gtf_df.apply(get_exon_number, axis=1)
+#  except:
+#    gtf_df["exon_number"] = gtf_df.apply(get_exon_number2, axis=1)
+
   splices = {}
   count = 0
   t0 = time.time()
@@ -49,9 +59,9 @@ def get_splices(gtf_df):
 
 def main():
 
-  save_splices = True
+  save_splices = False
   save_exon_bounds = True
-  save_ann = False
+  save_ann = True
 
   args = get_args()
   wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
@@ -67,7 +77,7 @@ def main():
 
   if save_splices:
     splices = get_splices(gtf_df)
-    pickle.dump(exon_bounds, open("{}annotators/{}_splices.pkl".format(wrapper_path, args.assembly), "wb"))
+    pickle.dump(splices, open("{}annotators/{}_splices.pkl".format(wrapper_path, args.assembly), "wb"))
   
     print("{}annotators/{}_splices.pkl".format(wrapper_path, args.assembly))
 #  if os.path.exists(annotator_path):
