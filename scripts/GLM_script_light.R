@@ -251,10 +251,10 @@ is.SE = as.numeric(args[3])
 #####################################
 
 ### arguments for debugging ######
-is.SE = 0
-directory = "/scratch/PI/horence/rob/STAR_wrapper/output/20200331_full_Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/"
-class_input =  fread("/oak/stanford/groups/horence/Roozbeh/class_input.tsv", nrows = 50000, sep = "\t", header = TRUE)
-assembly = "hg38"
+#is.SE = 1
+#directory = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_180607_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P3_1_S9_L001/"
+#class_input =  fread("/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_180607_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P3_1_S9_L001/class_input.tsv", nrows = 50000, sep = "\t", header = TRUE)
+#assembly = "hg38"
 ##################################
 
 ###### read in class input file #####################
@@ -267,9 +267,9 @@ assembly = "hg38"
 ###############################################
 
 ###### read in class input file #####################
-#class_input_file = list.files(directory, pattern = "class_input.tsv")
-#class_input_file = paste(directory, class_input_file,sep = "")
-#class_input =  fread(class_input_file, sep = "\t", header = TRUE)
+class_input_file = list.files(directory, pattern = "class_input.tsv")
+class_input_file = paste(directory, class_input_file,sep = "")
+class_input =  fread(class_input_file, sep = "\t", header = TRUE)
 ###############################################
 
 
