@@ -253,7 +253,7 @@ is.SE = as.numeric(args[3])
 ### arguments for debugging ######
 #is.SE = 1
 #directory = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_180607_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P3_1_S9_L001/"
-#class_input =  fread("/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_180607_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P3_1_S9_L001/class_input.tsv", nrows = 50000, sep = "\t", header = TRUE)
+#class_input =  fread("/oak/stanford/groups/horence/Roozbeh/class_input.tsv", nrows = 50000, sep = "\t", header = TRUE)
 #assembly = "hg38"
 ##################################
 
@@ -281,11 +281,6 @@ if(directory %like% "10X"){
   class_input = class_input[!duplicated(paste(barcode,UMI,refName_newR1))]
 }
 
-###### find the best alignment rank across all aligned reads for each junction ######   
-#star_sj_output[, junction:=paste(V1,V2,V1,V3, sep= ":"), by = 1:nrow(star_sj_output)]
-#class_input = merge(class_input, star_sj_output[, list(junction,V7,V8)], by.x = "junction_compatible", by.y = "junction", all.x = TRUE, all.y = FALSE)
-#class_input[, minHIR1A:=min(HIR1A), by = junction_compatible]
-###################################################################################
 
 tic()
 setkey(class_input,refName_newR1)
@@ -313,14 +308,14 @@ class_input = compare_classinput_STARChimOut(directory,is.SE)
 
 
 ### obtain fragment lengths for chimeric reads for computing length adjusted AS ##########
-class_input[fileTypeR1 == "Aligned", length_adj_AS_R1:= aScoreR1B/readLenR1]
+class_input[fileTypeR1 == "Aligned", length_adj_AS_R1:= aScoreR1A/readLenR1]
 class_input[fileTypeR1 == "Chimeric", length_adj_AS_R1 := (aScoreR1A + aScoreR1B)/ (MR1A + MR1B + SR1A + SR1B)]
 class_input[, length_adj_AS_R1A:= aScoreR1A / (MR1A + SR1A), by = 1:nrow(class_input)]
 class_input[, length_adj_AS_R1B:= aScoreR1B / (MR1B + SR1B), by = 1:nrow(class_input)]
 ###########################################################################################
 
 ### obtain the number of smismatches per alignment ##########
-class_input[fileTypeR1 == "Aligned", nmmR1:= nmmR1B]
+class_input[fileTypeR1 == "Aligned", nmmR1:= nmmR1A]
 class_input[fileTypeR1 == "Chimeric", nmmR1:= nmmR1A + nmmR1B]
 ###########################################################################################
 
@@ -341,7 +336,7 @@ class_input[nmmR1 ==0, is.zero_nmm := 1]
 
 ###### categorical variable for multimapping ###########
 class_input[, is.multimapping := 0]
-class_input[NHR1B>2, is.multimapping := 1]
+class_input[NHR1A>2, is.multimapping := 1]
 #####################################################
 
 ###### compute noisy junction score ########
@@ -429,9 +424,9 @@ if (n.pos >= n.neg){
 # if we use type = "link", it gives the fitted value in the scale of linear predictors, if we use type = "response", it gives the response in the scale of the response variable
 
 if (is.SE == 0){
-  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1B + nmmR1 + MR1A:SR1A + MR1B:SR1B + length_adj_AS_R1 + nmmR2 + length_adj_AS_R2 + NHR2A + entropyR1*entropyR2 + location_compatible + read_strand_compatible")
+  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A + MR1B:SR1B + length_adj_AS_R1 + nmmR2 + length_adj_AS_R2 + NHR2A + entropyR1*entropyR2 + location_compatible + read_strand_compatible")
 } else {
-  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1B + nmmR1 + MR1A:SR1A +  MR1B:SR1B + entropyR1 + length_adj_AS_R1 + entropyR1:NHR1B + entropyR1:length_adj_AS_R1")
+  regression_formula = as.formula("train_class ~ overlap_R1 * max_overlap_R1 + NHR1A + nmmR1 + MR1A:SR1A +  MR1B:SR1B + entropyR1 + length_adj_AS_R1 + entropyR1:NHR1A + entropyR1:length_adj_AS_R1")
 }
 
 tic("GLM model")
