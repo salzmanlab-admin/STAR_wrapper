@@ -205,11 +205,12 @@ def main():
   print("input sample".format(path))
   folder = path.split("/")[0]
   sample = path.split("/")[1]
+  print(sample)
   data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/data10x/sequencing_runs/171205_A00111_0088_BH55NYDMXX/fastqs/"+folder+"/"
   # 171205_A00111_0088_BH55NYDMXX
   # 180607_A00111_0155_BHFCWYDMXX
   assembly = "hg38"
-  run_name = "HLCA_180607_10X"
+  run_name = "HLCA_171205_10X"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
@@ -226,7 +227,7 @@ def main():
   run_sam_to_bam = False
   run_star_fusion = False
   run_ann = False
-  run_class = True
+  run_class = False
   run_HISAT_class = False
   run_GLM = True
   

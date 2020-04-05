@@ -100,7 +100,7 @@ compare_classinput_STARChimOut <- function(directory,is.SE){
   options(scipen = 999)  # this will make sure that the modified coordinates in chimeric or SJ files won't be written in scientific representation as we want to compare them with those in the class input file 
   star_SJ_output_1_file = list.files(directory,pattern = "2SJ.out.tab")
   star_chimeric_output_1_file = list.files(directory,pattern = "2Chimeric.out.junction")
-  star_fusion_file = list.files(directory,pattern = "star-fusion.fusion_predictions.abridged.tsv" , recursive = TRUE)
+#  star_fusion_file = list.files(directory,pattern = "star-fusion.fusion_predictions.abridged.tsv" , recursive = TRUE)
   
   if (is.SE == 0){
     star_SJ_output_1_file = list.files(directory,pattern = "1SJ.out.tab")
@@ -112,7 +112,7 @@ compare_classinput_STARChimOut <- function(directory,is.SE){
   ####### read in files ############
   chimeric1 =  fread(paste(directory,star_chimeric_output_1_file,sep = ""),sep = "\t",header = FALSE)
   star_SJ_output_1 =  fread(paste(directory,star_SJ_output_1_file,sep = ""),sep = "\t",header = FALSE)
-  star_fusion = fread(paste(directory,star_fusion_file,sep = ""),sep = "\t" , header = TRUE)
+#  star_fusion = fread(paste(directory,star_fusion_file,sep = ""),sep = "\t" , header = TRUE)
   #############################
   
   # if the script has been run previously on the class inout file, delete the following columns to avoid duplicate column names
@@ -132,15 +132,15 @@ compare_classinput_STARChimOut <- function(directory,is.SE){
   star_SJ_output_1[,junction := paste(V1,V2,V1,V3,sep = ":")]
   
   # building compatible junction coordinates for fusions called by STAR-Fusion
-  if ( nrow(star_fusion)>0 ) {
-    star_fusion[,chr1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][1],by = 1:nrow(star_fusion)] 
-    star_fusion[,pos1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][2],by = 1:nrow(star_fusion)]
-    star_fusion[,strand1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][3],by = 1:nrow(star_fusion)]
-    star_fusion[,chr2 := strsplit(RightBreakpoint,split = ":",fixed = TRUE)[[1]][1],by = 1:nrow(star_fusion)]
-    star_fusion[,pos2 := strsplit(RightBreakpoint,split = ":",fixed = TRUE)[[1]][2],by = 1:nrow(star_fusion)]
-    star_fusion[,strand2 := strsplit(RightBreakpoint,split = ":",fixed = TRUE)[[1]][3],by = 1:nrow(star_fusion)]  
-    star_fusion[,junction := paste(chr1,pos1,chr2,pos2 ,sep = ":")]
-  }
+#  if ( nrow(star_fusion)>0 ) {
+#    star_fusion[,chr1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][1],by = 1:nrow(star_fusion)] 
+#    star_fusion[,pos1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][2],by = 1:nrow(star_fusion)]
+#    star_fusion[,strand1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][3],by = 1:nrow(star_fusion)]
+#    star_fusion[,chr2 := strsplit(RightBreakpoint,split = ":",fixed = TRUE)[[1]][1],by = 1:nrow(star_fusion)]
+#    star_fusion[,pos2 := strsplit(RightBreakpoint,split = ":",fixed = TRUE)[[1]][2],by = 1:nrow(star_fusion)]
+#    star_fusion[,strand2 := strsplit(RightBreakpoint,split = ":",fixed = TRUE)[[1]][3],by = 1:nrow(star_fusion)]  
+#    star_fusion[,junction := paste(chr1,pos1,chr2,pos2 ,sep = ":")]
+#  }
   
   class_input[,min_junc_pos:=min(juncPosR1A,juncPosR1B),by=paste(juncPosR1A,juncPosR1B)] # I do this to consistently have the minimum junc position first in the junction id used for comparing between the class input file and the STAR output file
   class_input[,max_junc_pos:=max(juncPosR1A,juncPosR1B),by=paste(juncPosR1A,juncPosR1B)]
@@ -157,9 +157,9 @@ compare_classinput_STARChimOut <- function(directory,is.SE){
   class_input = merge(class_input,star_SJ_output_1[,list(junction,V5,V6,V7,V8,V9)],by.x = "junction_compatible",by.y = "junction",all.x = TRUE,all.y = FALSE )
   
   class_input[fileTypeR1 == "Chimeric", is.STAR_Fusion := 0]
-  if ( nrow(star_fusion)>0 ) {
-    class_input[fileTypeR1 == "Chimeric" & (junction_compatible %in% star_fusion$junction) ,is.STAR_Fusion := 1]
-  }
+#  if ( nrow(star_fusion)>0 ) {
+#    class_input[fileTypeR1 == "Chimeric" & (junction_compatible %in% star_fusion$junction) ,is.STAR_Fusion := 1]
+#  }
   
   in_star_chim_not_in_classinput = chimeric1[!(junction %in% class_input$junction_compatible)]
   in_star_SJ_not_in_classinput = star_SJ_output_1[ !(junction %in% class_input$junction_compatible)]
@@ -251,10 +251,10 @@ is.SE = as.numeric(args[3])
 #####################################
 
 ### arguments for debugging ######
-#is.SE = 1
-#directory = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_180607_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P3_1_S9_L001/"
-#class_input =  fread("/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_180607_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P3_1_S9_L001/class_input.tsv", nrows = 50000, sep = "\t", header = TRUE)
-#assembly = "hg38"
+is.SE = 0
+directory = "/scratch/PI/horence/rob/STAR_wrapper/output/20200331_full_Engstrom_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/Engstrom_sim1_trimmed/"
+class_input =  fread("/oak/stanford/groups/horence/Roozbeh/class_input.tsv", nrows = 50000, sep = "\t", header = TRUE)
+assembly = "hg38"
 ##################################
 
 ###### read in class input file #####################
@@ -267,9 +267,9 @@ is.SE = as.numeric(args[3])
 ###############################################
 
 ###### read in class input file #####################
-class_input_file = list.files(directory, pattern = "class_input.tsv")
-class_input_file = paste(directory, class_input_file,sep = "")
-class_input =  fread(class_input_file, sep = "\t", header = TRUE)
+#class_input_file = list.files(directory, pattern = "class_input.tsv")
+#class_input_file = paste(directory, class_input_file,sep = "")
+#class_input =  fread(class_input_file, sep = "\t", header = TRUE)
 ###############################################
 
 
@@ -278,7 +278,7 @@ class_input =  fread(class_input_file, sep = "\t", header = TRUE)
 
 # do deduplication for 10X data
 if(directory %like% "10X"){
-  class_input = class_input[!duplicated(paste(barcode,UMI))]
+  class_input = class_input[!duplicated(paste(barcode,UMI,refName_newR1))]
 }
 
 ###### find the best alignment rank across all aligned reads for each junction ######   
@@ -306,7 +306,7 @@ class_input[, geneR1B_uniq:=strsplit(refName_newR1, split = ":", fixed = TRUE)[[
 toc()
 
 ## add ensembl ids
-class_input = add_ensembl(assembly,directory,class_input,is.SE)
+#class_input = add_ensembl(assembly,directory,class_input,is.SE)
 
 ## compare class inpout file with STAR chimeric and output files
 class_input = compare_classinput_STARChimOut(directory,is.SE)
