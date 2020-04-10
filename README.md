@@ -1,5 +1,6 @@
 # STAR wrapper
 Created 19 June 2019
+Last updated 9 April 2020
 
 This project aligns fastq files to the genome using STAR, concatenates the `SJ.out.tab` and `Chimeric.out.junction` outputs into one file, and creates a class input file based on the STAR output.
 
