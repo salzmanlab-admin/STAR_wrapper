@@ -34,7 +34,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
 
 def star_fusion(out_path, name, single, dep = ""):
   """Run star-fusion on chimeric alignments by STAR"""
-  command = "/scratch/PI/horence/Roozbeh/STAR-Fusion/STAR-Fusion --genome_lib_dir /scratch/PI/horence/Roozbeh/STAR-Fusion/GRCh38_gencode_v29_CTAT_lib_Mar272019.plug-n-play/ctat_genome_lib_build_dir/ -J "
+  command = "/scg/apps/software/star-fusion/1.8.1/STAR-Fusion --genome_lib_dir  /oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-Fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/ctat_genome_lib_build_dir/ -J "
   if single:
     command += "   {}{}/2Chimeric.out.junction --output_dir {}{}/star_fusion ".format(out_path, name,out_path,name)
   else:
@@ -200,13 +200,14 @@ def main():
   scoreDelOpen = [-2]
   scoreDelBase = [-2]
 
-
+  path = args.sample
+  sample = path.split("/")[0]
 # Lemur smart seq sample
-  data_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/"+args.sample+"/"
-  assembly = "Mmur"
+  data_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0356/"+sample+"/"
+  assembly = "Mmur_3.0"
   run_name = "Lemur_smartseq"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = [args.sample]
+  names = [sample]
   gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/Lemur_genome/Kransow_reference/ref_Mmur_3.0.gtf"
   single = False
   tenX = False
@@ -215,11 +216,11 @@ def main():
   
   run_whitelist = False
   run_extract = False
-  run_map = False
+  run_map = True
   run_HISAT_map = False
   run_sam_to_bam = False
   run_star_fusion = False
-  run_ann = False
+  run_ann = True
   run_class = True
   run_HISAT_class = False
   run_GLM = True
@@ -255,7 +256,7 @@ def main():
                 for sDB in scoreDelBase:
               #cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
                   cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
-                  out_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/salzman_pipeline_output/{}/".format(cond_run_name)
+                  out_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0356/salzman_pipeline_output/{}/".format(cond_run_name)
                   if run_name == "DMD_Artandi":
                     out_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/{}/".format(cond_run_name)
         

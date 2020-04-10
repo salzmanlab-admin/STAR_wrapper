@@ -26,7 +26,7 @@ def get_args():
   parser = argparse.ArgumentParser()
   parser.add_argument('--bams', nargs="+",required=True, help='bams to parse (either one or two for paired end)')
   parser.add_argument("--outpath",help="folder to write output to")
-  parser.add_argument("--assembly",choices = ["hg38","Mmur_3.0"], help="which assembly to use to modify class input")
+  parser.add_argument("--assembly",choices = ["hg38","Mmur_3.0","hg38_EBV"], help="which assembly to use to modify class input")
   parser.add_argument("--UMI_bar", action="store_true",help="extract UMI and barcode")
 
   args = parser.parse_args()

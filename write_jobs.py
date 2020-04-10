@@ -96,7 +96,7 @@ def class_input(out_path, name, assembly, tenX, single,dep=""):
     command += "{}{}/2Aligned.out.bam ".format(out_path,name)
   if tenX:
     command += "--UMI_bar "
-  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "250Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
+  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "300Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
   return submit_job("run_class_input.sh")
 
 def HISAT_class_input(out_path, name, assembly, gtf_file, tenX, single,dep=""):
@@ -225,11 +225,11 @@ def main():
 
 
 # TSP1 10x
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/TSP1_muscle_3/"
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/bob_10x_TS_data/TSP1_blood_1_redo/TSP1_blood_1_redo_4/"
   assembly = "hg38"
-  run_name = "TS_pilot_10X_test"
+  run_name = "TS_pilot_10X_bob"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_muscle_3_S21_L003"]
+  names = ["TSP1_blood_1_redo_S4"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = True
   tenX = True
@@ -271,22 +271,22 @@ def main():
 #  tenX = False
 
 #V3 chemistry
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_nextgem_fastqs/"
-  assembly = "hg38"
-  run_name = "V3_chemistry_10X"
-  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["5k_pbmc_v3_nextgem_S1_L001"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = True
-  tenX = False
-  HISAT = False
+#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/chemistry_check_datasets/5k_pbmc_v3_nextgem_fastqs/"
+#  assembly = "hg38"
+#  run_name = "V3_chemistry_10X"
+#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+#  names = ["5k_pbmc_v3_nextgem_S1_L001"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = True
+#  tenX = False
+#  HISAT = False
 
 # SC benchmarking CCLE data
   data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/cell_lines/"
   assembly = "hg38"
   run_name = "SC_benchmarking_CCLE"
   r_ends = ["_1.fq.gz","_2.fq.gz"]
-  names = ["G20499.A549","G26194.HCC827","G26203.NCI-H838","G26264.NCI-H1975","G28616.NCI-H2228"]
+  names = ["G26203.NCI-H838"]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = False
   HISAT = False
