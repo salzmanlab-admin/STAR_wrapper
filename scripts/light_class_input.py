@@ -244,7 +244,7 @@ def main():
   else:
     final_df = CI_dfs[0]
 #  final_df.fillna(np.nan,inplace=True)
-  float_cols = ["aScoreR1B","nmmR1B","qualR1B","NHR1B","primaryR1B","genomic_aScoreR1","HIR1B"]
+  float_cols = ["aScoreR1A","nmmR1A","qualR1A","NHR1A","primaryR1A","genomic_aScoreR1","HIR1A"]
   if len(bam_files) == 2:
     float_cols += ["readLenR2","AT_run_R2",
                 "GC_run_R2","max_run_R2","aScoreR2A","aScoreR2B","MR2A","MR2B","SR2A","SR2B","nmmR2A","nmmR2B",

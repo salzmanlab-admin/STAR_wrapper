@@ -381,16 +381,29 @@ def main():
 #  tenX = False
 #  HISAT = False
 
-  run_whitelist = False
-  run_extract = False
-  run_map = False
+#TSP1_redo
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/TSP1_redo/TSP1_muscle_3/"
+  assembly = "hg38"
+  run_name = "TS_pilot_10X_redo"
+  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+  names = ["TSP1_muscle_3_S15_L003","TSP1_muscle_3_S15_L004"]
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+  single = True
+  tenX = True
+  HISAT = False
+  bc_pattern = "C"*16 + "N"*10
+
+
+  run_whitelist = True
+  run_extract = True
+  run_map = True
   run_HISAT_map = False
   run_sam_to_bam = False
-  run_star_fusion = False
+  run_star_fusion = True
   run_ann = False
-  run_class = True
+  run_class = False
   run_HISAT_class = False
-  run_GLM = True
+  run_GLM = False
   
 
   if not single:
