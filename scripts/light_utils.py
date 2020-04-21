@@ -12,6 +12,7 @@ import sys
 import annotator
 
 def modify_refnames(CI, assembly):
+  swap_names = False
   if "Mmur_3.0" in assembly:
     gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/Mmur3_gene_strand.txt"
   elif "hg38" in assembly:
@@ -131,7 +132,8 @@ def modify_refnames(CI, assembly):
   
 #  CI_new = pickle.load(open("/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/output/test/CI_new.pkl","rb"))
 
-  CI_new.loc[ind] = CI_new.loc[ind].rename(columns=name_swap)
+  if swap_names:
+    CI_new.loc[ind] = CI_new.loc[ind].rename(columns=name_swap)
   ind = CI_new[(CI_new["fileTypeR1"] == "Aligned") & (CI_new["gene_strandR1A_new"] == "+")].index
   
   CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["chrR1A"] + ":" + CI_new.loc[ind]["geneR1A_uniq"] + ":" + CI_new.loc[ind]["juncPosR1A"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1A_new"] + "|" +  CI_new.loc[ind]["chrR1B"] + ":" + CI_new.loc[ind]["geneR1B_uniq"] + ":" + CI_new.loc[ind]["juncPosR1B"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1B_new"]
@@ -142,7 +144,8 @@ def modify_refnames(CI, assembly):
   
   CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["chrR1B"] + ":" + CI_new.loc[ind]["geneR1B_uniq"] + ":" + CI_new.loc[ind]["juncPosR1B"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1B_new"] + "|" + CI_new.loc[ind]["chrR1A"] + ":" + CI_new.loc[ind]["geneR1A_uniq"] + ":" + CI_new.loc[ind]["juncPosR1A"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1A_new"]
   CI_new.loc[ind,"reverse"] = True
-  CI_new.loc[ind] = CI_new.loc[ind].rename(columns=name_swap)
+  if swap_names:
+    CI_new.loc[ind] = CI_new.loc[ind].rename(columns=name_swap)
   
   ind = CI_new[(CI_new["fileTypeR1"] == "Chimeric") & ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) | (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"]))].index
   CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["chrR1A"] + ":" + CI_new.loc[ind]["geneR1A_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1A"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1A_new"] + "|" +  CI_new.loc[ind]["chrR1B"] + ":" + CI_new.loc[ind]["geneR1B_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1B"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1B_new"]
@@ -167,7 +170,8 @@ def modify_refnames(CI, assembly):
       name_swap[c.replace("R1A","R1B")] = c
 
 
-  CI.loc[ind] = CI.loc[ind].rename(columns=name_swap)
+  if swap_names:
+    CI.loc[ind] = CI.loc[ind].rename(columns=name_swap)
   CI_new = CI
 
   CI_new["gene_strandR1A"] = CI_new["refName_newR1"].str.split("|").str[0].str.split(":").str[-1]
