@@ -133,7 +133,6 @@ compare_classinput_STARChimOut <- function(directory,is.SE){
   
   # building compatible junction coordinates for fusions called by STAR-Fusion
 #  if ( nrow(star_fusion)>0 ) {
-#    star_fusion[,chr1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][1],by = 1:nrow(star_fusion)] 
 #    star_fusion[,pos1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][2],by = 1:nrow(star_fusion)]
 #    star_fusion[,strand1 := strsplit(LeftBreakpoint,split = ":",fixed = TRUE)[[1]][3],by = 1:nrow(star_fusion)]
 #    star_fusion[,chr2 := strsplit(RightBreakpoint,split = ":",fixed = TRUE)[[1]][1],by = 1:nrow(star_fusion)]
@@ -251,10 +250,10 @@ is.SE = as.numeric(args[3])
 #####################################
 
 ### arguments for debugging ######
-is.SE = 0
-directory = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0356/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/MAA001665_B112513_P7_S367/"
-class_input =  fread("/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0356/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/MAA001665_B112513_P7_S367/class_input.tsv", sep = "\t", header = TRUE)
-assembly = "Mmur"
+#is.SE = 1
+#directory = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_redo_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TSP1_bladder_1_S7_L003/"
+#class_input =  fread("/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_redo_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TSP1_bladder_1_S7_L003/class_input.tsv", sep = "\t", header = TRUE,nrows = 100000)
+#assembly = "hg38"
 ##################################
 
 ###### read in class input file #####################
@@ -267,12 +266,10 @@ assembly = "Mmur"
 ###############################################
 
 ###### read in class input file #####################
-#class_input_file = list.files(directory, pattern = "class_input.tsv")
-#class_input_file = paste(directory, class_input_file,sep = "")
-#class_input =  fread(class_input_file, sep = "\t", header = TRUE)
+class_input_file = list.files(directory, pattern = "class_input.tsv")
+class_input_file = paste(directory, class_input_file,sep = "")
+class_input =  fread(class_input_file, sep = "\t", header = TRUE)
 ###############################################
-
-
 
 
 
