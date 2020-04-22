@@ -196,13 +196,13 @@ def get_loc_flag(row):
     return 0
   if "|lin" in row["refName_ABR1"]:
     if r_strand == "+":
-      if row["juncPosR2A"] > row["juncPosR1A"]:
+      if row["juncPosR2A"] >= row["juncPosR1A"]:
         return 1
       else:
         return 0
     if r_strand == "-":
 #       print(row["juncPosR2A"],row["juncPosR1A"])
-      if (row["juncPosR2A"]) < row["juncPosR1A"]:
+      if (row["juncPosR2A"]) <= row["juncPosR1A"]:
         return 1
       else:
         return 0
