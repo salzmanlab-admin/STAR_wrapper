@@ -201,7 +201,7 @@ def main():
 
 
 # Tabula Sapiens pilot (smartseq)
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/"+args.sample+"/"
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/smartseq2/"+args.sample+"/"
   assembly = "hg38"
   run_name = "TS_pilot_smartseq"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]

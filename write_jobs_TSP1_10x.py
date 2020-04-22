@@ -205,7 +205,7 @@ def main():
   print("input sample".format(path))
   folder = path.split("/")[0]
   sample = path.split("/")[1]
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/"+folder+"/"
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/10X/"+folder+"/"
   assembly = "hg38"
   run_name = "TS_pilot_10X_withinbam"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]

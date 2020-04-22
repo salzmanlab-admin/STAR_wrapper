@@ -205,7 +205,7 @@ def main():
   print("input sample".format(path))
   folder = path.split("/")[0]
   sample = path.split("/")[1]
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/10X/"+folder+"/"
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/10X/"+folder+"/"
   assembly = "hg38_EBV"
   star_index = "/scratch/PI/horence/rob/data/ebv/ebv_grch38_refseq_star_ind_2.7.3a"
   run_name = "TS_pilot_10X_covid_combined"

@@ -352,12 +352,12 @@ def get_loc_flag(r1, r2):
   r_strand = read_strand(r1.flagA)
   if "|lin" in r1.refName:
     if r_strand == "+":
-      if int(r2.offsetA) > int(r1.offsetA):
+      if int(r2.offsetA) >= int(r1.offsetA):
         return 1
       else:
         return 0
     if r_strand == "-":
-      if int(r2.offsetA) < int(r1.offsetA):
+      if int(r2.offsetA) <= int(r1.offsetA):
         return 1
       else:
         return 0

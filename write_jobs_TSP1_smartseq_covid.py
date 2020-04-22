@@ -201,7 +201,7 @@ def main():
 
 
 # TSP1 10x sample
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/pilot/raw_data/smartseq2/"+args.sample+"/"
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/smartseq2/"+args.sample+"/"
   assembly = "hg38_EBV"
   star_index = "/scratch/PI/horence/rob/data/ebv/ebv_grch38_refseq_star_ind_2.7.3a"
   run_name = "TS_pilot_smartseq_EBV_combined"
