@@ -149,9 +149,29 @@ def modify_refnames(CI, assembly):
   
   ind = CI_new[(CI_new["fileTypeR1"] == "Chimeric") & ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) | (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"]))].index
   CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["chrR1A"] + ":" + CI_new.loc[ind]["geneR1A_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1A"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1A_new"] + "|" +  CI_new.loc[ind]["chrR1B"] + ":" + CI_new.loc[ind]["geneR1B_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1B"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1B_new"]
-  
-  ind = CI_new[(CI_new["refName_newR1"] == "") | (CI_new["refName_newR1"].isna())].index
-  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_ABR1"]
+ 
+  ind1 = CI_new[(CI_new["refName_newR1"] == "") | (CI_new["refName_newR1"].isna())].index # this ind1 is used to simply replace refName_newR1 with the refName_ABR1 
+
+## adding the junction type to refName_newR1
+  CI_new["junc_type"] = ""
+  ind = CI_new[(CI_new["chrR1A"] != CI_new["chrR1B"]) | ((CI_new["gene_strandR1A_new"] == CI_new["gene_strandR1B_new"]) & (abs(CI_new["juncPosR1A"] - CI_new["juncPosR1B"])>=1000000) )].index 
+  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|fus"
+  CI_new.loc[ind,"junc_type"] = "fus"
+
+  ind = CI_new[(CI_new["chrR1A"] == CI_new["chrR1B"]) & (CI_new["gene_strandR1A_new"] != CI_new["gene_strandR1B_new"])].index
+  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|sc"
+  CI_new.loc[ind,"junc_type"] = "sc"
+
+  ind = CI_new[(CI_new["junc_type"] != "sc") & (CI_new["junc_type"] != "fus") &  ( ((CI_new["gene_strandR1A_new"] == "+") & (CI_new["juncPosR1A"] > CI_new["juncPosR1B"])) | ((CI_new["gene_strandR1A_new"] == "-") & (CI_new["juncPosR1A"] < CI_new["juncPosR1B"])) )].index
+  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|rev"
+  CI_new.loc[ind,"junc_type"] = "rev"
+
+  ind = CI_new[(CI_new["junc_type"] != "sc") & (CI_new["junc_type"] != "fus") & (CI_new["junc_type"] != "rev")].index
+  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|lin"
+
+  CI_new = CI_new.drop("junc_type", axis=1)
+
+  CI_new.loc[ind1,"refName_newR1"] = CI_new.loc[ind1]["refName_ABR1"]
   ref_dict = pd.Series(CI_new.refName_newR1.values,index=CI_new.refName_ABR1).to_dict()
   rev_dict = pd.Series(CI_new.reverse.values,index=CI_new.refName_ABR1).to_dict()
   CI["refName_newR1"] = CI["refName_ABR1"].map(ref_dict)
