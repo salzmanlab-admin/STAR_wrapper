@@ -157,6 +157,7 @@ def main():
   wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
   assembly = args.assembly
   annotator_path = "{}annotators/{}.pkl".format(wrapper_path, assembly)
+  #annotator_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/grch38.pkl"
   ann = pickle.load(open(annotator_path, "rb"))
 #  bam_files = ["/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/1Aligned.out.bam",
 #              "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/2Aligned.out.bam"]

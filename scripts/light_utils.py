@@ -67,7 +67,7 @@ def modify_refnames(CI, assembly):
       CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let),"chrR1{}".format(let)], right_on=["gene_name","chr"])
       CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
       CI_new = CI_new.drop(["gene_name","chr"],axis=1)
-    elif "hg38" in assembly:
+    else:
       CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let)], right_on=["gene_name"])
       CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
       CI_new = CI_new.drop(["gene_name"],axis=1)
@@ -86,7 +86,7 @@ def modify_refnames(CI, assembly):
     CI_new = CI_new.drop(["gene_strandR1B_new"],axis=1)
     CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1B_uniq","chrR1B"], right_on=["gene_name","chr"])
     CI_new = CI_new.rename(columns={"strand" : "gene_strandR1B_new"})
-  elif "hg38" in assembly:
+  else:
   #   display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
   
     CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1A_uniq"], right_on=["gene_name"])
