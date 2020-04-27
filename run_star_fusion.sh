@@ -1,12 +1,15 @@
 #!/bin/bash
 #
-#SBATCH --job-name=fusion_TSP1_muscle_3_S15_L004
-#SBATCH --output=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_redo_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TSP1_muscle_3_S15_L004/log_files/fusion_TSP1_muscle_3_S15_L004.%j.out
-#SBATCH --error=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_redo_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TSP1_muscle_3_S15_L004/log_files/fusion_TSP1_muscle_3_S15_L004.%j.err
+#SBATCH --job-name=fusion_MAA001675_B109003_P9_S369
+#SBATCH --output=/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0357/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/MAA001675_B109003_P9_S369/log_files/fusion_MAA001675_B109003_P9_S369.%j.out
+#SBATCH --error=/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0357/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/MAA001675_B109003_P9_S369/log_files/fusion_MAA001675_B109003_P9_S369.%j.err
 #SBATCH --time=12:00:00
-#SBATCH -p quake,horence,owners
+#SBATCH --account=horence
+#SBATCH --partition=nih_s10
 #SBATCH --nodes=1
 #SBATCH --mem=20Gb
+#SBATCH --dependency=afterok:15124492
+#SBATCH --kill-on-invalid-dep=yes
 date
-/scratch/PI/horence/Roozbeh/STAR-Fusion/STAR-Fusion --genome_lib_dir /scratch/PI/horence/Roozbeh/STAR-Fusion/GRCh38_gencode_v29_CTAT_lib_Mar272019.plug-n-play/ctat_genome_lib_build_dir/ -J    /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_redo_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TSP1_muscle_3_S15_L004/2Chimeric.out.junction --output_dir /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/TS_pilot_10X_redo_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/TSP1_muscle_3_S15_L004/star_fusion 
+/scg/apps/software/star-fusion/1.8.1/STAR-Fusion --genome_lib_dir  /oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-Fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/ctat_genome_lib_build_dir/ -J  /oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0357/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/MAA001675_B109003_P9_S369/1Chimeric.out.junction --output_dir /oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0357/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/MAA001675_B109003_P9_S369/star_fusion 
 date

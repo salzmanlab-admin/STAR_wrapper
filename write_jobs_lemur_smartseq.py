@@ -203,7 +203,7 @@ def main():
   path = args.sample
   sample = path.split("/")[0]
 # Lemur smart seq sample
-  data_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0356/"+sample+"/"
+  data_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0357/"+sample+"/"
   assembly = "Mmur_3.0"
   run_name = "Lemur_smartseq"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
@@ -219,7 +219,7 @@ def main():
   run_map = True
   run_HISAT_map = False
   run_sam_to_bam = False
-  run_star_fusion = False
+  run_star_fusion = True
   run_ann = True
   run_class = True
   run_HISAT_class = False
@@ -256,7 +256,7 @@ def main():
                 for sDB in scoreDelBase:
               #cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
                   cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
-                  out_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0356/salzman_pipeline_output/{}/".format(cond_run_name)
+                  out_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Antoine_SS2/rawdata/token_A00111_0357/salzman_pipeline_output/{}/".format(cond_run_name)
                   if run_name == "DMD_Artandi":
                     out_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/{}/".format(cond_run_name)
         
