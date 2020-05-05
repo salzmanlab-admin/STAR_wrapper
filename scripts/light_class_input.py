@@ -85,6 +85,9 @@ def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, fill_char
     CI_dict["juncPos{}B".format(suffix)].append(int(posB))
   CI_dict["read_strand{}A".format(suffix)].append(read_strand(bam_read.flag))
   CI_dict["read_strand{}B".format(suffix)].append(fill_char)
+  CI_dict["flag{}A".format(suffix)].append(bam_read.flag)
+  CI_dict["flag{}B".format(suffix)].append(fill_char)
+
   CI_dict["primary{}A".format(suffix)].append(sec_dict[bam_read.is_secondary])
   CI_dict["primary{}B".format(suffix)].append(fill_char)
   empty_cols = ["aScore{}B".format(suffix),"qual{}B".format(suffix),"NH{}B".format(suffix),"nmm{}B".format(suffix), "HI{}B".format(suffix)]
@@ -143,6 +146,8 @@ def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar
     CI_dict["S{}{}".format(suffix,halves[i])].append(S)
     CI_dict["cigar{}{}".format(suffix,halves[i])].append(cigar)
     CI_dict["read_strand{}{}".format(suffix,halves[i])].append(read_strand(reads[i].flag))
+    CI_dict["flag{}{}".format(suffix,halves[i])].append(reads[i].flag)
+
     CI_dict["primary{}{}".format(suffix,halves[i])].append(sec_dict[reads[i].is_secondary])
   return CI_dict
 
@@ -178,7 +183,7 @@ def main():
     else:
       read_ids = set()
     suffix = suffixes[i]
-    col_bases = ["aScore","M","S","nmm","qual","NH","HI","cigar", "juncPos", "gene", "chr", "read_strand","primary"]
+    col_bases = ["aScore","M","S","nmm","qual","NH","HI","cigar", "juncPos", "gene", "chr", "read_strand","primary","flag"]
     columns = ["id","readLen" + suffix, "fileType" + suffix,"seq" + suffix,"AT_run_" + suffix,"GC_run_" + suffix,
                "max_run_" + suffix,"entropy" + suffix,"refName_AB" + suffix, "UMI","barcode","maxA_10mer" + suffix,"maxT_10mer" + suffix,"maxG_10mer" + suffix,"maxC_10mer" + suffix]
     for c in col_bases:
