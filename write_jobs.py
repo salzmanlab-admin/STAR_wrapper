@@ -19,7 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
   #job_file.write("#SBATCH --qos=high_p\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p quake,horence,owners\n")
+  job_file.write("#SBATCH -p quake,owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -49,7 +49,7 @@ def GLM(out_path, name, single, assembly, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "200Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "250Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -249,15 +249,15 @@ def main():
 #  HISAT = False
 
 #circRNA thirdparty benchmarking
-#  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
-#  assembly = "hg38"
-#  run_name = "circRNA_thirdparty_benchmarking_IntronMax_1000000"
-#  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
-#  names = ["TxDx2016-001-001_S1_L001"]
-#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-#  single = False
-#  tenX = False
-#  HISAT = False
+  data_path = "/scratch/PI/horence/Roozbeh/third_party_circ_benchmarking/Ghent-cRNA-137582445/TxDx2016_001_001-271916136/"
+  assembly = "hg38"
+  run_name = "circRNA_thirdparty_benchmarking_IntronMax_1000000"
+  r_ends = ["_R1.fastq.gz", "_R2.fastq.gz"]
+  names = ["TxDx2016-001-001_S1_L001"]
+  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+  single = False
+  tenX = False
+  HISAT = False
 
 # STAR_sim
 #  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
@@ -282,15 +282,15 @@ def main():
 #  HISAT = False
 
 # SC benchmarking CCLE data
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/cell_lines/"
-  assembly = "hg38"
-  run_name = "SC_benchmarking_CCLE"
-  r_ends = ["_1.fq.gz","_2.fq.gz"]
-  names = ["G26203.NCI-H838"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = False
-  HISAT = False
-  tenX= False
+#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/cell_lines/"
+#  assembly = "hg38"
+#  run_name = "SC_benchmarking_CCLE"
+#  r_ends = ["_1.fq.gz","_2.fq.gz"]
+#  names = ["G26203.NCI-H838"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = False
+#  HISAT = False
+#  tenX= False
 
 # SC 10X benchmarking data
 #  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/benchmarking/"
@@ -382,28 +382,28 @@ def main():
 #  HISAT = False
 
 #TSP1_redo
-  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/TSP1_redo/TSP1_muscle_3/"
-  assembly = "hg38"
-  run_name = "TS_pilot_10X_redo"
-  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
-  names = ["TSP1_muscle_3_S15_L003","TSP1_muscle_3_S15_L004"]
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  single = True
-  tenX = True
-  HISAT = False
-  bc_pattern = "C"*16 + "N"*10
+#  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/TSP1_redo/TSP1_muscle_3/"
+#  assembly = "hg38"
+#  run_name = "TS_pilot_10X_redo"
+#  r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
+#  names = ["TSP1_muscle_3_S15_L003","TSP1_muscle_3_S15_L004"]
+#  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
+#  single = True
+#  tenX = True
+#  HISAT = False
+#  bc_pattern = "C"*16 + "N"*10
 
 
-  run_whitelist = True
-  run_extract = True
-  run_map = True
+  run_whitelist = False
+  run_extract = False
+  run_map = False
   run_HISAT_map = False
   run_sam_to_bam = False
-  run_star_fusion = True
+  run_star_fusion = False
   run_ann = False
-  run_class = False
+  run_class = True
   run_HISAT_class = False
-  run_GLM = False
+  run_GLM = True
   
 
   if not single:
@@ -437,7 +437,7 @@ def main():
               #cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}_sIO_{}_sIB_{}".format(cSM, cJOM, aSJMN, cSRGM, sIO, sIB)
                   cond_run_name = run_name + "_cSM_{}_cJOM_{}_aSJMN_{}_cSRGM_{}".format(cSM, cJOM, aSJMN, cSRGM)
 #                  out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
-                  out_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
+                  out_path = "/scratch/PI/horence/Roozbeh/single_cell_project/output/{}/".format(cond_run_name)
                   if run_name == "DMD_Artandi":
                     out_path = "/scratch/PI/horence/Roozbeh/DMD_Artandi/{}/".format(cond_run_name)
         

@@ -19,7 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
   #job_file.write("#SBATCH --qos=high_p\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p quake,horence,owners\n")
+  job_file.write("#SBATCH -p quake,owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -49,7 +49,7 @@ def GLM(out_path, name, single, assembly, dep = ""):
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "200Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "150Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -96,7 +96,7 @@ def class_input(out_path, name, assembly, tenX, single,dep=""):
     command += "{}{}/2Aligned.out.bam ".format(out_path,name)
   if tenX:
     command += "--UMI_bar "
-  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "250Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
+  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "100Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
   return submit_job("run_class_input.sh")
 
 def HISAT_class_input(out_path, name, assembly, gtf_file, tenX, single,dep=""):
@@ -202,8 +202,8 @@ def main():
 
 # Tabula Sapiens pilot (smartseq)
   data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/smartseq2/"+args.sample+"/"
-  assembly = "hg38"
-  run_name = "TS_pilot_smartseq"
+  assembly = "hg38_covid19_ercc"
+  run_name = "TS_pilot_smartseq_hg38_covid19_ercc"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [args.sample]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
@@ -211,16 +211,16 @@ def main():
   tenX = False
   HISAT = False
 
-  run_whitelist = True
-  run_extract = True
-  run_map = True
+  run_whitelist = False
+  run_extract = False
+  run_map = False
   run_HISAT_map = False
   run_sam_to_bam = False
   run_star_fusion = False
   run_ann = False
   run_class = False
   run_HISAT_class = False
-  run_GLM = False
+  run_GLM = True
   
 
   if not single:
