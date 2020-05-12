@@ -13,3 +13,8 @@ remaining*
 run_*
 write_jobs_*
 run_*
+sandbox/
+*.fa
+.*
+*.tsv
+gtf_files/

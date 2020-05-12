@@ -28,6 +28,8 @@ def get_args():
   parser.add_argument("--outpath",help="folder to write output to")
   parser.add_argument("--assembly",choices = ["hg38","Mmur_3.0","chlSab_covid19","hg38_covid19_ercc"], help="which assembly to use to modify class input")
   parser.add_argument("--UMI_bar", action="store_true",help="extract UMI and barcode")
+  parser.add_argument("--paired", action="store_true",help="run once with each read primary and concatenate the files")
+
 
   args = parser.parse_args()
   return args
@@ -151,31 +153,7 @@ def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar
     CI_dict["primary{}{}".format(suffix,halves[i])].append(sec_dict[reads[i].is_secondary])
   return CI_dict
 
-
-def main():
-  t0 = time.time()
-  args = get_args()
-
-  bam_files = args.bams
-  print("bam_files",bam_files)
-
-  wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
-  assembly = args.assembly
-  annotator_path = "{}annotators/{}.pkl".format(wrapper_path, assembly)
-  if "hg38" in assembly:
-    annotator_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/grch38.pkl"
-  ann = pickle.load(open(annotator_path, "rb"))
-#  bam_files = ["/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/1Aligned.out.bam",
-#              "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/2Aligned.out.bam"]
-#  bam_files = ["/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/Lemur_Antoine_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/MLCA_ANTOINE_RETINA_S6_L001/2Aligned.out.bam"]
-#  bam_files = ["/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_171205_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P1_3_S1_L001/2Aligned.out.bam"]
-  # bamFile = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/1Aligned.out.bam"
-  # bamFile2 = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/salzman_pipeline_output/Lemur_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/F10_B000389_B009060_S130/2Aligned.out.bam"
-  
-#  UMI_bar = True
-
-#  paired = True
-  suffixes = ["R1","R2"]
+def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly):
   CI_dfs = []
   for i in range(len(bam_files)):
     if i == 1:
@@ -199,7 +177,7 @@ def main():
     # columns
     for bam_read in alignFile.fetch(until_eof=True):
   #     suffix = "R1"
-  
+
       # make sure read is mapped
       if not bam_read.is_unmapped:
         if (i == 0) or (not bam_read.is_secondary and bam_read.query_name in read_ids):
@@ -208,20 +186,20 @@ def main():
                 prev_read = bam_read
                 first = True
           else:
-  
+
             # add info from chimeric read
             if bam_read.has_tag("ch"):
               count += 1
 
               # note: removing chim for this test ONLY; uncomment after
-              CI_dict = extract_info_chim(CI_dict,prev_read,bam_read,suffix, alignFile, ann, args.UMI_bar)
+              CI_dict = extract_info_chim(CI_dict,prev_read,bam_read,suffix, alignFile, ann, UMI_bar)
               first = False
-  
+
             # add info from align read
             elif "N" in bam_read.cigarstring:
               count += 1
-              CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, args.UMI_bar)
-  
+              CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, UMI_bar)
+
             # save genomic alignment information
             else:
               if i == 0:
@@ -230,13 +208,13 @@ def main():
                 else:
                   genomic_alignments[bam_read.query_name] = max(bam_read.get_tag("AS"), genomic_alignments[bam_read.query_name])
               else:
-                CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, args.UMI_bar)
+                CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, UMI_bar)
   #     if count == 10000:
   #       continue
     CI_df = pd.DataFrame.from_dict(CI_dict)
     if i == 0:
       genomic_alignments = defaultdict(lambda: np.nan,genomic_alignments)
-      
+
       CI_df["genomicAlignmentR1"] = 0
       # print(CI_df.loc[CI_df["id"].isin(genomic_alignments)].shape)
       CI_df.loc[CI_df["id"].isin(genomic_alignments),"genomicAlignmentR1"] = 1
@@ -250,25 +228,69 @@ def main():
     final_df["location_compatible"] = final_df.apply(get_loc_flag,axis=1)
   else:
     final_df = CI_dfs[0]
-#  final_df.fillna(np.nan,inplace=True)
+  #  final_df.fillna(np.nan,inplace=True)
   float_cols = ["aScoreR1A","nmmR1A","qualR1A","NHR1A","primaryR1A","genomic_aScoreR1","HIR1A"]
   if len(bam_files) == 2:
     float_cols += ["readLenR2","AT_run_R2",
                 "GC_run_R2","max_run_R2","aScoreR2A","aScoreR2B","MR2A","MR2B","SR2A","SR2B","nmmR2A","nmmR2B",
                 "qualR2A","qualR2B","NHR2A","NHR2B","juncPosR2A","juncPosR2B","primaryR2A","primaryR2B",  "HIR2A", "HIR2B"]
 
-#  for c in float_cols:
-#    final_df[c] = final_df[c].astype("Int32")
+  #  for c in float_cols:
+  #    final_df[c] = final_df[c].astype("Int32")
   print("started modify", time.time() - t0)
-#  for c in final_df.columns:
-#    str_dtype = final_df[c].dtype 
-#    if str(str_dtype)[0] == "i":
-#      final_df[c] = final_df[c].astype("I" + str_dtype[1:])
+  #  for c in final_df.columns:
+  #    str_dtype = final_df[c].dtype 
+  #    if str(str_dtype)[0] == "i":
+  #      final_df[c] = final_df[c].astype("I" + str_dtype[1:])
 
   final_df = modify_refnames(final_df, assembly) 
 
   print("ended modify", time.time() - t0)
   final_df["max_id_priority"] = final_df["id"].map(final_df.groupby("id")["HIR1A"].min())
+
+  #  for c in final_df.columns:
+  #    if str(final_df[c].dtype)[0] == "I":
+  #      final_df[c] = final_df[c].astype("float32")
+
+  #  final_df.to_parquet(args.outpath + "class_input_final.pq")
+  final_df["primary_bam"] = j
+  primary = final_df[final_df["HIR1A"] == final_df["max_id_priority"]]
+  secondary = final_df[final_df["HIR1A"] != final_df["max_id_priority"]]
+
+  return primary, secondary
+
+def main():
+  t0 = time.time()
+  args = get_args()
+
+  bam_files = args.bams
+  print("bam_files",bam_files)
+
+  wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
+  annotator_path = "{}annotators/{}.pkl".format(wrapper_path, args.assembly)
+  if "hg38" in args.assembly:
+    annotator_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/grch38.pkl"
+  ann = pickle.load(open(annotator_path, "rb"))
+
+  suffixes = ["R1","R2"]
+
+  final_dfs = []
+  final_dfs_secondary = []
+  
+  if args.paired:
+    n_rounds = 2
+  else:
+    n_rounds = 1
+
+  for j in range(n_rounds):
+    if j == 1:
+      bam_files.reverse()
+    print("bam_files",bam_files)
+    primary, secondary = get_final_df(bam_files,j,suffixes,ann,args.UMI_bar,t0,args.assembly)
+    final_dfs.append(primary)
+    final_dfs_secondary.append(secondary)
+#  final_df = pd.concat(final_dfs,axis=0).reset_index(drop=True)
+
 
 #  for c in final_df.columns:
 #    if str(final_df[c].dtype)[0] == "I":
@@ -276,14 +298,14 @@ def main():
 
 #  final_df.to_parquet(args.outpath + "class_input_final.pq")
 
-  final_df[final_df["HIR1A"] == final_df["max_id_priority"]].to_parquet(args.outpath + "class_input.pq")
-  final_df[final_df["HIR1A"] != final_df["max_id_priority"]].to_parquet(args.outpath + "class_input_secondary.pq")
+  pd.concat(final_dfs,axis=0).reset_index(drop=True).to_parquet(args.outpath + "class_input.pq")
+  pd.concat(final_dfs_secondary,axis=0).reset_index(drop=True).to_parquet(args.outpath + "class_input_secondary.pq")
 
 #  final_df[final_df["HIR1A"] == final_df["max_id_priority"]].to_hdf(args.outpath + "class_input.h5", key="class_input")
 #  final_df[final_df["HIR1A"] != final_df["max_id_priority"]].to_hdf(args.outpath + "class_input_secondary.h5", key="class_input_secondary")
 
-  final_df[final_df["HIR1A"] == final_df["max_id_priority"]].to_csv(args.outpath + "class_input.tsv",sep="\t",index=False)
-  final_df[final_df["HIR1A"] != final_df["max_id_priority"]].to_csv(args.outpath + "class_input_secondary.tsv",sep="\t",index=False)
+  pd.concat(final_dfs,axis=0).reset_index(drop=True).to_csv(args.outpath + "class_input.tsv",sep="\t",index=False)
+  pd.concat(final_dfs_secondary,axis=0).reset_index(drop=True).to_csv(args.outpath + "class_input_secondary.tsv",sep="\t",index=False)
 #  final_df["juncPosR1A"] = final_df["juncPosR1A"].astype("Int32")
 #  final_df["juncPosR1B"] = final_df["juncPosR1B"].astype("Int32") 
 
