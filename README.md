@@ -82,6 +82,12 @@ The class input file contains the following fields (not necessarily in this orde
 
 <!---Note: :whale: indicates that it is safe to use without modification in a model between aligned and chimeric. :octopus: means it is safe to use without modification within chimeric. ---> 
 
+**Junction classification**
+* `linear`: acceptor and donor are on the same chromosome and strand, closer than 1 MB to each other, and are based on the reference genome canonical ordering 
+* `rev`: acceptor and donor are on the same chromosome and strand, closer than 1 MB to each other, and are ordered opposite of the reference genome canonical ordering
+* `sc`: acceptor and donor are on the same chromosome but opposite strands.
+* `fusion`: acceptor and donor are on different chromosomes, or on the same chromosome and strand but farther than 1MB from each other. 
+
 **Refnames for negative-strand genes will have the acceptor first and the donor second**
 * `id`: Read name. Example: `SRR6546273.367739`
 * `readLenR1`: length of read 1 (including any softclipped portions)
