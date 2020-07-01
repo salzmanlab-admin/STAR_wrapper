@@ -19,7 +19,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --time={}\n".format(time))
   #job_file.write("#SBATCH --qos=high_p\n")
 #  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p quake,horence,owners\n")
+  job_file.write("#SBATCH -p quake,owners\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -210,7 +210,7 @@ def main():
   # 171205_A00111_0088_BH55NYDMXX
   # 180607_A00111_0155_BHFCWYDMXX
   assembly = "hg38"
-  run_name = "HLCA_171205_10X"
+  run_name = "HLCA_171205_tumor_10X"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"

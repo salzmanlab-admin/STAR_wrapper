@@ -218,7 +218,7 @@ def main():
   run_sam_to_bam = False
   run_star_fusion = False
   run_ann = False
-  run_class = False
+  run_class = True
   run_HISAT_class = False
   run_GLM = True
   

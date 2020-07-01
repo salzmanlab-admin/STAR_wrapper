@@ -16,12 +16,15 @@ add_ensembl <- function(assembly,directory,class_input,is.SE){
  
    if (assembly %like% "hg38"){
     gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_gene_name_ids.txt"
+    gene_length = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_gene_length_gencode.v33.txt"
   } else if(assembly %like% "Mmur"){ 
     gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/Mmur3_gene_name_ids.txt"
   }
   
   ######## read in gtf file ################
   gtf_info = fread(gtf_file,sep = "\t",header = TRUE)
+  gene_length = fread(gene_length,sep="\t",header=FALSE)
+  names(gene_length) = c("gene_id","length")
   gtf_info = gtf_info[!(duplicated(gene_name))]
   ##########################################
   
@@ -33,10 +36,16 @@ add_ensembl <- function(assembly,directory,class_input,is.SE){
   }
   ######### read in gene count file #######
   gene_count = fread(genecount_file,sep = "\t",header = FALSE)
+  if (gene_count[1,V1]%like%"ensembl"){
+     gene_count = fread(genecount_file,sep = "\t",header = TRUE)
+  }
   if (assembly %like% "hg38"){
     if (! ("ensembl_id" %in% names(gene_count)) ){  
-      gene_count = gene_count[V1%like%"ENSG"]
+      gene_count = gene_count[(V1%like%"ENSG") | (V1%like%"ERCC") ]
       gene_count[,ensembl_id:=strsplit(V1,split = ".",fixed = TRUE)[[1]][1],by = 1:nrow(gene_count)]
+      gene_count[ensembl_id%like%"ERCC",gene_name:=ensembl_id]
+      gene_count[(ensembl_id %in% c("L","S","E","M","N")) | (ensembl_id %like% "ORF"), gene_name:=ensembl_id]
+
     }
     if ("gene_name" %in% names(gene_count)){
       gene_count[,gene_name := NULL]  # if there is a gene name column from the past in the file, we want to delete it to avoid errors
@@ -58,11 +67,17 @@ add_ensembl <- function(assembly,directory,class_input,is.SE){
   
   #add HUGO gene names to the gene count file
   gene_count = merge(gene_count,gtf_info,by.x = "ensembl_id",by.y = "gene_id",all.x = TRUE,all.y = FALSE)
+  gene_count = merge(gene_count,gene_length,by.x = "ensembl_id",by.y = "gene_id",all.x = TRUE,all.y = FALSE)
+  gene_count[ensembl_id%like%"ERCC",gene_name:=ensembl_id]
   gene_count[,V1 := NULL]
   gene_count[,V5 := NULL]
   gene_count = gene_count[!duplicated(gene_name)]
   gene_count = gene_count[!duplicated(ensembl_id)]
-  
+  total_read_unstranded = sum(gene_count$V2)
+  total_read_stranded = sum(gene_count$V3)
+  gene_count[,RPKM_unstranded:= V2/ (total_read_unstranded/(10^6) * length/(10^3))]
+  gene_count[,RPKM_stranded:= V3/ (total_read_stranded/(10^6) * length/(10^3))]
+
   
   # now add gene ensembl and gene counts to the class input file
   if ( "geneR1B_ensembl" %in% names(class_input) ){
@@ -83,14 +98,14 @@ add_ensembl <- function(assembly,directory,class_input,is.SE){
   setnames(class_input,old = "gene_id" ,new = "geneR1A_ensembl")
   class_input = merge(class_input,unique(gtf_info[,list(gene_name,gene_id)]),by.x = "geneR1B_uniq",by.y = "gene_name",all.x = TRUE,all.y = FALSE)
   setnames(class_input,old = "gene_id" ,new = "geneR1B_ensembl")
-  
-  class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3)],by.x = "geneR1A_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
-  setnames(class_input,old = c("V2","V3") ,new = c("geneR1A_expression_unstranded","geneR1A_expression_stranded"))
-  class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3)],by.x = "geneR1B_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
-  setnames(class_input,old = c("V2","V3") ,new = c("geneR1B_expression_unstranded","geneR1B_expression_stranded"))
-  
+
+  class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3,RPKM_unstranded,RPKM_stranded)],by.x = "geneR1A_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
+  setnames(class_input,old = c("V2","V3","RPKM_unstranded","RPKM_stranded") ,new = c("geneR1A_expression_unstranded","geneR1A_expression_stranded","geneR1A_RPKM_unstranded","geneR1A_RPKM_stranded"))
+  class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3,RPKM_unstranded,RPKM_stranded)],by.x = "geneR1B_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
+  setnames(class_input,old = c("V2","V3","RPKM_unstranded","RPKM_stranded") ,new = c("geneR1B_expression_unstranded","geneR1B_expression_stranded","geneR1B_RPKM_unstranded","geneR1B_RPKM_stranded"))
+
   ## write output files
-  write.table(gene_count,genecount_file,row.names = FALSE,sep = "\t",quote = FALSE)
+#  write.table(gene_count,genecount_file,row.names = FALSE,sep = "\t",quote = FALSE)
   return(class_input)
 }
 
@@ -291,7 +306,7 @@ class_input[, chrR1B:=strsplit(refName_newR1, split = "[:|]")[[1]][5], by = refN
 class_input[, juncPosR1A:=as.integer(strsplit(refName_newR1, split = ":", fixed = TRUE)[[1]][3]), by = refName_newR1]
 class_input[, juncPosR1B:=as.integer(strsplit(refName_newR1, split = ":", fixed = TRUE)[[1]][6]), by = refName_newR1]
 class_input[, gene_strandR1A:=strsplit(refName_newR1, split = "[:|]")[[1]][4], by = refName_newR1]
-class_input[, gene_strandR1B:=strsplit(refName_newR1, split = ":", fixed = TRUE)[[1]][7], by = refName_newR1]
+class_input[, gene_strandR1B:=strsplit(refName_newR1, split = "[:|]")[[1]][8], by = refName_newR1]
 class_input[, geneR1A_uniq:=strsplit(refName_newR1, split = ":", fixed = TRUE)[[1]][2], by = refName_newR1]
 class_input[, geneR1B_uniq:=strsplit(refName_newR1, split = ":", fixed = TRUE)[[1]][5], by = refName_newR1]
 #class_input[, intron_length:=abs(juncPosR1A - juncPosR1B), by = refName_newR1]
@@ -300,8 +315,11 @@ toc()
 ## add ensembl ids
 #class_input = add_ensembl(assembly,directory,class_input,is.SE)
 
+class_input[fileTypeR1 == "Chimeric",is.STAR_Chim := ""]
+class_input[fileTypeR1 == "Aligned",is.STAR_SJ := ""]
+
 ## compare class inpout file with STAR chimeric and output files
-class_input = compare_classinput_STARChimOut(directory,is.SE)
+#class_input = compare_classinput_STARChimOut(directory,is.SE)
 
 
 ### obtain fragment lengths for chimeric reads for computing length adjusted AS ##########
@@ -568,12 +586,12 @@ p_predicted_neg_cutoff = p_predicted_quantile[[2]]
 p_predicted_pos_cutoff = p_predicted_quantile[[8]]
 
 ####### Assign pos and neg training data for GLM training #######
-n.neg = nrow(class_input[fileTypeR1 == "Chimeric"][p_predicted_glmnet <= p_predicted_neg_cutoff])
-n.pos = nrow(class_input[fileTypeR1 == "Chimeric"][p_predicted_glmnet >= p_predicted_pos_cutoff])
+n.neg = nrow(class_input[fileTypeR1 == "Chimeric"][(p_predicted_glmnet <= p_predicted_neg_cutoff) | (refName_newR1%like%"chrM")])
+n.pos = nrow(class_input[fileTypeR1 == "Chimeric"][(p_predicted_glmnet >= p_predicted_pos_cutoff) & (!refName_newR1%like%"chrM")])
 n.neg = min(n.neg,150000)
 n.pos = min(n.pos,150000)  # number of positive reads that we want to subsample from the list of all reads
-all_neg_reads = which((class_input$fileTypeR1 == "Chimeric") & (class_input$p_predicted_glmnet <= p_predicted_neg_cutoff))
-all_pos_reads = which((class_input$fileTypeR1 == "Chimeric") & (class_input$p_predicted_glmnet >= p_predicted_pos_cutoff))
+all_neg_reads = which((class_input$fileTypeR1 == "Chimeric") & ((class_input$p_predicted_glmnet <= p_predicted_neg_cutoff) | class_input$refName_newR1%like%"chrM"))
+all_pos_reads = which((class_input$fileTypeR1 == "Chimeric") & ((class_input$p_predicted_glmnet >= p_predicted_pos_cutoff) & !class_input$refName_newR1%like%"chrM"))
 class_input[sample(all_neg_reads, n.neg, replace= FALSE), train_class := 0]
 class_input[sample(all_pos_reads, n.pos, replace= FALSE), train_class := 1]
 #################################################################
@@ -730,7 +748,7 @@ toc()
 ##################################################
 ##################################################
 
-col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glmnet","p_predicted_glmnet_constrained","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_constrained","p_predicted_glmnet_twostep","p_predicted_glmnet_twostep_constrained","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_constrained","junc_cdf_glmnet_corrected","junc_cdf_glmnet_corrected_constrained","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_entropyR1","ave_entropyR2","min_entropyR1","min_entropyR2","ave_max_run_R2","sd_overlap","p_val_median_overlap_R1","chrR1A","chrR1B","juncPosR1A","juncPosR1B","gene_strandR1A","gene_strandR1B","fileTypeR1","read_strandR1A","read_strandR1B")
+col_names_to_keep_in_junc_pred_file = c("refName_newR1","frac_genomic_reads","numReads","njunc_binR1B","njunc_binR1A","median_overlap_R1","threeprime_partner_number_R1","fiveprime_partner_number_R1","is.STAR_Chim","is.STAR_SJ","is.STAR_Fusion","is.True_R1","geneR1A_expression_stranded","geneR1A_expression_unstranded","geneR1B_expression_stranded","geneR1B_expression_unstranded","geneR1A_RPKM_stranded","geneR1A_RPKM_unstranded","geneR1B_RPKM_stranded","geneR1B_RPKM_unstranded","geneR1B_ensembl","geneR1A_ensembl","geneR1B_uniq","geneR1A_uniq","intron_motif","is.TRUE_fusion","p_predicted_glm","p_predicted_glm_corrected","p_predicted_glmnet","p_predicted_glmnet_constrained","p_predicted_glmnet_corrected","p_predicted_glmnet_corrected_constrained","p_predicted_glmnet_twostep","p_predicted_glmnet_twostep_constrained","junc_cdf_glm","junc_cdf_glmnet","junc_cdf_glmnet_constrained","junc_cdf_glmnet_corrected","junc_cdf_glmnet_corrected_constrained","junc_cdf_glm_corrected","junc_cdf_glmnet_twostep","ave_max_junc_14mer","ave_min_junc_14mer","frac_anomaly","ave_AT_run_R1","ave_GC_run_R1","ave_max_run_R1","ave_AT_run_R2","ave_GC_run_R2","ave_entropyR1","ave_entropyR2","min_entropyR1","min_entropyR2","ave_max_run_R2","sd_overlap","p_val_median_overlap_R1","chrR1A","chrR1B","juncPosR1A","juncPosR1B","gene_strandR1A","gene_strandR1B","fileTypeR1","read_strandR1A","read_strandR1B")
 junction_prediction = unique(class_input[, colnames(class_input)%in%col_names_to_keep_in_junc_pred_file, with = FALSE])
 junction_prediction = junction_prediction[!(duplicated(refName_newR1))]
 
@@ -756,7 +774,7 @@ if (is.SE == 0){
 tic("add_junc_seq")
 
 ## add junction sequence to the glm report file
-class_input_extract = class_input[, list(refName_newR1, seqR1, cigarR1A, cigarR1B)]
+class_input_extract = class_input[, list(refName_newR1, seqR1,  flagR1A, flagR1B,cigarR1A, cigarR1B)]
 setkey(class_input_extract,cigarR1A)
 class_input_extract[, readoverhang1_length:=sum(explodeCigarOpLengths(cigarR1A, ops=c("I", "S","M"))[[1]]), by = cigarR1A]
 setkey(class_input_extract,cigarR1B)
@@ -771,7 +789,7 @@ toc()
 
 ## removing redundant columns for GLM script
 class_input[,c("cur_weight","train_class","sum_log_per_read_prob","log_per_read_prob","junc_cdf1_glm","junc_cdf1_glm_corrected","junc_cdf1_glmnet","junc_cdf1_glmnet_corrected","junc_cdf1_glmnet_twostep","refName_readStrandR1","refName_readStrandR2","gene_strandR1A_new","gene_strandR1B_new"):=NULL]
-junction_prediction[, c("cigarR1A","cigarR1B","readoverhang1_length","readoverhang2_length"):= NULL]
+junction_prediction[, c("cigarR1A","cigarR1B"):= NULL]
 
 write.table(junction_prediction, paste(directory,"GLM_output.txt", sep = ""), row.names = FALSE, quote = FALSE, sep = "\t")
 write.table(class_input, paste(directory,"class_input.tsv", sep = ""), row.names = FALSE, quote = FALSE, sep = "\t")

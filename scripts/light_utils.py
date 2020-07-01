@@ -19,6 +19,8 @@ def modify_refnames(CI, assembly):
     gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_gene_strand.txt"
   elif "covid" in assembly:
     gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_covid_gene_strand.txt"
+  elif "gencode-vH29.SARS-CoV-2_WA1" in assembly:
+    gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/gencode-vH29.SARS-CoV-2_WA1_gene_strand.txt"
   gene_strand_info = pd.read_csv(gene_strand_info_file,sep="\t")
   CI["HIR1B"] = CI["HIR1A"]
 #  CI = pd.read_csv("/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_171205_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P1_3_S1_L001/test_class_input.tsv","\t")
