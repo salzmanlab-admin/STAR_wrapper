@@ -11,7 +11,7 @@ import sys
 #sys.path.insert(1, '/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/scripts/')
 import annotator
 
-def modify_refnames(CI, assembly):
+def modify_refnames(CI, assembly, stranded_library):
   swap_names = False
   if "Mmur_3.0" in assembly:
     gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/Mmur3_gene_strand.txt"
@@ -29,11 +29,17 @@ def modify_refnames(CI, assembly):
 
   CI_new["geneR1A"] = CI_new["geneR1A"].fillna("")
   CI_new["geneR1B"] = CI_new["geneR1B"].fillna("")
+
+  # assign read_strandR1B where blank
   CI_new.loc[CI_new["fileTypeR1"] == "Aligned","read_strandR1B"] = CI_new[CI_new["fileTypeR1"] == "Aligned"]["read_strandR1A"]
   # CI_new["read_strandR1A_orig"] = CI_new["read_strandR1A"]
   # CI_new["read_strandR1B_orig"] = CI_new["read_strandR1B"]
+
+  #get gene strand from where it's currently stored
   CI_new["gene_strandR1A"] = CI_new["refName_ABR1"].str.split("|").str[0].str.split(":").str[-1]
   CI_new["gene_strandR1B"] = CI_new["refName_ABR1"].str.split("|").str[1].str.split(":").str[-1]
+
+
   CI_new["numgeneR1A"] = CI_new["geneR1A"].str.split(",").str.len()#.astype("Int32") # the number of overlapping genes on the R1A side
   CI_new[["numgeneR1A"]] = CI_new[["numgeneR1A"]].fillna(0)
   CI_new["numgeneR1B"] = CI_new["geneR1B"].str.split(",").str.len()#.astype("Int32") # the number of overlapping genes on the R1B side
@@ -48,7 +54,8 @@ def modify_refnames(CI, assembly):
       CI_new.loc[ind,"numgeneR1" + suff] = CI_new.loc[ind,"geneR1" + suff].str.split(",").str.len()#.astype("Int32")
   CI_new["shared_gene"] = [",".join([x for x in a.split(",") if x in b.split(",")]) for a,b in zip(CI_new["geneR1A"],CI_new["geneR1B"])]
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
-  
+
+ 
   CI_new["num_shared_genes"] = CI_new["shared_gene"].str.split(",").str.len()
   CI_new.loc[CI_new["shared_gene"] == "","num_shared_genes"] = 0
   ind = CI_new[(CI_new["num_shared_genes"] > 0) & ((CI_new["numgeneR1A"] > 1) | (CI_new["numgeneR1B"] > 1))].index
@@ -73,6 +80,12 @@ def modify_refnames(CI, assembly):
       CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let)], right_on=["gene_name"])
       CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
       CI_new = CI_new.drop(["gene_name"],axis=1)
+
+  # if the library is stranded, we want to keep the read strand; the genes should all come from that strand as well (when not, it seems to be due to strand ambiguity, i.e. the gene appears on both strands)
+  if stranded_library:
+    for let in ["A","B"]:
+      CI_new["gene_strandR1{}_new".format(let)] = CI_new["read_strandR1{}".format(let)]
+
   ind = CI_new[((((CI_new["gene_strandR1A_new"] != CI_new["read_strandR1A"]) & (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"])) | ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) & (~CI_new["gene_strandR1B_new"].isna()) & (CI_new["gene_strandR1B_new"] != CI_new["read_strandR1B"]))) & (CI_new["gene_strandR1A"] == "?") & (CI_new["num_shared_genes"] == 0)) & (CI_new["numgeneR1A"] > 1)].index
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:28601:21715_GTTTCTACAAGCGAGT_TAGTTCACTG"])
   
@@ -83,6 +96,7 @@ def modify_refnames(CI, assembly):
   if assembly == "Mmur_3.0":
     CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1A_uniq","chrR1A"], right_on=["gene_name","chr"])
     CI_new = CI_new.rename(columns={"strand" : "gene_strandR1A_new"})
+    
     ind = CI_new[(((CI_new["gene_strandR1A_new"] != CI_new["read_strandR1A"]) & (~CI_new["gene_strandR1A_new"].isna())  & (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"])) | ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) & (CI_new["gene_strandR1B_new"] != CI_new["read_strandR1B"]))) & (CI_new["gene_strandR1B"] == "?") & (CI_new["num_shared_genes"] == 0) & (CI_new["numgeneR1B"] > 1)].index
     CI_new.loc[ind,"geneR1B_uniq"] = CI_new.loc[ind]["geneR1B"].str.split(",").str[-2]
     CI_new = CI_new.drop(["gene_strandR1B_new"],axis=1)
@@ -105,7 +119,10 @@ def modify_refnames(CI, assembly):
     CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1B_uniq"], right_on=["gene_name"])
     CI_new = CI_new.rename(columns={"strand" : "gene_strandR1B_new"})
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
-  
+  if stranded_library:
+    for let in ["A","B"]:
+      CI_new["gene_strandR1{}_new".format(let)] = CI_new["read_strandR1{}".format(let)]
+
   reverse = {"+" : "-", "-" : "+"}
   same = {"-" : "-", "+" : "+"}
   
@@ -123,7 +140,7 @@ def modify_refnames(CI, assembly):
   CI_new["refName_newR1"] = ""
   CI_new["geneR1B_uniq"].fillna("",inplace=True)
   CI_new["geneR1A_uniq"].fillna("",inplace=True)
-  
+ 
   CI_new["reverse"] = False
   ind = CI_new[(CI_new["fileTypeR1"] == "Aligned") & (CI_new["gene_strandR1A_new"] == "-") & (CI_new["juncPosR1A"] < CI_new["juncPosR1B"])].index
   CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["chrR1B"] + ":" + CI_new.loc[ind]["geneR1B_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1B"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1B_new"] + "|" + CI_new.loc[ind]["chrR1A"] + ":" + CI_new.loc[ind]["geneR1A_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1A"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1A_new"]
@@ -207,6 +224,7 @@ def modify_refnames(CI, assembly):
   CI_new["geneR1A_uniq"] = CI_new["refName_newR1"].str.split("|").str[0].str.split(":").str[1]
   CI_new["geneR1B_uniq"] = CI_new["refName_newR1"].str.split("|").str[1].str.split(":").str[1]
   CI_new.drop("reverse",axis=1,inplace=True)
+
   return CI_new
 
 
@@ -255,7 +273,7 @@ def read_strand(flag, fill_char = np.nan):
   sign_dict = {"0" : "+", "1" : "-"}
   return sign_dict['{0:012b}'.format(flag)[7]]
 
-def chim_refName(flags, cigars, offsets, rnames, ann):
+def chim_refName(flags, cigars, offsets, rnames, ann, stranded_library):
     sign_dict = {"0" : "+", "1" : "-"}
     signs = []
     for i in range(len(flags)):
@@ -280,8 +298,8 @@ def chim_refName(flags, cigars, offsets, rnames, ann):
 
 
 
-    gene1, strand1 =  ann.get_name_given_locus(rnames[0], posFirst)
-    gene2, strand2 =  ann.get_name_given_locus(rnames[1], posSecond)
+    gene1, strand1 =  ann.get_name_given_locus(rnames[0], posFirst, signs[0], stranded_library)
+    gene2, strand2 =  ann.get_name_given_locus(rnames[1], posSecond, signs[1], stranded_library)
 
     if rnames[0] != rnames[1]:
         juncType = "fus"
@@ -308,12 +326,12 @@ def chim_refName(flags, cigars, offsets, rnames, ann):
 #     elif signs[0] == "-":
 #       return unchanged, "{}:{}:{}:{}|{}:{}:{}:{}|{}".format(rnames[1], gene2, posSecond, strand2, rnames[0], gene1, posFirst, strand1, juncType)
 
-def readObj_refname(flag, cigar, seqname, position, ann, fill_char):
+def readObj_refname(flag, cigar, seqname, position, ann, fill_char, stranded_library):
   flag_dict = {0 : "+", 256 : "+", 16 : "-", 272 : "-"}
   read_strand = flag_dict[flag]
   if "N" not in cigar:
 #    gene, strand = get_name_strand(seqname, int(position), ann) #ann.get_name_given_locus(seqname, int(position))
-    gene, strand = ann.get_name_given_locus(seqname, int(position))
+    gene, strand = ann.get_name_given_locus(seqname, int(position), read_strand, stranded_library)
     return "{}:{}:{}".format(seqname,gene,strand), seqname,gene, position, fill_char, fill_char, fill_char
 
   matches = re.findall(r'(\d+)([A-Z]{1})', cigar)
@@ -345,8 +363,8 @@ def readObj_refname(flag, cigar, seqname, position, ann, fill_char):
       elif m[1] in ["N","D"]:
           offset2 += int(m[0])
   offset1 -= 1
-  gene1, strand1 = ann.get_name_given_locus(seqname, offset1)
-  gene2, strand2 = ann.get_name_given_locus(seqname, offset2)
+  gene1, strand1 = ann.get_name_given_locus(seqname, offset1, read_strand, stranded_library)
+  gene2, strand2 = ann.get_name_given_locus(seqname, offset2, read_strand, stranded_library)
 
   read_class = "lin"
 

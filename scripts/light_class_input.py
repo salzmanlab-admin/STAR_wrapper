@@ -9,11 +9,15 @@ import pyarrow
 import pickle
 import pysam
 import re
+from tqdm import tqdm
 import time
 import sys
+import warnings
 #sys.path.insert(1, '/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/scripts/')
 import annotator
 from light_utils import *
+
+warnings.filterwarnings("ignore")
 
 def max_base(seq):
   base_counts = {"A" : [], "T" : [], "G" : [], "C" : []}
@@ -28,13 +32,15 @@ def get_args():
   parser.add_argument("--outpath",help="folder to write output to")
   parser.add_argument("--assembly",choices = ["hg38","Mmur_3.0","chlSab_covid19","hg38_covid19_ercc","gencode-vH29.SARS-CoV-2_WA1"], help="which assembly to use to modify class input")
   parser.add_argument("--UMI_bar", action="store_true",help="extract UMI and barcode")
+  parser.add_argument("--stranded_library", action="store_true",help="Take gene strand information directly from the read strand")
+
   parser.add_argument("--paired", action="store_true",help="run once with each read primary and concatenate the files")
 
 
   args = parser.parse_args()
   return args
 
-def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, fill_char = np.nan):
+def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, stranded_library, fill_char = np.nan):
   sec_dict = {True: 0, False: 1}
   if UMI_bar:
     vals = bam_read.query_name.split("_")
@@ -73,7 +79,7 @@ def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, fill_char
   CI_dict["maxG_10mer" + suffix].append(maxG)
   CI_dict["maxC_10mer" + suffix].append(maxC)
 
-  refName, chrA, geneA, posA, chrB, geneB, posB = readObj_refname(bam_read.flag, bam_read.cigarstring, bam_file.get_reference_name(bam_read.tid), bam_read.reference_start + 1, ann, fill_char)
+  refName, chrA, geneA, posA, chrB, geneB, posB = readObj_refname(bam_read.flag, bam_read.cigarstring, bam_file.get_reference_name(bam_read.tid), bam_read.reference_start + 1, ann, fill_char, stranded_library)
 #   print("refName",refName)
   CI_dict["refName_AB" + suffix].append(refName)
   CI_dict["chr{}A".format(suffix)].append(chrA)
@@ -97,7 +103,7 @@ def extract_info_align(CI_dict,bam_read,suffix,bam_file, ann, UMI_bar, fill_char
     CI_dict[c].append(fill_char)
   return CI_dict
 
-def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar, fill_char = np.nan):
+def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar, stranded_library, fill_char = np.nan):
   assert bam_read1.query_name == bam_read2.query_name
   sec_dict = {True: 0, False: 1}
   if UMI_bar:
@@ -127,7 +133,7 @@ def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar
   CI_dict["maxG_10mer" + suffix].append(maxG)
   CI_dict["maxC_10mer" + suffix].append(maxC)
 
-  refName, chrA, geneA, posA, chrB, geneB, posB  = chim_refName([x.flag for x in reads], [x.cigarstring for x in reads], [x.reference_start + 1 for x in reads], [bam_file.get_reference_name(x.tid) for x in reads], ann)
+  refName, chrA, geneA, posA, chrB, geneB, posB  = chim_refName([x.flag for x in reads], [x.cigarstring for x in reads], [x.reference_start + 1 for x in reads], [bam_file.get_reference_name(x.tid) for x in reads], ann, stranded_library)
   CI_dict["refName_AB" + suffix].append(refName)
 #   split_ref = refName.split("|")
   CI_dict["chr{}A".format(suffix)].append(chrA)
@@ -153,7 +159,7 @@ def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar
     CI_dict["primary{}{}".format(suffix,halves[i])].append(sec_dict[reads[i].is_secondary])
   return CI_dict
 
-def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly):
+def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly, stranded_library):
   CI_dfs = []
   for i in range(len(bam_files)):
     if i == 1:
@@ -175,7 +181,7 @@ def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly):
       genomic_alignments = {}
     alignFile = pysam.AlignmentFile(bam_files[i])
     # columns
-    for bam_read in alignFile.fetch(until_eof=True):
+    for bam_read in tqdm(alignFile.fetch(until_eof=True)):
   #     suffix = "R1"
 
       # make sure read is mapped
@@ -192,13 +198,13 @@ def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly):
               count += 1
 
               # note: removing chim for this test ONLY; uncomment after
-              CI_dict = extract_info_chim(CI_dict,prev_read,bam_read,suffix, alignFile, ann, UMI_bar)
+              CI_dict = extract_info_chim(CI_dict,prev_read,bam_read,suffix, alignFile, ann, UMI_bar, stranded_library)
               first = False
 
             # add info from align read
             elif "N" in bam_read.cigarstring:
               count += 1
-              CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, UMI_bar)
+              CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, UMI_bar, stranded_library)
 
             # save genomic alignment information
             else:
@@ -208,7 +214,7 @@ def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly):
                 else:
                   genomic_alignments[bam_read.query_name] = max(bam_read.get_tag("AS"), genomic_alignments[bam_read.query_name])
               else:
-                CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, UMI_bar)
+                CI_dict = extract_info_align(CI_dict,bam_read,suffix,alignFile, ann, UMI_bar, stranded_library)
   #     if count == 10000:
   #       continue
     CI_df = pd.DataFrame.from_dict(CI_dict)
@@ -234,7 +240,6 @@ def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly):
     float_cols += ["readLenR2","AT_run_R2",
                 "GC_run_R2","max_run_R2","aScoreR2A","aScoreR2B","MR2A","MR2B","SR2A","SR2B","nmmR2A","nmmR2B",
                 "qualR2A","qualR2B","NHR2A","NHR2B","juncPosR2A","juncPosR2B","primaryR2A","primaryR2B",  "HIR2A", "HIR2B"]
-
   #  for c in float_cols:
   #    final_df[c] = final_df[c].astype("Int32")
   print("started modify", time.time() - t0)
@@ -242,8 +247,8 @@ def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly):
   #    str_dtype = final_df[c].dtype 
   #    if str(str_dtype)[0] == "i":
   #      final_df[c] = final_df[c].astype("I" + str_dtype[1:])
-
-  final_df = modify_refnames(final_df, assembly) 
+# test commenting out modify_refNames
+  final_df = modify_refnames(final_df, assembly, stranded_library) 
 
   print("ended modify", time.time() - t0)
   final_df["max_id_priority"] = final_df["id"].map(final_df.groupby("id")["HIR1A"].min())
@@ -286,7 +291,7 @@ def main():
     if j == 1:
       bam_files.reverse()
     print("bam_files",bam_files)
-    primary, secondary = get_final_df(bam_files,j,suffixes,ann,args.UMI_bar,t0,args.assembly)
+    primary, secondary = get_final_df(bam_files,j,suffixes,ann,args.UMI_bar,t0,args.assembly, args.stranded_library)
     final_dfs.append(primary)
     final_dfs_secondary.append(secondary)
 #  final_df = pd.concat(final_dfs,axis=0).reset_index(drop=True)

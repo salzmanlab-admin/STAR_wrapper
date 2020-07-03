@@ -78,27 +78,49 @@ class Annotator:
                   gtf_dict[seqname][j][gene_id] = [start,end, strand] 
     self.gtf_dict = gtf_dict
 
-  def get_name_given_locus(self, seqname, position): 
+  def get_name_given_locus(self, seqname, position, read_strand = "", stranded_library = False): 
    
       try: 
           poss_genes = self.gtf_dict[seqname][round_down(position,self.jump)] 
       except Exception as e: 
+
           if seqname not in self.gtf_dict.keys(): 
-              return self.unknown, self.unknown_strand 
+              if stranded_library:
+                return self.unknown,  read_strand
+
+              else:
+                return self.unknown, self.unknown_strand 
           if position > max(self.gtf_dict[seqname].keys()): 
-              return self.unknown, self.unknown_strand
+              if stranded_library:
+                return self.unknown, read_strand
+              else:
+                return self.unknown, self.unknown_strand
           else: 
               raise e 
       if len(poss_genes) == 0: 
-          return self.unknown, self.unknown_strand 
+          if stranded_library:
+              return self.unknown, read_strand 
+          else:
+              return self.unknown, self.unknown_strand 
+
       gene_names = [] 
       strands = []
       for gene, pos in poss_genes.items(): 
           if pos[0] <= position <= pos[1]:
-              gene_names.append(gene)
-              strands.append(pos[2])
+              if stranded_library:
+                  if pos[2] == read_strand:
+                      gene_names.append(gene)
+                      strands.append(pos[2])
+              else:
+                  gene_names.append(gene)
+                  strands.append(pos[2])
+      if len(gene_names) == 0:
+          gene_names.append(self.unknown)
+
       if len(set(strands)) == 1:
-        strand = strands[0]
+          strand = strands[0]
+      elif stranded_library:
+          strand = read_strand
       else:
-        strand = self.unknown_strand 
+          strand = self.unknown_strand 
       return ",".join(gene_names), strand
