@@ -16,8 +16,8 @@ def get_transcript_id(row):
     return row["attribute"].split("transcript_id")[-1].split('"')[1]
 
 def get_exon_number(row):
-  if "gene_name" in row["attribute"]:
-    return int(row["attribute"].split("exon_number")[-1].split('"')[1])
+  if "exon_number" in row["attribute"]:
+    return int(row["attribute"].split("exon_number")[-1].split("\"")[1])
 
 #def get_exon_number2(row):
 #  return int(row["attribute"].split("ID=exon")[1].split(";")[0].split("-")[-1])
@@ -53,15 +53,15 @@ def get_splices(gtf_df):
     count += 1
     print(count, name1, time.time())
     for name2, group2 in group1.groupby("transcript_id"):
-      for i in range(1,max(group2["exon_number"])):
+      for i in range(1,int(max(group2["exon_number"]))):
         splices[name1].add(tuple(sorted([group2[group2["exon_number"] == i].iloc[0]["end"],group2[group2["exon_number"] == i + 1].iloc[0]["start"]])))
   return splices
 
 def main():
 
-  save_splices = False
-  save_exon_bounds = True
-  save_ann = True
+  save_splices = True
+  save_exon_bounds = False
+  save_ann = False
 
   args = get_args()
   wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"

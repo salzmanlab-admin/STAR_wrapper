@@ -44,7 +44,7 @@ class_input[,numgeneR1B:=length(strsplit(geneR1B,split = ",")[[1]]),by = geneR1B
 class_input[,gene_strandR1A_new:=NULL] #if I rerun this script for a class input file, need to delete these columns because otherwise I would get an error
 class_input[,gene_strandR1B_new:=NULL]
 
-# I remove SNORA and other weird gene names from the list of gene names on each side of junction if the strand inforamtion is already known or there are many genes in the junction id (after each removal one is deducted from the number of genes)
+# I remove SNORA and other weird gene from the list of genes on each side of the junction if the strand inforamtion is already known or there are many genes in the junction id (after each removal one is deducted from the number of genes)
 # TRNA genes are mostly observed in the lemur data
 #class_input[((numgeneR1A>2) & (geneR1A%like%"SNORA")) | ((numgeneR1A>1) & !(gene_strandR1A=="?") & (geneR1A%like%"SNORA")),`:=`(geneR1A = gsub("^SNORA[[:digit:]]+,?", "", geneR1A), numgeneR1A = numgeneR1A-1)]
 #class_input[((numgeneR1B>2) & (geneR1B%like%"SNORA")) | ((numgeneR1B>1) & !(gene_strandR1B=="?") & (geneR1B%like%"SNORA")),`:=`(geneR1B = gsub("^SNORA[[:digit:]]+,?", "", geneR1B), numgeneR1B = numgeneR1B-1)]
