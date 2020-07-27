@@ -9,15 +9,11 @@ import pyarrow
 import pickle
 import pysam
 import re
-from tqdm import tqdm
 import time
 import sys
-import warnings
 #sys.path.insert(1, '/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/scripts/')
 import annotator
 from light_utils import *
-
-warnings.filterwarnings("ignore")
 
 def max_base(seq):
   base_counts = {"A" : [], "T" : [], "G" : [], "C" : []}
@@ -30,12 +26,11 @@ def get_args():
   parser = argparse.ArgumentParser()
   parser.add_argument('--bams', nargs="+",required=True, help='bams to parse (either one or two for paired end)')
   parser.add_argument("--outpath",help="folder to write output to")
-  parser.add_argument("--assembly",choices = ["hg38","Mmur_3.0","chlSab_covid19","hg38_covid19_ercc","gencode-vH29.SARS-CoV-2_WA1"], help="which assembly to use to modify class input")
-  parser.add_argument("--UMI_bar", action="store_true",help="extract UMI and barcode")
-  parser.add_argument("--stranded_library", action="store_true",help="Take gene strand information directly from the read strand")
-
-  parser.add_argument("--paired", action="store_true",help="run once with each read primary and concatenate the files")
-
+  parser.add_argument("--UMI_bar", action="store_true", help="extract UMI and barcode")
+  parser.add_argument("--paired", action="store_true", help="run once with each read primary and concatenate the files")
+  parser.add_argument("--annotator", required=True, help="the path to the annotator pickle file")
+  parser.add_argument("--gtf", required=True, help="the path to the gtf file")
+  parser.add_argument("--stranded_library", action="store_true", help="Take gene strand information directly from the read strand")
 
   args = parser.parse_args()
   return args
@@ -159,7 +154,7 @@ def extract_info_chim(CI_dict,bam_read1,bam_read2,suffix, bam_file, ann, UMI_bar
     CI_dict["primary{}{}".format(suffix,halves[i])].append(sec_dict[reads[i].is_secondary])
   return CI_dict
 
-def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly, stranded_library):
+def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,gtf, stranded_library):
   CI_dfs = []
   for i in range(len(bam_files)):
     if i == 1:
@@ -181,7 +176,7 @@ def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly, stranded_library)
       genomic_alignments = {}
     alignFile = pysam.AlignmentFile(bam_files[i])
     # columns
-    for bam_read in tqdm(alignFile.fetch(until_eof=True)):
+    for bam_read in alignFile.fetch(until_eof=True):
   #     suffix = "R1"
 
       # make sure read is mapped
@@ -240,6 +235,7 @@ def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly, stranded_library)
     float_cols += ["readLenR2","AT_run_R2",
                 "GC_run_R2","max_run_R2","aScoreR2A","aScoreR2B","MR2A","MR2B","SR2A","SR2B","nmmR2A","nmmR2B",
                 "qualR2A","qualR2B","NHR2A","NHR2B","juncPosR2A","juncPosR2B","primaryR2A","primaryR2B",  "HIR2A", "HIR2B"]
+
   #  for c in float_cols:
   #    final_df[c] = final_df[c].astype("Int32")
   print("started modify", time.time() - t0)
@@ -247,8 +243,8 @@ def get_final_df(bam_files,j,suffixes,ann,UMI_bar,t0,assembly, stranded_library)
   #    str_dtype = final_df[c].dtype 
   #    if str(str_dtype)[0] == "i":
   #      final_df[c] = final_df[c].astype("I" + str_dtype[1:])
-# test commenting out modify_refNames
-  final_df = modify_refnames(final_df, assembly, stranded_library) 
+
+  final_df = modify_refnames(final_df, gtf, stranded_library) 
 
   print("ended modify", time.time() - t0)
   final_df["max_id_priority"] = final_df["id"].map(final_df.groupby("id")["HIR1A"].min())
@@ -269,12 +265,10 @@ def main():
   args = get_args()
 
   bam_files = args.bams
+  gtf = args.gtf
   print("bam_files",bam_files)
 
-  wrapper_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/"
-  annotator_path = "{}annotators/{}.pkl".format(wrapper_path, args.assembly)
-  if "hg38" in args.assembly:
-    annotator_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/grch38.pkl"
+  annotator_path = args.annotator
   ann = pickle.load(open(annotator_path, "rb"))
 
   suffixes = ["R1","R2"]
@@ -291,7 +285,7 @@ def main():
     if j == 1:
       bam_files.reverse()
     print("bam_files",bam_files)
-    primary, secondary = get_final_df(bam_files,j,suffixes,ann,args.UMI_bar,t0,args.assembly, args.stranded_library)
+    primary, secondary = get_final_df(bam_files,j,suffixes,ann,args.UMI_bar,t0,gtf,args.stranded_library)
     final_dfs.append(primary)
     final_dfs_secondary.append(secondary)
 #  final_df = pd.concat(final_dfs,axis=0).reset_index(drop=True)

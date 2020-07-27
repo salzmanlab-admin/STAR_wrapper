@@ -11,17 +11,20 @@ import sys
 #sys.path.insert(1, '/scratch/PI/horence/JuliaO/single_cell/STAR_wrapper/scripts/')
 import annotator
 
-def modify_refnames(CI, assembly, stranded_library):
+def get_gene_id(row):
+#  return row["attribute"].split(";")[0].split()[1][1:-1]
+  if "gene_name" in row["attribute"]:
+    return row["attribute"].split("gene_name")[-1].split('"')[1]
+  elif ";gene=" in row["attribute"]:
+    return row["attribute"].split(";gene=")[-1].split(";")[0]
+
+def modify_refnames(CI, gtf_file, stranded_library):
+  
+  gtf_df = pd.read_csv(gtf_file,sep="\t",names=["seqname","source","feature","start","end","score","strand","frame","attribute"],comment="#")
+  gtf_df["gene_name"] = gtf_df.apply(get_gene_id, axis=1)
+  gtf_df = gtf_df[['seqname', 'strand','gene_name']]
+  gene_strand_info = gtf_df.drop_duplicates().reset_index(drop=True)
   swap_names = False
-  if "Mmur_3.0" in assembly:
-    gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/Mmur3_gene_strand.txt"
-  elif "hg38" in assembly:
-    gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_gene_strand.txt"
-  elif "covid" in assembly:
-    gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/hg38_covid_gene_strand.txt"
-  elif "gencode-vH29.SARS-CoV-2_WA1" in assembly:
-    gene_strand_info_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/gencode-vH29.SARS-CoV-2_WA1_gene_strand.txt"
-  gene_strand_info = pd.read_csv(gene_strand_info_file,sep="\t")
   CI["HIR1B"] = CI["HIR1A"]
 #  CI = pd.read_csv("/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/HLCA_171205_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0/P1_3_S1_L001/test_class_input.tsv","\t")
   CI_new = CI.drop_duplicates("refName_ABR1")
@@ -29,17 +32,11 @@ def modify_refnames(CI, assembly, stranded_library):
 
   CI_new["geneR1A"] = CI_new["geneR1A"].fillna("")
   CI_new["geneR1B"] = CI_new["geneR1B"].fillna("")
-
-  # assign read_strandR1B where blank
   CI_new.loc[CI_new["fileTypeR1"] == "Aligned","read_strandR1B"] = CI_new[CI_new["fileTypeR1"] == "Aligned"]["read_strandR1A"]
   # CI_new["read_strandR1A_orig"] = CI_new["read_strandR1A"]
   # CI_new["read_strandR1B_orig"] = CI_new["read_strandR1B"]
-
-  #get gene strand from where it's currently stored
   CI_new["gene_strandR1A"] = CI_new["refName_ABR1"].str.split("|").str[0].str.split(":").str[-1]
   CI_new["gene_strandR1B"] = CI_new["refName_ABR1"].str.split("|").str[1].str.split(":").str[-1]
-
-
   CI_new["numgeneR1A"] = CI_new["geneR1A"].str.split(",").str.len()#.astype("Int32") # the number of overlapping genes on the R1A side
   CI_new[["numgeneR1A"]] = CI_new[["numgeneR1A"]].fillna(0)
   CI_new["numgeneR1B"] = CI_new["geneR1B"].str.split(",").str.len()#.astype("Int32") # the number of overlapping genes on the R1B side
@@ -54,8 +51,7 @@ def modify_refnames(CI, assembly, stranded_library):
       CI_new.loc[ind,"numgeneR1" + suff] = CI_new.loc[ind,"geneR1" + suff].str.split(",").str.len()#.astype("Int32")
   CI_new["shared_gene"] = [",".join([x for x in a.split(",") if x in b.split(",")]) for a,b in zip(CI_new["geneR1A"],CI_new["geneR1B"])]
   # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
-
- 
+  
   CI_new["num_shared_genes"] = CI_new["shared_gene"].str.split(",").str.len()
   CI_new.loc[CI_new["shared_gene"] == "","num_shared_genes"] = 0
   ind = CI_new[(CI_new["num_shared_genes"] > 0) & ((CI_new["numgeneR1A"] > 1) | (CI_new["numgeneR1B"] > 1))].index
@@ -72,14 +68,9 @@ def modify_refnames(CI, assembly, stranded_library):
   CI_new.loc[ind,"geneR1B_uniq"] = CI_new.loc[ind]["geneR1B"].str.split(",").str[-1]
   for let in ["A","B"]:
   
-    if assembly == "Mmur_3.0":
-      CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let),"chrR1{}".format(let)], right_on=["gene_name","chr"])
-      CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
-      CI_new = CI_new.drop(["gene_name","chr"],axis=1)
-    else:
-      CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let)], right_on=["gene_name"])
-      CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
-      CI_new = CI_new.drop(["gene_name"],axis=1)
+    CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1{}_uniq".format(let),"chrR1{}".format(let)], right_on=["gene_name","seqname"])
+    CI_new = CI_new.rename(columns={"strand" : "gene_strandR1{}_new".format(let)})
+    CI_new = CI_new.drop(["gene_name","seqname"],axis=1)
 
   # if the library is stranded, we want to keep the read strand; the genes should all come from that strand as well (when not, it seems to be due to strand ambiguity, i.e. the gene appears on both strands)
   if stranded_library:
@@ -87,42 +78,23 @@ def modify_refnames(CI, assembly, stranded_library):
       CI_new["gene_strandR1{}_new".format(let)] = CI_new["read_strandR1{}".format(let)]
 
   ind = CI_new[((((CI_new["gene_strandR1A_new"] != CI_new["read_strandR1A"]) & (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"])) | ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) & (~CI_new["gene_strandR1B_new"].isna()) & (CI_new["gene_strandR1B_new"] != CI_new["read_strandR1B"]))) & (CI_new["gene_strandR1A"] == "?") & (CI_new["num_shared_genes"] == 0)) & (CI_new["numgeneR1A"] > 1)].index
-  # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:28601:21715_GTTTCTACAAGCGAGT_TAGTTCACTG"])
-  
   CI_new.loc[ind,"geneR1A_uniq"] = CI_new.loc[ind]["geneR1A"].str.split(",").str[-2]
-  # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:28601:21715_GTTTCTACAAGCGAGT_TAGTTCACTG"])
-  
   CI_new = CI_new.drop(["gene_strandR1A_new"],axis=1)
-  if assembly == "Mmur_3.0":
-    CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1A_uniq","chrR1A"], right_on=["gene_name","chr"])
-    CI_new = CI_new.rename(columns={"strand" : "gene_strandR1A_new"})
-    
-    ind = CI_new[(((CI_new["gene_strandR1A_new"] != CI_new["read_strandR1A"]) & (~CI_new["gene_strandR1A_new"].isna())  & (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"])) | ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) & (CI_new["gene_strandR1B_new"] != CI_new["read_strandR1B"]))) & (CI_new["gene_strandR1B"] == "?") & (CI_new["num_shared_genes"] == 0) & (CI_new["numgeneR1B"] > 1)].index
-    CI_new.loc[ind,"geneR1B_uniq"] = CI_new.loc[ind]["geneR1B"].str.split(",").str[-2]
-    CI_new = CI_new.drop(["gene_strandR1B_new"],axis=1)
-    CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1B_uniq","chrR1B"], right_on=["gene_name","chr"])
-    CI_new = CI_new.rename(columns={"strand" : "gene_strandR1B_new"})
-  else:
-  #   display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
-  
-    CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1A_uniq"], right_on=["gene_name"])
-    CI_new = CI_new.drop(["gene_name"],axis=1)
-    CI_new = CI_new.rename(columns={"strand" : "gene_strandR1A_new"})
-    ind = CI_new[((((CI_new["gene_strandR1A_new"] != CI_new["read_strandR1A"]) & (~CI_new["gene_strandR1A_new"].isna()) & (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"])) | ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) & (CI_new["gene_strandR1B_new"] != CI_new["read_strandR1B"]))) & (CI_new["gene_strandR1B"] == "?") & (CI_new["num_shared_genes"] == 0)) & (CI_new["numgeneR1B"] > 1)].index
-  #   display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
-  #   display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:28601:21715_GTTTCTACAAGCGAGT_TAGTTCACTG"])
-  
-    CI_new.loc[ind,"geneR1B_uniq"] = CI_new.loc[ind]["geneR1B"].str.split(",").str[-2]
-  #   display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:28601:21715_GTTTCTACAAGCGAGT_TAGTTCACTG"])
-  
-    CI_new = CI_new.drop(["gene_strandR1B_new"],axis=1)
-    CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1B_uniq"], right_on=["gene_name"])
-    CI_new = CI_new.rename(columns={"strand" : "gene_strandR1B_new"})
-  # display(CI_new[CI_new["id"] == "A00111:88:H55NYDMXX:1:1101:15365:8469_TATCAGGCATTATCTC_GCAACGGCAG"])
+  CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1A_uniq","chrR1A"], right_on=["gene_name","seqname"])
+  CI_new = CI_new.drop(["gene_name","seqname"],axis=1)
+  CI_new = CI_new.rename(columns={"strand" : "gene_strandR1A_new"})
+
+  ind = CI_new[(((CI_new["gene_strandR1A_new"] != CI_new["read_strandR1A"]) & (~CI_new["gene_strandR1A_new"].isna())  & (CI_new["gene_strandR1B_new"] == CI_new["read_strandR1B"])) | ((CI_new["gene_strandR1A_new"] == CI_new["read_strandR1A"]) & (CI_new["gene_strandR1B_new"] != CI_new["read_strandR1B"]))) & (CI_new["gene_strandR1B"] == "?") & (CI_new["num_shared_genes"] == 0) & (CI_new["numgeneR1B"] > 1)].index
+  CI_new.loc[ind,"geneR1B_uniq"] = CI_new.loc[ind]["geneR1B"].str.split(",").str[-2]
+  CI_new = CI_new.drop(["gene_strandR1B_new"],axis=1)
+  CI_new = CI_new.merge(gene_strand_info,how="left",left_on = ["geneR1B_uniq","chrR1B"], right_on=["gene_name","seqname"])
+  CI_new = CI_new.rename(columns={"strand" : "gene_strandR1B_new"})
+  CI_new = CI_new.drop(["gene_name","seqname"],axis=1)
+
   if stranded_library:
     for let in ["A","B"]:
       CI_new["gene_strandR1{}_new".format(let)] = CI_new["read_strandR1{}".format(let)]
-
+  
   reverse = {"+" : "-", "-" : "+"}
   same = {"-" : "-", "+" : "+"}
   
@@ -140,7 +112,7 @@ def modify_refnames(CI, assembly, stranded_library):
   CI_new["refName_newR1"] = ""
   CI_new["geneR1B_uniq"].fillna("",inplace=True)
   CI_new["geneR1A_uniq"].fillna("",inplace=True)
- 
+  
   CI_new["reverse"] = False
   ind = CI_new[(CI_new["fileTypeR1"] == "Aligned") & (CI_new["gene_strandR1A_new"] == "-") & (CI_new["juncPosR1A"] < CI_new["juncPosR1B"])].index
   CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["chrR1B"] + ":" + CI_new.loc[ind]["geneR1B_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1B"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1B_new"] + "|" + CI_new.loc[ind]["chrR1A"] + ":" + CI_new.loc[ind]["geneR1A_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1A"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1A_new"]
@@ -172,25 +144,6 @@ def modify_refnames(CI, assembly, stranded_library):
   CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["chrR1A"] + ":" + CI_new.loc[ind]["geneR1A_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1A"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1A_new"] + "|" +  CI_new.loc[ind]["chrR1B"] + ":" + CI_new.loc[ind]["geneR1B_uniq"].astype(str) + ":" + CI_new.loc[ind]["juncPosR1B"].astype(str) + ":" + CI_new.loc[ind]["gene_strandR1B_new"]
  
   ind1 = CI_new[(CI_new["refName_newR1"] == "") | (CI_new["refName_newR1"].isna())].index # this ind1 is used to simply replace refName_newR1 with the refName_ABR1 
-
-## adding the junction type to refName_newR1
-  CI_new["junc_type"] = ""
-  ind = CI_new[(CI_new["chrR1A"] != CI_new["chrR1B"]) | ((CI_new["gene_strandR1A_new"] == CI_new["gene_strandR1B_new"]) & (abs(CI_new["juncPosR1A"] - CI_new["juncPosR1B"])>=1000000) )].index 
-  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|fus"
-  CI_new.loc[ind,"junc_type"] = "fus"
-
-  ind = CI_new[(CI_new["chrR1A"] == CI_new["chrR1B"]) & (CI_new["gene_strandR1A_new"] != CI_new["gene_strandR1B_new"])].index
-  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|sc"
-  CI_new.loc[ind,"junc_type"] = "sc"
-
-  ind = CI_new[(CI_new["junc_type"] != "sc") & (CI_new["junc_type"] != "fus") &  ( ((CI_new["gene_strandR1A_new"] == "+") & (CI_new["juncPosR1A"] > CI_new["juncPosR1B"])) | ((CI_new["gene_strandR1A_new"] == "-") & (CI_new["juncPosR1A"] < CI_new["juncPosR1B"])) )].index
-  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|rev"
-  CI_new.loc[ind,"junc_type"] = "rev"
-
-  ind = CI_new[(CI_new["junc_type"] != "sc") & (CI_new["junc_type"] != "fus") & (CI_new["junc_type"] != "rev")].index
-  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|lin"
-
-  CI_new = CI_new.drop("junc_type", axis=1)
 
   CI_new.loc[ind1,"refName_newR1"] = CI_new.loc[ind1]["refName_ABR1"]
   ref_dict = pd.Series(CI_new.refName_newR1.values,index=CI_new.refName_ABR1).to_dict()
@@ -225,6 +178,25 @@ def modify_refnames(CI, assembly, stranded_library):
   CI_new["geneR1B_uniq"] = CI_new["refName_newR1"].str.split("|").str[1].str.split(":").str[1]
   CI_new.drop("reverse",axis=1,inplace=True)
 
+## adding the junction type to refName_newR1
+  CI_new["junc_type"] = ""
+  ind = CI_new[(CI_new["chrR1A"] != CI_new["chrR1B"]) | ((CI_new["gene_strandR1A"] == CI_new["gene_strandR1B"]) & (abs(CI_new["juncPosR1A"] - CI_new["juncPosR1B"])>=1000000) ) & (CI_new["gene_strandR1A"] !=  "?")].index
+  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|fus"
+  CI_new.loc[ind,"junc_type"] = "fus"
+
+  ind = CI_new[(CI_new["chrR1A"] == CI_new["chrR1B"]) & (CI_new["gene_strandR1A"] != CI_new["gene_strandR1B"]) & (CI_new["gene_strandR1A"] !=  "?")].index
+  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|sc"
+  CI_new.loc[ind,"junc_type"] = "sc"
+
+  ind = CI_new[(CI_new["junc_type"] != "sc") & (CI_new["junc_type"] != "fus") &  ( ((CI_new["gene_strandR1A"] == "+") & (CI_new["juncPosR1A"] > CI_new["juncPosR1B"])) | ((CI_new["gene_strandR1A"] == "-") & (CI_new["juncPosR1A"] < CI_new["juncPosR1B"])) ) & (CI_new["gene_strandR1A"] !=  "?")].index
+  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|rev"
+  CI_new.loc[ind,"junc_type"] = "rev"
+
+  ind = CI_new[(CI_new["junc_type"] != "sc") & (CI_new["junc_type"] != "fus") & (CI_new["junc_type"] != "rev") & (CI_new["gene_strandR1A"] !=  "?")].index
+  CI_new.loc[ind,"refName_newR1"] = CI_new.loc[ind]["refName_newR1"] + "|lin"
+ 
+  CI_new = CI_new.drop("junc_type", axis=1)
+  
   return CI_new
 
 
@@ -253,7 +225,7 @@ def get_loc_flag(row):
       return 1
     else:
       return 0
-  return "error"
+  return -1
 
 def parse_cigar(cigar):
   matches = re.findall(r'(\d+)([A-Z]{1})', cigar)
