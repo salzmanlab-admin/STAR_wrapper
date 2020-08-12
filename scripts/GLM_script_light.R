@@ -249,14 +249,14 @@ add_ensembl <- function(gtf_file,directory,class_input,is.SE){
   setnames(class_input,old = "gene_id" ,new = "geneR1B_ensembl")
   
   if("length" %in% names(gtf_info)){
-    class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3,RPKM_unstranded,RPKM_stranded)],by.x = "geneR1A_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
+    class_input = merge(class_input,gene_count[!duplicated(ensembl_id),list(ensembl_id,V2,V3,RPKM_unstranded,RPKM_stranded)],by.x = "geneR1A_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
     setnames(class_input,old = c("V2","V3","RPKM_unstranded","RPKM_stranded") ,new = c("geneR1A_expression_unstranded","geneR1A_expression_stranded","geneR1A_RPKM_unstranded","geneR1A_RPKM_stranded"))
-    class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3,RPKM_unstranded,RPKM_stranded)],by.x = "geneR1B_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
+    class_input = merge(class_input,gene_count[!duplicated(ensembl_id),list(ensembl_id,V2,V3,RPKM_unstranded,RPKM_stranded)],by.x = "geneR1B_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
     setnames(class_input,old = c("V2","V3","RPKM_unstranded","RPKM_stranded") ,new = c("geneR1B_expression_unstranded","geneR1B_expression_stranded","geneR1B_RPKM_unstranded","geneR1B_RPKM_stranded"))
   }else{
-    class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3)],by.x = "geneR1A_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
+    class_input = merge(class_input,gene_count[!duplicated(ensembl_id),list(ensembl_id,V2,V3)],by.x = "geneR1A_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
     setnames(class_input,old = c("V2","V3") ,new = c("geneR1A_expression_unstranded","geneR1A_expression_stranded"))
-    class_input = merge(class_input,gene_count[,list(ensembl_id,V2,V3)],by.x = "geneR1B_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
+    class_input = merge(class_input,gene_count[!duplicated(ensembl_id),list(ensembl_id,V2,V3)],by.x = "geneR1B_ensembl",by.y = "ensembl_id",all.x = TRUE,all.y = FALSE)
     setnames(class_input,old = c("V2","V3") ,new = c("geneR1B_expression_unstranded","geneR1B_expression_stranded"))
   }
   
