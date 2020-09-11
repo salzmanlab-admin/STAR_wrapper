@@ -33,7 +33,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
 
 def star_fusion(out_path, name, single, dep = ""):
   """Run star-fusion on chimeric alignments by STAR"""
-  command = "/scratch/PI/horence/Roozbeh/STAR-Fusion/STAR-Fusion --genome_lib_dir /scratch/PI/horence/Roozbeh/STAR-Fusion/GRCh38_gencode_v29_CTAT_lib_Mar272019.plug-n-play/ctat_genome_lib_build_dir/ -J "
+  command = "/scratch/PI/horence/Roozbeh/STAR-Fusion/STAR-Fusion --genome_lib_dir /oak/stanford/groups/horence/Roozbeh/software/STAR-Fusion.v1.9.0/GRCh38_gencode_v33_CTAT_lib_Apr062020.plug-n-play/ctat_genome_lib_build_dir/ -J "
   if single:
     command += "   {}{}/2Chimeric.out.junction --output_dir {}{}/star_fusion ".format(out_path, name,out_path,name)
   else:
@@ -71,7 +71,7 @@ def extract(out_path, data_path, name, bc_pattern, r_ends, dep = ""):
   command += "--read2-in {}{}{} ".format(data_path, name, r_ends[1])
   command += "--read2-out={}{}_extracted{} ".format(data_path, name, r_ends[1])
 #  command += "--read2-stdout "
-  command += "--filter-cell-barcode "
+#  command += "--filter-cell-barcode "
   command += "--whitelist={}{}_whitelist.txt ".format(data_path, name)
   command += "--error-correct-cell "
   sbatch_file("run_extract.sh", out_path, name,"extract_{}".format(name), "20:00:00", "20Gb", command, dep = dep)
