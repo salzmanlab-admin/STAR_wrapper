@@ -6,6 +6,8 @@ def get_gene_id(row):
     return row["attribute"].split("gene_name")[-1].split('"')[1]
   elif ";gene=" in row["attribute"]:
     return row["attribute"].split(";gene=")[-1].split(";")[0]
+  if "gene_id" in row["attribute"]:
+    return row["attribute"].split("gene_id")[-1].split('"')[1]
 
 def round_down(num, divisor): 
     return num - (num%divisor)

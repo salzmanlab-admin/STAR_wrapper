@@ -12,12 +12,12 @@ def get_args():
   return args
 
 def get_transcript_id(row):
-  if "gene_name" in row["attribute"]:
+  #if "gene_name" in row["attribute"]:
     return row["attribute"].split("transcript_id")[-1].split('"')[1]
 
 def get_exon_number(row):
   if "exon_number" in row["attribute"]:
-    return int(row["attribute"].split("exon_number")[-1].split("\"")[0].split(";")[0])
+    return int(row["attribute"].split("exon_number")[-1].split("\"")[1].split(";")[0])
 
 #def get_exon_number2(row):
 #  return int(row["attribute"].split("ID=exon")[1].split(";")[0].split("-")[-1])
@@ -60,7 +60,7 @@ def get_splices(gtf_df):
 def main():
 
   save_splices = True
-  save_exon_bounds = False
+  save_exon_bounds = True
   save_ann = False
 
   args = get_args()

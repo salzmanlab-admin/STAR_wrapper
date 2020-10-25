@@ -257,7 +257,7 @@ def main():
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
   single = False
   tenX = False
-  HISAT = False
+  HISAT = True
 
 # STAR_sim
 #  data_path = "/scratch/PI/horence/Roozbeh/data/machete_paper/STAR-Fusion_benchmarking_data/sim_101_fastq/"
@@ -397,12 +397,12 @@ def main():
   run_whitelist = False
   run_extract = False
   run_map = False
-  run_HISAT_map = False
+  run_HISAT_map = True
   run_sam_to_bam = False
   run_star_fusion = False
   run_ann = False
-  run_class = True
-  run_HISAT_class = False
+  run_class = False
+  run_HISAT_class = True
   run_GLM = True
   
 
