@@ -19,3 +19,4 @@ sandbox/
 *.tsv
 gtf_files/
 TSP*
+*.txt
