@@ -203,7 +203,7 @@ add_ensembl <- function(gtf_file,directory,class_input,is.SE){
     gene_count[,ensembl_id:=strsplit(V1,split = ".",fixed = TRUE)[[1]][1],by = 1:nrow(gene_count)]
   }
   if ("gene_name" %in% names(gene_count)){
-    gene_count[,gene_name := NULL]  # if there is a gene name column from the past in the file, we want to delete it to avoid errors
+    gene_count[,c("gene_name","length") := NULL]  # if there is a gene name column from the past in the file, we want to delete it to avoid errors
   }
   ##########################################
   
@@ -260,7 +260,7 @@ add_ensembl <- function(gtf_file,directory,class_input,is.SE){
   }
   
   ## write output files
-  #  write.table(gene_count,genecount_file,row.names = FALSE,sep = "\t",quote = FALSE)
+  write.table(gene_count,genecount_file,row.names = FALSE,sep = "\t",quote = FALSE)
   return(class_input)
 }
 
