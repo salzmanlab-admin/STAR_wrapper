@@ -103,13 +103,8 @@ postprocessing_model <- function(GLM_output, class_input, is.SE, is.10X){
     cp = cutpointr(GLM_output[!is.na(train)], postprocess_prob, train,method = maximize_metric, metric = sum_sens_spec)
     GLM_output[postprocess_prob<cp$optimal_cutpoint,postprocess_passed:=0]
     GLM_output[postprocess_prob>=cp$optimal_cutpoint,postprocess_passed:=1]
-    print("here is 1")
     coefficients = as.vector(coefficients)
-    print(coefficients)
-    length(which(coefficients!=0))
-    length(which(coefficients!=0)) < 2  
     if(length(which(coefficients!=0)) < 2){
-      print("here is 0")
       GLM_output[,postprocess_passed:=1]
       GLM_output[median_overlap_R1<10,postprocess_passed:=0]
       GLM_output[ave_max_run_R1 > 9,postprocess_passed:=0]
@@ -118,10 +113,8 @@ postprocessing_model <- function(GLM_output, class_input, is.SE, is.10X){
     if (is.SE==0){
       GLM_output[frac_anomaly == 1,postprocess_passed:=0]
     }
-    print("here is 2")
     GLM_output[frac_multimapping == 1,postprocess_passed:=0]
   }
-  print("here is 3")
   GLM_output[ave_max_run_R1 > 14,postprocess_passed:=0]
   GLM_output[ave_entropyR1 < 3,postprocess_passed:=0]
   
