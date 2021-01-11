@@ -17,9 +17,10 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --output={}{}/log_files/{}.%j.out\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --error={}{}/log_files/{}.%j.err\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --time={}\n".format(time))
-  #job_file.write("#SBATCH --qos=high_p\n")
-#  job_file.write("#SBATCH -p horence\n")
-  job_file.write("#SBATCH -p quake,owners\n")
+#  job_file.write("#SBATCH --qos=high_p\n")
+  job_file.write("#SBATCH -p owners,normal,quake\n")
+#  job_file.write("#SBATCH --account=horence\n")
+#  job_file.write("#SBATCH --partition=nih_s10\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -33,7 +34,7 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
 
 def star_fusion(out_path, name, single, dep = ""):
   """Run star-fusion on chimeric alignments by STAR"""
-  command = "/scratch/PI/horence/Roozbeh/STAR-Fusion/STAR-Fusion --genome_lib_dir /oak/stanford/groups/horence/Roozbeh/software/STAR-Fusion.v1.9.0/GRCh38_gencode_v33_CTAT_lib_Apr062020.plug-n-play/ctat_genome_lib_build_dir/ -J "
+  command = "/scg/apps/software/star-fusion/1.8.1/STAR-Fusion --genome_lib_dir  /oak/stanford/groups/horence/Roozbeh/software/STAR-Fusion.v1.9.0/GRCh38_gencode_v33_CTAT_lib_Apr062020.plug-n-play/ctat_genome_lib_build_dir/ -J "
   if single:
     command += "   {}{}/2Chimeric.out.junction --output_dir {}{}/star_fusion ".format(out_path, name,out_path,name)
   else:
@@ -42,14 +43,23 @@ def star_fusion(out_path, name, single, dep = ""):
   return submit_job("run_star_fusion.sh")
 
 
-def GLM(out_path, name, gtf_file, single, domain_file, exon_pickle_file, splice_pickle_file, dep = ""):
+def GLM(out_path, name, gtf_file, single, tenX, stranded_library, domain_file, exon_pickle_file, splice_pickle_file, dep = ""):
   """Run the GLM script to compute the statistical scores for junctions in the class input file"""
   command = "Rscript scripts/GLM_script_light.R {}{}/ {} ".format(out_path, name, gtf_file)
   if single:
     command += " 1 "
   else:
     command += " 0 "
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "150Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
+  if tenX:
+    command += " 1 "
+  else:
+    command += " 0 "
+  if stranded_library:
+    command += " 1 "
+  else:
+    command += " 0 "
+  command += "{} {} {} ".format(domain_file, exon_pickle_file, splice_pickle_file)
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "100Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -88,11 +98,11 @@ def class_input(out_path, name, gtf_file, annotator_file, tenX, single, stranded
     command += "{}{}/2Aligned.out.bam ".format(out_path,name)
   if tenX:
     command += "--UMI_bar "
-  if stranded_library:
-    command += "--stranded_library "
+#  if stranded_library:
+  command += "--stranded_library "
   if not single:
     command += "--paired "
-  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "100Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
+  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "150Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
   return submit_job("run_class_input.sh")
 
 def HISAT_class_input(out_path, name, assembly, gtf_file, tenX, single,dep=""):
@@ -117,7 +127,7 @@ def sam_to_bam(out_path, name, single,dep=""):
 def STAR_map(out_path, data_path, name, r_ends, gzip, single, gtf_file, tenX, star_path, star_ref_path, dep = ""):
   """Run script to perform mapping job for STAR"""
   command = "mkdir -p {}{}\n".format(out_path, name)
-  command += "STAR --version\n"
+  command += "{} --version\n".format(star_path)
   if single:
     l = 1
   else:
@@ -135,11 +145,16 @@ def STAR_map(out_path, data_path, name, r_ends, gzip, single, gtf_file, tenX, st
     command += "--alignIntronMax 1000000 "
     command += "--outFileNamePrefix {}{}/{} ".format(out_path, name, i + 1)
     command += "--outSAMtype BAM Unsorted "
-    command += "--chimSegmentMin 10 "
     command += "--outSAMattributes All "
     command += "--chimOutType WithinBAM SoftClip Junctions "
-    command += "--chimJunctionOverhangMin 20 "
+    command += "--chimJunctionOverhangMin 10 "
     command += "--chimSegmentReadGapMax 0 "
+    command += "--chimOutJunctionFormat 1 "
+    command += "--chimSegmentMin 12 "
+   # command += "--chimMultimapNmax 20 "
+    command += "--chimScoreJunctionNonGTAG -4 "
+    command += "--chimNonchimScoreDropMin 10 "
+  #  command += "--chimMultimapScoreRange 3 "
     command += "--quantMode GeneCounts "
     command += "--sjdbGTFfile {} ".format(gtf_file)
     command += "--outReadsUnmapped Fastx \n\n"
@@ -184,32 +199,33 @@ def main():
   args = parser.parse_args()
 
 # Tabula Sapiens pilot (smartseq)
-  sample = args.directory
+  sample = args.sample
   print("input sample".format(sample))
-  data_path = "/scratch/PI/horence/Roozbeh/single_cell_project/data/TSP2_SS2/RUN1/"
-  out_dir = "//oak/stanford/groups/horence/Roozbeh/single_cell_project/output"
-  run_name = "TSP2_SS2_RUN1"
+  data_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/data/tabula_sapiens/smartseq2/"+sample+"/"
+  out_dir = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output"
+  run_name = "TS_pilot_smartseq_cSM_10_cJOM_10_aSJMN_0_cSRGM_0"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
-  star_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.3a/bin/Linux_x86_64/STAR"
-  star_ref_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/STAR-2.7.1a/hg38_index_2.7.1a"
+  star_path = "/oak/stanford/groups/horence/Roozbeh/software/STAR-2.7.5a/bin/Linux_x86_64/STAR"
+  star_ref_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/hg38_ERCC_STAR_2.7.5.a"
   gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  annotator_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38.pkl"
-  exon_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_RefSeq_exon_bounds.pkl"
-  splice_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_RefSeq_splices.pkl"
+  annotator_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_refseq.pkl"
+  exon_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_refseq_exon_bounds.pkl"
+  splice_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_refseq_splices.pkl"
   domain_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/ucscGenePfam.txt"
   single = False
   tenX = False
-  stranded_library = True
+  HISAT = False
+  stranded_library = False
   bc_pattern = "C"*16 + "N"*12
 
 
   run_whitelist = False
   run_extract = False
-  run_map = False
+  run_map = True
   run_HISAT_map = False
   run_sam_to_bam = False
-  run_star_fusion = True
+  run_star_fusion = False
   run_class = True
   run_HISAT_class = False
   run_GLM = True
@@ -237,72 +253,72 @@ def main():
     gzip = False
 
         
-                  total_jobs = []
-                  total_job_names = []
-                  for name in names:
-                    jobs = []
-                    job_nums = []
-              
-                    if not os.path.exists("{}{}/log_files".format(out_path, name)):
-                      os.makedirs("{}{}/log_files".format(out_path, name))
+  total_jobs = []
+  total_job_names = []
+  for name in names:
+    jobs = []
+    job_nums = []
 
-                    if run_whitelist or curr_run_whitelist:
-                      whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)
-                      jobs.append("whitelist_{}.{}".format(name, whitelist_jobid))
-                      job_nums.append(whitelist_jobid)
-                    else:
-                      whitelist_jobid = ""
-                    if run_extract or curr_run_extract:
-                      extract_jobid = extract(out_path, data_path, name, bc_pattern, r_ends, dep = ":".join(job_nums))
-                      jobs.append("extract_{}.{}".format(name, extract_jobid))
-                      job_nums.append(extract_jobid)
-                    else:
-                      extract_jobid = ""
-                    if run_map:
-                      map_jobid = STAR_map(out_path, data_path, name, r_ends, gzip, single, gtf_file, tenX, star_path, star_ref_path, dep = ":".join(job_nums))
-                      jobs.append("map_{}.{}".format(name,map_jobid))
-                      job_nums.append(map_jobid)
+    if not os.path.exists("{}{}/log_files".format(out_path, name)):
+      os.makedirs("{}{}/log_files".format(out_path, name))
 
-                    if run_HISAT_map:
-                      HISAT_map_jobid = HISAT_map(out_path, data_path, name, r_ends, assembly, single, tenX, dep = ":".join(job_nums))
-                      jobs.append("HISAT_map_{}.{}".format(name,HISAT_map_jobid))
-                      job_nums.append(HISAT_map_jobid)
-                    else:
-                      HISAT_map_jobid = ""
+    if run_whitelist:
+      whitelist_jobid = whitelist(data_path,out_path, name, bc_pattern, r_ends)
+      jobs.append("whitelist_{}.{}".format(name, whitelist_jobid))
+      job_nums.append(whitelist_jobid)
+    else:
+      whitelist_jobid = ""
+    if run_extract:
+      extract_jobid = extract(out_path, data_path, name, bc_pattern, r_ends, dep = ":".join(job_nums))
+      jobs.append("extract_{}.{}".format(name, extract_jobid))
+      job_nums.append(extract_jobid)
+    else:
+      extract_jobid = ""
+    if run_map:
+      map_jobid = STAR_map(out_path, data_path, name, r_ends, gzip, single, gtf_file, tenX, star_path, star_ref_path, dep = ":".join(job_nums))
+      jobs.append("map_{}.{}".format(name,map_jobid))
+      job_nums.append(map_jobid)
 
-                    if run_sam_to_bam:
-                      sam_to_bam_jobid = sam_to_bam(out_path, name, single, dep = ":".join(job_nums))
-                      jobs.append("sam_to_bam_{}.{}".format(name,HISAT_map_jobid))
-                      job_nums.append(sam_to_bam_jobid)
-                    else:
-                      sam_to_bam_jobid = ""
+    if run_HISAT_map:
+      HISAT_map_jobid = HISAT_map(out_path, data_path, name, r_ends, assembly, single, tenX, dep = ":".join(job_nums))
+      jobs.append("HISAT_map_{}.{}".format(name,HISAT_map_jobid))
+      job_nums.append(HISAT_map_jobid)
+    else:
+      HISAT_map_jobid = ""
 
-                    if run_star_fusion:
-                      star_fusion_jobid = star_fusion(out_path, name, single, dep=":".join(job_nums))
-                      jobs.append("fusion_{}.{}".format(name,star_fusion_jobid))
-                      job_nums.append(star_fusion_jobid)
-                    else:
-                      star_fusion_jobid = ""
-        
-                    if run_HISAT_class:
-                      HISAT_class_input_jobid = HISAT_class_input(out_path, name, assembly, gtf_file, tenX, single, dep=":".join(job_nums))
-                      jobs.append("HISAT_class_input_{}.{}".format(name,HISAT_class_input_jobid))
-                      job_nums.append(HISAT_class_input_jobid)
-                    else:
-                      HISAT_class_input_jobid = ""
+    if run_sam_to_bam:
+      sam_to_bam_jobid = sam_to_bam(out_path, name, single, dep = ":".join(job_nums))
+      jobs.append("sam_to_bam_{}.{}".format(name,HISAT_map_jobid))
+      job_nums.append(sam_to_bam_jobid)
+    else:
+      sam_to_bam_jobid = ""
 
-                    if run_class:
-                      class_input_jobid = class_input(out_path, name, gtf_file, annotator_file, tenX, single, stranded_library, dep=":".join(job_nums))
-                      jobs.append("class_input_{}.{}".format(name,class_input_jobid))
-                      job_nums.append(class_input_jobid)
-                    else:
-                      class_input_jobid = ""
+    if run_star_fusion:
+      star_fusion_jobid = star_fusion(out_path, name, single, dep=":".join(job_nums))
+      jobs.append("fusion_{}.{}".format(name,star_fusion_jobid))
+      job_nums.append(star_fusion_jobid)
+    else:
+      star_fusion_jobid = ""
 
-                    if run_GLM:
-                     GLM_jobid = GLM(out_path, name, gtf_file, single, domain_file, exon_pickle_file, splice_pickle_file, dep=":".join(job_nums))
-                     jobs.append("GLM_{}.{}".format(name,GLM_jobid))
-                     job_nums.append(GLM_jobid)
-                    else:
-                      GLM_jobid =  ""
+    if run_HISAT_class:
+      HISAT_class_input_jobid = HISAT_class_input(out_path, name, assembly, gtf_file, tenX, single, dep=":".join(job_nums))
+      jobs.append("HISAT_class_input_{}.{}".format(name,HISAT_class_input_jobid))
+      job_nums.append(HISAT_class_input_jobid)
+    else:
+      HISAT_class_input_jobid = ""
+
+    if run_class:
+      class_input_jobid = class_input(out_path, name, gtf_file, annotator_file, tenX, single, stranded_library, dep=":".join(job_nums))
+      jobs.append("class_input_{}.{}".format(name,class_input_jobid))
+      job_nums.append(class_input_jobid)
+    else:
+      class_input_jobid = ""
+
+    if run_GLM:
+      GLM_jobid = GLM(out_path, name, gtf_file, single, tenX, stranded_library, domain_file, exon_pickle_file, splice_pickle_file, dep=":".join(job_nums))
+      jobs.append("GLM_{}.{}".format(name,GLM_jobid))
+      job_nums.append(GLM_jobid)
+    else:
+      GLM_jobid =  ""
 
 main()

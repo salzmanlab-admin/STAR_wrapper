@@ -18,9 +18,9 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --error={}{}/log_files/{}.%j.err\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --time={}\n".format(time))
   #job_file.write("#SBATCH --qos=high_p\n")
- # job_file.write("#SBATCH -p owners,quake\n")
-  job_file.write("#SBATCH --account=horence\n")
-  job_file.write("#SBATCH --partition=nih_s10\n")
+  job_file.write("#SBATCH -p owners,normal,quake\n")
+ # job_file.write("#SBATCH --account=horence\n")
+ # job_file.write("#SBATCH --partition=nih_s10\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -195,15 +195,15 @@ def submit_job(file_name):
 def main():
 
   parser = argparse.ArgumentParser()
-  parser.add_argument('-s', '--directory', required=True, help='the name of the sample')
+  parser.add_argument('-s', '--sample', required=True, help='the name of the sample')
   args = parser.parse_args()
 
-  path = args.directory
-  print("input sample".format(path))
-  sample = path.split("/")[0]
-  data_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0132_AH3VFJDSXX/"+sample+"/"
-  out_dir = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output"
-  run_name = "Lemur_smartseq_180409_A00111_0132"
+  sample = args.sample
+  print("input sample".format(sample))
+  sample = sample.split("/")[0]
+  data_path = "/oak/stanford/groups/krasnow/MLCA/dataSS2/Stumpy_Bernard_SS2/rawdata/180409_A00111_0133_BH3VGJDSXX/"+sample+"/"
+  out_dir = "/scratch/PI/horence/Roozbeh/single_cell_project/output"
+  run_name = "Lemur_smartseq_token_A00111_0358"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
   star_path = "/oak/stanford/groups/horence/Roozbeh/software/STAR-2.7.5a/bin/Linux_x86_64/STAR"
@@ -211,7 +211,7 @@ def main():
   gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/lemur/ref_Mmur_3.0.gtf"
   annotator_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/lemur/Mmur_3.0.pkl"
   exon_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/lemur/Mmur_3.0_exon_bounds.pkl"
-  splice_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_refseq_splices.pkl"
+  splice_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/lemur/Mmur_3.0_splices.pkl"
   domain_file = ""
   single = False
   tenX = False
@@ -222,7 +222,7 @@ def main():
 
   run_whitelist = False
   run_extract = False
-  run_map = True
+  run_map = False
   run_HISAT_map = False
   run_sam_to_bam = False
   run_star_fusion = False

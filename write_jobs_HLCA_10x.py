@@ -59,7 +59,7 @@ def GLM(out_path, name, gtf_file, single, tenX, stranded_library, domain_file, e
   else:
     command += " 0 "
   command += "{} {} {} ".format(domain_file, exon_pickle_file, splice_pickle_file)
-  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "150Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
+  sbatch_file("run_GLM.sh", out_path, name,"GLM_{}".format(name), "48:00:00", "200Gb", command, dep=dep)  # used 200Gb for CML 80Gb for others and 300 for 10x blood3 
   return submit_job("run_GLM.sh")
 
 def whitelist(data_path,out_path, name, bc_pattern, r_ends):
@@ -206,18 +206,18 @@ def main():
   print(sample)
 # 171205_A00111_0088_BH55NYDMXX
 # 180607_A00111_0155_BHFCWYDMXX
-  data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/data10x/sequencing_runs/171205_A00111_0088_BH55NYDMXX171205_A00111_0088_BH55NYDMXX/fastqs/"+folder+"/"
+  data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/data10x/sequencing_runs/171205_A00111_0088_BH55NYDMXX/fastqs/"+folder+"/"
   out_dir = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output"
-  run_name = "HLCA_171205_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0"
+  run_name = "HLCA_171205_tumor_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
   star_path = "/oak/stanford/groups/horence/Roozbeh/software/STAR-2.7.5a/bin/Linux_x86_64/STAR"
   star_ref_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/hg38_ERCC_STAR_2.7.5.a"
-  gtf_file = "/oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf"
-  annotator_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_refseq.pkl"
-  exon_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_refseq_exon_bounds.pkl"
-  splice_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_refseq_splices.pkl"
-  domain_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/utility_files/ucscGenePfam.txt"
+  gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/grch38_known_genes.gtf"
+  annotator_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/hg38_refseq.pkl"
+  exon_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/hg38_refseq_exon_bounds.pkl"
+  splice_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/hg38_refseq_splices.pkl"
+  domain_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/ucscGenePfam.txt"
   single = True
   tenX = True
   HISAT = False

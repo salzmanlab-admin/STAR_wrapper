@@ -102,7 +102,7 @@ def class_input(out_path, name, gtf_file, annotator_file, tenX, single, stranded
   command += "--stranded_library "
   if not single:
     command += "--paired "
-  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "48:00:00", "350Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
+  sbatch_file("run_class_input.sh", out_path, name,"class_input_{}".format(name), "96:00:00", "350Gb", command, dep=dep)  # 96:00:00, and 210 Gb for Lu, 100 for others
   return submit_job("run_class_input.sh")
 
 def HISAT_class_input(out_path, name, assembly, gtf_file, tenX, single,dep=""):
