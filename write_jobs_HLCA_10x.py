@@ -92,10 +92,10 @@ def class_input(out_path, name, gtf_file, annotator_file, tenX, single, stranded
   """Run script to create class input file"""
   command = "python3 scripts/light_class_input.py --outpath {}{}/ --gtf {} --annotator {} --bams ".format(out_path, name, gtf_file,annotator_file) 
   if single:
-    command += "{}{}/2Aligned.sortedByCoord.out.bam ".format(out_path,name)
+    command += "{}{}/2Aligned.out.bam ".format(out_path,name)
   else:
-    command += "{}{}/1Aligned.sortedByCoord.out.bam ".format(out_path,name)
-    command += "{}{}/2Aligned.sortedByCoord.out.bam ".format(out_path,name)
+    command += "{}{}/1Aligned.out.bam ".format(out_path,name)
+    command += "{}{}/2Aligned.out.bam ".format(out_path,name)
   if tenX:
     command += "--UMI_bar "
  # if stranded_library:
@@ -126,6 +126,7 @@ def sam_to_bam(out_path, name, single,dep=""):
 
 def STAR_map(out_path, data_path, name, r_ends, gzip, single, gtf_file, tenX, star_path, star_ref_path, dep = ""):
   """Run script to perform mapping job for STAR"""
+  data_path = data_path+"extracted/"
   command = "mkdir -p {}{}\n".format(out_path, name)
   command += "{} --version\n".format(star_path)
   if single:
@@ -144,7 +145,7 @@ def STAR_map(out_path, data_path, name, r_ends, gzip, single, gtf_file, tenX, st
     command += "--twopassMode Basic "
     command += "--alignIntronMax 1000000 "
     command += "--outFileNamePrefix {}{}/{} ".format(out_path, name, i + 1)
-    command += "--outSAMtype BAM SortedByCoordinate "
+    command += "--outSAMtype BAM Unsorted "
     command += "--outSAMattributes All "
     command += "--chimOutType WithinBAM SoftClip Junctions "
     command += "--chimJunctionOverhangMin 10 "
@@ -207,13 +208,13 @@ def main():
 # 171205_A00111_0088_BH55NYDMXX
 # 180607_A00111_0155_BHFCWYDMXX
   data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/data10x/sequencing_runs/171205_A00111_0088_BH55NYDMXX/fastqs/"+folder+"/"
-  out_dir = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output"
-  run_name = "HLCA_171205_tumor_10X_cSM_10_cJOM_10_aSJMN_0_cSRGM_0"
+  out_dir = "/scratch/PI/horence/Roozbeh/single_cell_project/output"
+  run_name = "HLCA_171205_10X"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
   star_path = "/oak/stanford/groups/horence/Roozbeh/software/STAR-2.7.5a/bin/Linux_x86_64/STAR"
   star_ref_path = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/hg38_ERCC_STAR_2.7.5.a"
-  gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/grch38_known_genes.gtf"
+  gtf_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/ucsc_known_genes/grch38_known_genes.gtf"
   annotator_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/hg38_refseq.pkl"
   exon_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/hg38_refseq_exon_bounds.pkl"
   splice_pickle_file = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/human/hg38_refseq_splices.pkl"
@@ -227,13 +228,13 @@ def main():
 
   run_whitelist = False
   run_extract = False
-  run_map = False
+  run_map = True
   run_HISAT_map = False
   run_sam_to_bam = False
   run_star_fusion = False
   run_class = False
   run_HISAT_class = False
-  run_GLM = True
+  run_GLM = False
  
   out_path = out_dir + "/{}/".format(run_name) 
 

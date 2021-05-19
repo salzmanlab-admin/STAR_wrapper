@@ -20,3 +20,5 @@ sandbox/
 gtf_files/
 TSP*
 *.txt
+*HLCA*
+*lemur*
