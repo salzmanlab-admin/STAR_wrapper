@@ -15,7 +15,7 @@ QUEUE="owners,quake"   # the queue for submitting jobs
 ######## the three steps required for SICILIAN postprocessing #########
 ## For running each step, its corresponding flag should be set to True, otherwise it should be set to False
 RUN_consolidate="True"
-RUN_process="True"
+RUN_process="False"
 RUN_postprocess="True"
 ######################################################################
 

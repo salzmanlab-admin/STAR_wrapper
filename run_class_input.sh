@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --job-name=class_input_TSP1_muscle_3_S15_L004
-#SBATCH --output=/scratch/PI/horence/Roozbeh/single_cell_project/output/TSP1_10X_redo/TSP1_muscle_3_S15_L004/log_files/class_input_TSP1_muscle_3_S15_L004.%j.out
-#SBATCH --error=/scratch/PI/horence/Roozbeh/single_cell_project/output/TSP1_10X_redo/TSP1_muscle_3_S15_L004/log_files/class_input_TSP1_muscle_3_S15_L004.%j.err
+#SBATCH --job-name=class_input_SRR7311317
+#SBATCH --output=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/mouse_brain_PNAS_Tasic_2018/SRR7311317/log_files/class_input_SRR7311317.%j.out
+#SBATCH --error=/oak/stanford/groups/horence/Roozbeh/single_cell_project/output/mouse_brain_PNAS_Tasic_2018/SRR7311317/log_files/class_input_SRR7311317.%j.err
 #SBATCH --time=48:00:00
 #SBATCH -p owners,quake
 #SBATCH --nodes=1
-#SBATCH --mem=300Gb
+#SBATCH --mem=200Gb
 date
-python3 scripts/light_class_input.py --outpath /scratch/PI/horence/Roozbeh/single_cell_project/output/TSP1_10X_redo/TSP1_muscle_3_S15_L004/ --gtf /oak/stanford/groups/horence/circularRNApipeline_Cluster/index/grch38_known_genes.gtf --annotator /oak/stanford/groups/horence/Roozbeh/single_cell_project/scripts/STAR_wrapper/annotators/hg38_refseq.pkl --bams /scratch/PI/horence/Roozbeh/single_cell_project/output/TSP1_10X_redo/TSP1_muscle_3_S15_L004/2Aligned.out.bam --UMI_bar --stranded_library 
+python3 scripts/light_class_input.py --outpath /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/mouse_brain_PNAS_Tasic_2018/SRR7311317/ --gtf /oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/mouse/refseq_GRCm38.p6/GCF_000001635.26_GRCm38.p6_genomic.gtf --annotator /oak/stanford/groups/horence/Roozbeh/single_cell_project/SICILIAN_references/mouse/refseq_GRCm38.p6/refseq_mm10.p6.pkl --bams /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/mouse_brain_PNAS_Tasic_2018/SRR7311317/1Aligned.out.bam /oak/stanford/groups/horence/Roozbeh/single_cell_project/output/mouse_brain_PNAS_Tasic_2018/SRR7311317/2Aligned.out.bam --stranded_library --paired 
 date

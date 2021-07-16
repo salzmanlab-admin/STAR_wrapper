@@ -17,10 +17,10 @@ def sbatch_file(file_name,out_path, name, job_name, time, mem, command, dep="", 
   job_file.write("#SBATCH --output={}{}/log_files/{}.%j.out\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --error={}{}/log_files/{}.%j.err\n".format(out_path, name,job_name))
   job_file.write("#SBATCH --time={}\n".format(time))
-#  job_file.write("#SBATCH --qos=high_p\n")
-#  job_file.write("#SBATCH -p owners,normal\n")
-  job_file.write("#SBATCH --account=horence\n")
-  job_file.write("#SBATCH --partition=nih_s10\n")
+ # job_file.write("#SBATCH --qos=high_p\n")
+  job_file.write("#SBATCH -p owners,quake\n")
+#  job_file.write("#SBATCH --account=horence\n")
+#  job_file.write("#SBATCH --partition=nih_s10\n")
   job_file.write("#SBATCH --nodes=1\n")
   job_file.write("#SBATCH --mem={}\n".format(mem)) 
   if dep != "":
@@ -128,17 +128,14 @@ def STAR_map(out_path, data_path, name, r_ends, gzip, single, gtf_file, tenX, st
   """Run script to perform mapping job for STAR"""
   command = "mkdir -p {}{}\n".format(out_path, name)
   command += "{} --version\n".format(star_path)
-  if single:
-    l = 1
-  else:
-    l = 0
+  l = 1
   for i in range(l,2):
     command += "{} --runThreadN 4 ".format(star_path)
     command += "--genomeDir {} ".format(star_ref_path)
     if tenX:
       command += "--readFilesIn {}{}_extracted{} ".format(data_path, name, r_ends[i])
     else:
-      command += "--readFilesIn {}{}{} ".format(data_path, name, r_ends[i])
+      command += "--readFilesIn {}{}{} {}{}{} ".format(data_path, name, r_ends[0], data_path, name, r_ends[1])
     if gzip:
       command += "--readFilesCommand zcat "
     command += "--twopassMode Basic "
@@ -201,9 +198,9 @@ def main():
 # Tabula Sapiens pilot (smartseq)
   sample = args.sample
   print("input sample".format(sample))
-  data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/datass2/sequencing_runs/190422_A00111_0304_AHJ7KTDSXX_Final/fastqs/"
+  data_path = "/oak/stanford/groups/krasnow/ktrav/HLCA/datass2/sequencing_runs/180305_A00111_0108_BH3K7JDSXX_Final/fastqs/"
   out_dir = "/oak/stanford/groups/horence/Roozbeh/single_cell_project/output"
-  run_name = "HLCA_smartseq_0304"
+  run_name = "HLCA_tumor_smartseq"
   r_ends = ["_R1_001.fastq.gz", "_R2_001.fastq.gz"]
   names = [sample]
   star_path = "/oak/stanford/groups/horence/Roozbeh/software/STAR-2.7.5a/bin/Linux_x86_64/STAR"
@@ -226,9 +223,9 @@ def main():
   run_HISAT_map = False
   run_sam_to_bam = False
   run_star_fusion = False
-  run_class = True
+  run_class = False
   run_HISAT_class = False
-  run_GLM = True
+  run_GLM = False
  
   out_path = out_dir + "/{}/".format(run_name) 
 
